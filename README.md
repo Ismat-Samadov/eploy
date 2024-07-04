@@ -1,4 +1,3 @@
-```markdown
 # CareerHorizon
 
 CareerHorizon is a Django-based job posting website where employees can apply for jobs and HRs can post jobs.
@@ -88,8 +87,3 @@ This will create fake HR users, job posts, and applications.
 3. Commit your changes (`git commit -m 'Add some feature'`)
 4. Push to the branch (`git push origin feature-branch`)
 5. Open a pull request
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
