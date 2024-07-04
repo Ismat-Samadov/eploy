@@ -1,5 +1,3 @@
-Sure, here's the updated `README.md` file without the sensitive credentials:
-
 ```markdown
 # CareerHorizon
 
@@ -95,5 +93,3 @@ This will create fake HR users, job posts, and applications.
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 ```
-
-This version removes the specific credentials and advises the user to replace them with their own credentials. You can now use this updated content for your `README.md` file.
