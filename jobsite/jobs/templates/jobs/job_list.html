@@ -1,0 +1,18 @@
+<!-- jobs/templates/jobs/job_list.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Listings</title>
+</head>
+<body>
+    <h1>Job Listings</h1>
+    <ul>
+        {% for job in jobs %}
+            <li>
+                <a href="{% url 'apply_job' job.id %}">{{ job.title }}</a> at {{ job.company }} in {{ job.location }}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
