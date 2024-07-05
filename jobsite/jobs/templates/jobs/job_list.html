@@ -11,6 +11,9 @@
         {% for job in jobs %}
             <li>
                 <a href="{% url 'apply_job' job.id %}">{{ job.title }}</a> at {{ job.company }} in {{ job.location }}
+                {% if request.user == job.posted_by %}
+                    | <a href="{% url 'job_applicants' job.id %}">View Applicants</a>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>

@@ -34,3 +34,12 @@ def apply_job(request, job_id):
     else:
         form = JobApplicationForm()
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
+
+
+@login_required
+def job_applicants(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id)
+    if request.user != job.posted_by:
+        return redirect('job_list')  # Optional: Redirect if the user is not the job poster
+    applications = JobApplication.objects.filter(job=job)
+    return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
