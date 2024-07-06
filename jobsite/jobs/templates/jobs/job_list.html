@@ -1,21 +1,19 @@
 <!-- jobs/templates/jobs/job_list.html -->
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Job Listings</title>
-</head>
-<body>
-    <h1>Job Listings</h1>
-    <ul>
-        {% for job in jobs %}
-            <li>
-                <a href="{% url 'apply_job' job.id %}">{{ job.title }}</a> at {{ job.company }} in {{ job.location }}
-                {% if request.user == job.posted_by %}
-                    | <a href="{% url 'job_applicants' job.id %}">View Applicants</a>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+{% extends 'jobs/base.html' %}
+
+{% block title %}Job Listings{% endblock %}
+
+{% block content %}
+<h1>Job Listings</h1>
+<ul>
+    {% for job in jobs %}
+        <li>
+            <a href="{% url 'apply_job' job.id %}">{{ job.title }}</a> at {{ job.company }} in {{ job.location }}
+            {% if request.user == job.posted_by %}
+                | <a href="{% url 'job_applicants' job.id %}">View Applicants</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
