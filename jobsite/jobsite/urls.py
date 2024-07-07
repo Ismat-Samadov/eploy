@@ -1,4 +1,4 @@
-# jobsite/urls.py
+#  jobsite/urls.py
 
 from django.contrib import admin
 from django.urls import path, include
@@ -10,7 +10,7 @@ urlpatterns = [
     path('jobs/', include('jobs.urls')),
 ]
 
-# Media files serving during development
+# Serve media files during development
 from django.conf import settings
 from django.conf.urls.static import static
 

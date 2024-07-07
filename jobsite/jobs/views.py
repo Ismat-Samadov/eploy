@@ -3,10 +3,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import JobPost, JobApplication
-from .forms import JobPostForm, JobApplicationForm
+from .forms import JobPostForm, JobApplicationForm, HRUserCreationForm
 from django.http import HttpResponseForbidden
-from django.contrib.auth import login, authenticate
-from .forms import HRUserCreationForm
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,40 +26,31 @@ def register(request):
         form = HRUserCreationForm()
     return render(request, 'jobs/register.html', {'form': form})
 
+def custom_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('job_list')
+            else:
+                messages.error(request, 'Invalid username or password.')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'jobs/login.html', {'form': form})
+
+def custom_logout(request):
+    logout(request)
+    return redirect('login')
 
 def job_list(request):
     jobs = JobPost.objects.all()
     return render(request, 'jobs/job_list.html', {'jobs': jobs})
-
-
-
-# @login_required
-# def post_job(request):
-#     if request.method == 'POST':
-#         form = JobPostForm(request.POST)
-#         if form.is_valid():
-#             job = form.save(commit=False)
-#             job.posted_by = request.user
-#             job.save()
-#             return redirect('job_list')
-#     else:
-#         form = JobPostForm()
-#     return render(request, 'jobs/post_job.html', {'form': form})
-
-
-# @login_required
-# def post_job(request):
-#     if request.method == 'POST':
-#         form = JobPostForm(request.POST)
-#         if form.is_valid():
-#             job = form.save(commit=False)
-#             job.posted_by = request.user
-#             job.save()
-#             return redirect('job_list')
-#     else:
-#         form = JobPostForm()
-#     return render(request, 'jobs/post_job.html', {'form': form})
-
 
 @login_required
 def post_job(request):
@@ -72,39 +64,6 @@ def post_job(request):
     else:
         form = JobPostForm()
     return render(request, 'jobs/post_job.html', {'form': form})
-
-# @login_required
-# def apply_job(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id)
-#     if request.method == 'POST':
-#         form = JobApplicationForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             application = form.save(commit=False)
-#             application.job = job
-#             application.applicant = request.user
-#             application.save()
-#             return redirect('job_list')
-#     else:
-#         form = JobApplicationForm()
-#     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
-
-
-# @login_required
-# def apply_job(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id)
-#     if request.method == 'POST':
-#         form = JobApplicationForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             application = form.save(commit=False)
-#             application.job = job
-#             application.applicant = request.user
-#             application.save()
-#             return redirect('job_list')
-#     else:
-#         form = JobApplicationForm()
-#     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
-
-
 
 @login_required
 def apply_job(request, job_id):
@@ -124,24 +83,6 @@ def apply_job(request, job_id):
     else:
         form = JobApplicationForm()
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
-
-# @login_required
-# def job_applicants(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id)
-#     if request.user != job.posted_by:
-#         return redirect('job_list')  # Optional: Redirect if the user is not the job poster
-#     applications = JobApplication.objects.filter(job=job)
-#     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
-
-
-# @login_required
-# def job_applicants(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id)
-#     if request.user != job.posted_by:
-#         return HttpResponseForbidden("You do not have permission to view these applicants.")
-#     applications = JobApplication.objects.filter(job=job)
-#     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
-
 
 @login_required
 def job_applicants(request, job_id):
