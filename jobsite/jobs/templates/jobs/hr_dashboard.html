@@ -1,0 +1,21 @@
+<!-- jobs/templates/jobs/hr_dashboard.html -->
+{% extends 'jobs/base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Posted Jobs</h2>
+    <div class="row">
+        {% for job in jobs %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ job.title }}</h5>
+                        <p class="card-text">{{ job.description }}</p>
+                        <a href="{% url 'edit_job' job.id %}" class="btn btn-primary">Edit</a>
+                        <a href="{% url 'delete_job' job.id %}" class="btn btn-danger">Delete</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

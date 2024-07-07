@@ -6,16 +6,28 @@
 
 {% block content %}
 <h1>Job Listings</h1>
+<form class="form-inline my-2" method="get" action="{% url 'job_list' %}">
+    <div class="input-group mb-3">
+        <input type="search" class="form-control" placeholder="Search for jobs" aria-label="Search" name="q">
+        <div class="input-group-append">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </div>
+    </div>
+</form>
 <div class="row">
     {% for job in jobs %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
+        <div class="col-md-4 mb-4 d-flex align-items-stretch">
+            <div class="card flex-fill">
+                <div class="card-body d-flex flex-column">
                     <h5 class="card-title">{{ job.title }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
-                    <p class="card-text">{{ job.description|truncatewords:20 }}</p>
+                    <p class="card-text flex-grow-1">{{ job.description|truncatewords:20 }}</p>
                     <p class="card-text"><small class="text-muted">{{ job.location }}</small></p>
-                    <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
+                    <a href="{% url 'apply_job' job.id %}" class="btn btn-primary mt-auto">Apply</a>
+                    {% if user == job.posted_by %}
+                        <a href="{% url 'edit_job' job.id %}" class="btn btn-secondary mt-2">Edit</a>
+                        <a href="{% url 'delete_job' job.id %}" class="btn btn-danger mt-2">Delete</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

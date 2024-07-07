@@ -1,0 +1,1 @@
+# jobs/templatetags/__init__.py

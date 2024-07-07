@@ -1,0 +1,20 @@
+<!-- jobs/templates/jobs/candidate_dashboard.html -->
+{% extends 'jobs/base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Applied Jobs</h2>
+    <div class="row">
+        {% for application in applications %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ application.job.title }}</h5>
+                        <p class="card-text">{{ application.cover_letter }}</p>
+                        <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

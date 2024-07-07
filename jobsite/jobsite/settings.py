@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'jobs',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,5 @@ LOGIN_REDIRECT_URL = 'job_list'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
+
+AUTH_USER_MODEL = 'users.CustomUser'

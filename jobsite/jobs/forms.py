@@ -1,11 +1,7 @@
-# jobs/forms.py
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
 from .models import JobPost, JobApplication
-
-
+from users.models import CustomUser  # Import CustomUser model
 
 class JobPostForm(forms.ModelForm):
     class Meta:
@@ -17,13 +13,13 @@ class JobApplicationForm(forms.ModelForm):
         model = JobApplication
         fields = ['resume', 'cover_letter']
 
-
 class HRUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    user_type = forms.ChoiceField(choices=CustomUser.USER_TYPE_CHOICES, required=True)
 
     class Meta:
-        model = User
-        fields = ('username', 'email', 'password1', 'password2')
+        model = CustomUser  # Use CustomUser model
+        fields = ('username', 'email', 'user_type', 'password1', 'password2')
 
     def save(self, commit=True):
         user = super(HRUserCreationForm, self).save(commit=False)

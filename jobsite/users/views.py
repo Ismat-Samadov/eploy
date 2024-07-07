@@ -3,8 +3,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import JobPost, JobApplication
-from .forms import JobPostForm, JobApplicationForm
-from users.forms import CustomUserCreationForm  # Import from users app
+from .forms import JobPostForm, JobApplicationForm, HRUserCreationForm
 from django.http import HttpResponseForbidden
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -13,36 +12,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@login_required
-def user_dashboard(request):
-    if request.user.user_type == 'HR':
-        jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
-    elif request.user.user_type == 'Candidate':
-        applications = JobApplication.objects.filter(applicant=request.user)
-        return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
-    else:
-        return HttpResponseForbidden("You are not authorized to view this page.")
-
-
-
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = HRUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password1'])
-            if user is not None:
-                login(request, user)
-                return redirect('job_list')
-            else:
-                messages.error(request, 'Registration successful, but could not authenticate the user.')
-        else:
-            messages.error(request, 'Error in form data.')
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('job_list')
     else:
-        form = CustomUserCreationForm()
+        form = HRUserCreationForm()
     return render(request, 'jobs/register.html', {'form': form})
-
 
 def custom_login(request):
     if request.method == 'POST':
@@ -76,6 +58,8 @@ def job_list(request):
 
 @login_required
 def post_job(request):
+    if request.user.user_type != 'HR':
+        return HttpResponseForbidden("You do not have permission to post a job.")
     if request.method == 'POST':
         form = JobPostForm(request.POST)
         if form.is_valid():
@@ -90,6 +74,8 @@ def post_job(request):
 @login_required
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, deleted=False)
+    if request.user.user_type != 'Candidate':
+        return HttpResponseForbidden("You do not have permission to apply for jobs.")
     if request.method == 'POST':
         form = JobApplicationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -135,3 +121,13 @@ def delete_job(request, job_id):
         job.save()
         return redirect('job_list')
     return render(request, 'jobs/confirm_delete.html', {'job': job})
+
+@login_required
+def user_dashboard(request):
+    if request.user.user_type == 'HR':
+        jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
+        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
+    elif request.user.user_type == 'Candidate':
+        applications = JobApplication.objects.filter(applicant=request.user)
+        return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
+    return redirect('job_list')

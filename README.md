@@ -80,6 +80,58 @@ This will create fake HR users, job posts, and applications.
 - `static/` - Static files (CSS, JavaScript, Images)
 - `media/` - Media files (uploads)
 
+## Diagram
+
+```plaintext
++-------------------+        +-------------------+        +-------------------+
+|    Frontend       |        |      Backend      |        |      Database     |
++-------------------+        +-------------------+        +-------------------+
+| - HTML/CSS        |        |                   |        |                   |
+| - Bootstrap       |        | - Django Views    |        | - PostgreSQL      |
+| - JavaScript      |        |                   |        |                   |
++---------+---------+        +---------+---------+        +---------+---------+
+          |                          |                          |
+          |                          |                          |
+          |  HTTP Requests           |  Process Requests        |
+          |                          |  & Interact with DB      |
+          |                          |                          |
+          v                          v                          v
++-------------------+        +-------------------+        +-------------------+
+|                   |        |                   |        |                   |
+|    Templates      |        |      Views        |        |      Models       |
+|                   |        |                   |        |                   |
++-------------------+        +-------------------+        +-------------------+
+| - base.html       |        | - job_list        |        | - CustomUser      |
+| - register.html   |        | - post_job        |        | - JobPost         |
+| - login.html      |        | - apply_job       |        | - JobApplication  |
+| - job_list.html   |        | - job_applicants  |        |                   |
+| - post_job.html   |        | - edit_job        |        |                   |
++-------------------+        +-------------------+        +-------------------+
+          |                          |                          |
+          |  Render HTML             |  Handle Logic            |  Store Data  |
+          |                          |                          |
+          v                          v                          v
++-------------------+        +-------------------+        +-------------------+
+|   URL Routing     |        |                   |        |                   |
++-------------------+        +-------------------+        +-------------------+
+| - urls.py         |        |  - forms.py       |        |  - models.py      |
++-------------------+        +-------------------+        +-------------------+
+| - jobs/urls.py    |        | - CustomUserForm  |        | - CustomUser      |
+| - users/urls.py   |        | - JobPostForm     |        | - JobPost         |
++-------------------+        +-------------------+        +-------------------+
+          |                          |                          |
+          |                          |                          |
+          v                          v                          v
++-------------------+        +-------------------+        +-------------------+
+|                   |        |                   |        |                   |
+|  Authentication   |        |  Business Logic   |        |  Data Storage     |
++-------------------+        +-------------------+        +-------------------+
+| - Login/Logout    |        | - Handle Forms    |        | - Store User Data |
+| - Register User   |        | - Validate Input  |        | - Store Job Data  |
+| - User Roles      |        | - Query Database  |        | - Store Apps Data |
++-------------------+        +-------------------+        +-------------------+
+```
+
 ## Contributing
 
 1. Fork the repository
@@ -87,3 +139,4 @@ This will create fake HR users, job posts, and applications.
 3. Commit your changes (`git commit -m 'Add some feature'`)
 4. Push to the branch (`git push origin feature-branch`)
 5. Open a pull request
+
