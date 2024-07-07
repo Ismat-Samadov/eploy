@@ -4,7 +4,6 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout
 
-
 urlpatterns = [
     path('', job_list, name='job_list'),
     path('post/', post_job, name='post_job'),

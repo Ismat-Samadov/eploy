@@ -49,7 +49,11 @@ def custom_logout(request):
     return redirect('login')
 
 def job_list(request):
-    jobs = JobPost.objects.all()
+    query = request.GET.get('q')
+    if query:
+        jobs = JobPost.objects.filter(title__icontains=query)
+    else:
+        jobs = JobPost.objects.all()
     return render(request, 'jobs/job_list.html', {'jobs': jobs})
 
 @login_required
@@ -86,6 +90,9 @@ def apply_job(request, job_id):
 
 @login_required
 def job_applicants(request, job_id):
+    if job_id == 0:
+        jobs = JobPost.objects.filter(posted_by=request.user)
+        return render(request, 'jobs/job_applicants_list.html', {'jobs': jobs})
     job = get_object_or_404(JobPost, id=job_id)
     if request.user != job.posted_by:
         return redirect('job_list')

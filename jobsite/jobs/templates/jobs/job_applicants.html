@@ -1,22 +1,24 @@
 <!-- jobs/templates/jobs/job_applicants.html -->
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Applicants for {{ job.title }}</title>
-</head>
-<body>
-    <h1>Applicants for {{ job.title }}</h1>
-    <ul>
-        {% for application in applications %}
-            <li>
-                <strong>Applicant:</strong> {{ application.applicant.username }}<br>
-                <strong>Resume:</strong> <a href="{{ application.resume.url }}">Download CV</a><br>
-                <strong>Cover Letter:</strong> {{ application.cover_letter|linebreaksbr }}<br>
-                <strong>Applied at:</strong> {{ application.applied_at }}
-            </li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'job_list' %}">Back to Job Listings</a>
-</body>
-</html>
+{% extends 'jobs/base.html' %}
+
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
+{% block content %}
+<h1>Applicants for {{ job.title }}</h1>
+<div class="row">
+    {% for application in applications %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Applicant: {{ application.applicant.username }}</h5>
+                    <p class="card-text"><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
+                    <p class="card-text"><strong>Applied at:</strong> {{ application.applied_at }}</p>
+                    <a href="{{ application.resume.url }}" class="btn btn-primary">Download CV</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<a href="{% url 'job_list' %}" class="btn btn-secondary mt-3">Back to Job Listings</a>
+{% endblock %}

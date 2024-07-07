@@ -1,11 +1,11 @@
-<!-- jobs/templates/jobs/job_list.html -->
+<!-- jobs/templates/jobs/job_applicants_list.html -->
 
 {% extends 'jobs/base.html' %}
 
-{% block title %}Job Listings{% endblock %}
+{% block title %}My Job Posts{% endblock %}
 
 {% block content %}
-<h1>Job Listings</h1>
+<h1>My Job Posts</h1>
 <div class="row">
     {% for job in jobs %}
         <div class="col-md-4 mb-4">
@@ -15,7 +15,7 @@
                     <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
                     <p class="card-text">{{ job.description|truncatewords:20 }}</p>
                     <p class="card-text"><small class="text-muted">{{ job.location }}</small></p>
-                    <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
+                    <a href="{% url 'job_applicants' job.id %}" class="btn btn-primary">View Applicants</a>
                 </div>
             </div>
         </div>

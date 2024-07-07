@@ -4,21 +4,56 @@
 <html>
 <head>
     <title>{% block title %}CareerHorizon{% endblock %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav>
-        {% if user.is_authenticated %}
-            <a href="{% url 'job_list' %}">Home</a>
-            <a href="{% url 'post_job' %}">Post a Job</a>
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" style="background:none; border:none; color:blue; cursor:pointer; padding:0; margin:0;">Logout</button>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'job_list' %}">CareerHorizon</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'job_list' %}">Home</a>
+                </li>
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'post_job' %}">Post Job</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'job_applicants' job_id=0 %}">View Applicants</a>
+                    </li>
+                {% endif %}
+            </ul>
+            <form class="form-inline my-2 my-lg-0 ml-auto" method="get" action="{% url 'job_list' %}">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="q">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
-        {% else %}
-            <a href="{% url 'login' %}">Login</a>
-            <a href="{% url 'register' %}">Register</a>
-        {% endif %}
+            <ul class="navbar-nav ml-auto">
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button class="nav-link btn btn-link" type="submit" style="padding: 0;">Logout</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Register</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
     </nav>
-    {% block content %}{% endblock %}
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
