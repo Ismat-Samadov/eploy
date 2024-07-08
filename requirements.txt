@@ -1,8 +1,11 @@
 asgiref==3.8.1
 Django==5.0.6
 Faker==26.0.0
+gunicorn==22.0.0
+packaging==24.1
 psycopg2-binary==2.9.9
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 six==1.16.0
 sqlparse==0.5.0
+whitenoise==6.7.0
