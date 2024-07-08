@@ -17,14 +17,13 @@ logger = logging.getLogger(__name__)
 def user_dashboard(request):
     if request.user.user_type == 'HR':
         jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
+        applications = JobApplication.objects.filter(job__posted_by=request.user)
+        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
     elif request.user.user_type == 'Candidate':
         applications = JobApplication.objects.filter(applicant=request.user)
         return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
     else:
         return HttpResponseForbidden("You are not authorized to view this page.")
-
-
 
 def register(request):
     if request.method == 'POST':
@@ -42,7 +41,6 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'jobs/register.html', {'form': form})
-
 
 def custom_login(request):
     if request.method == 'POST':
@@ -108,9 +106,6 @@ def apply_job(request, job_id):
 
 @login_required
 def job_applicants(request, job_id):
-    if job_id == 0:
-        jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-        return render(request, 'jobs/job_applicants_list.html', {'jobs': jobs})
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
     applications = JobApplication.objects.filter(job=job)
     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})

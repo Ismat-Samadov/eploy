@@ -1,21 +1,35 @@
 <!-- jobs/templates/jobs/hr_dashboard.html -->
+
 {% extends 'jobs/base.html' %}
+
+{% block title %}HR Dashboard{% endblock %}
+
 {% block content %}
 <div class="container">
-    <h2>Posted Jobs</h2>
-    <div class="row">
+    <h2>HR Dashboard</h2>
+    <h3>Your Posted Jobs</h3>
+    <ul class="list-group mb-4">
         {% for job in jobs %}
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ job.title }}</h5>
-                        <p class="card-text">{{ job.description }}</p>
-                        <a href="{% url 'edit_job' job.id %}" class="btn btn-primary">Edit</a>
-                        <a href="{% url 'delete_job' job.id %}" class="btn btn-danger">Delete</a>
-                    </div>
-                </div>
-            </div>
+            <li class="list-group-item">
+                <h4>{{ job.title }}</h4>
+                <p>{{ job.description }}</p>
+                <p><strong>Location:</strong> {{ job.location }}</p>
+                <p><strong>Posted At:</strong> {{ job.posted_at }}</p>
+            </li>
         {% endfor %}
-    </div>
+    </ul>
+
+    <h3>Applications</h3>
+    <ul class="list-group">
+        {% for application in applications %}
+            <li class="list-group-item">
+                <h4>Job: {{ application.job.title }}</h4>
+                <p><strong>Applicant:</strong> {{ application.applicant.username }}</p>
+                <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">{{ application.resume }}</a></p>
+                <p><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
+                <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+            </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}

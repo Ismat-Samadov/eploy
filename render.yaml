@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: careerhorizon
+    env: python
+    plan: free
+    buildCommand: "
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --noinput &&
+      python manage.py migrate"
+    startCommand: "gunicorn jobsite.wsgi"
+    envVars:
+      - key: DATABASE_URL
+        value: YOUR_DATABASE_URL
+      - key: SECRET_KEY
+        value: YOUR_SECRET_KEY
+      - key: DEBUG
+        value: 'False'
