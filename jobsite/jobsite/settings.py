@@ -17,7 +17,6 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['.onrender.com', 'careerhorizon.onrender.com']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -127,3 +126,8 @@ AUTHENTICATION_BACKENDS = (
 )
 
 AUTH_USER_MODEL = 'users.CustomUser'
+
+# Ensure that the static and media files are served in production
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
