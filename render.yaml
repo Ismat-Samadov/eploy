@@ -10,8 +10,10 @@ services:
     startCommand: "gunicorn jobsite.wsgi"
     envVars:
       - key: DATABASE_URL
-        value: YOUR_DATABASE_URL
+        fromDatabase:
+          name: careerhorizon-db
+          property: connectionString
       - key: SECRET_KEY
-        value: YOUR_SECRET_KEY
+        fromSecret: SECRET_KEY
       - key: DEBUG
         value: 'False'
