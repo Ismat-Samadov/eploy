@@ -10,10 +10,30 @@ services:
     startCommand: "gunicorn jobsite.wsgi"
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: careerhorizon-db
-          property: connectionString
+        fromEnv: DATABASE_URL
       - key: SECRET_KEY
-        fromSecret: SECRET_KEY
+        fromEnv: SECRET_KEY
       - key: DEBUG
-        value: 'False'
+        fromEnv: DEBUG
+      - key: GS_BUCKET_NAME
+        fromEnv: GS_BUCKET_NAME
+      - key: GCS_TYPE
+        fromEnv: GCS_TYPE
+      - key: GCS_PROJECT_ID
+        fromEnv: GCS_PROJECT_ID
+      - key: GCS_PRIVATE_KEY_ID
+        fromEnv: GCS_PRIVATE_KEY_ID
+      - key: GCS_PRIVATE_KEY
+        fromEnv: GCS_PRIVATE_KEY
+      - key: GCS_CLIENT_EMAIL
+        fromEnv: GCS_CLIENT_EMAIL
+      - key: GCS_CLIENT_ID
+        fromEnv: GCS_CLIENT_ID
+      - key: GCS_AUTH_URI
+        fromEnv: GCS_AUTH_URI
+      - key: GCS_TOKEN_URI
+        fromEnv: GCS_TOKEN_URI
+      - key: GCS_AUTH_PROVIDER_CERT_URL
+        fromEnv: GCS_AUTH_PROVIDER_CERT_URL
+      - key: GCS_CLIENT_CERT_URL
+        fromEnv: GCS_CLIENT_CERT_URL

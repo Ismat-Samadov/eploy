@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from decouple import config
 import dj_database_url
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,12 +29,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'jobs',
     'users',
-    'whitenoise.runserver_nostatic',  # Add this line for WhiteNoise
+    'whitenoise.runserver_nostatic',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this line for WhiteNoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,7 +128,20 @@ AUTHENTICATION_BACKENDS = (
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# Ensure that the static and media files are served in production
-if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Google Cloud Storage
+GS_BUCKET_NAME = config('GS_BUCKET_NAME')
+GCS_CREDENTIALS = service_account.Credentials.from_service_account_info({
+    "type": config('GCS_TYPE'),
+    "project_id": config('GCS_PROJECT_ID'),
+    "private_key_id": config('GCS_PRIVATE_KEY_ID'),
+    "private_key": config('GCS_PRIVATE_KEY').replace('\\n', '\n'),
+    "client_email": config('GCS_CLIENT_EMAIL'),
+    "client_id": config('GCS_CLIENT_ID'),
+    "auth_uri": config('GCS_AUTH_URI'),
+    "token_uri": config('GCS_TOKEN_URI'),
+    "auth_provider_x509_cert_url": config('GCS_AUTH_PROVIDER_CERT_URL'),
+    "client_x509_cert_url": config('GCS_CLIENT_CERT_URL'),
+})
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_CREDENTIALS = GCS_CREDENTIALS
