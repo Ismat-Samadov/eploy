@@ -17,7 +17,7 @@ from django.core.paginator import EmptyPage, PageNotAnInteger
 
 logger = logging.getLogger(__name__)
 
-FASTAPI_URL = "https://job-api-cv1f.onrender.com"
+FASTAPI_URL = "https://job-scraper-api-n1wx.onrender.com"
 
 def fetch_jobs_from_api(request):
     company = request.GET.get('company', '')
