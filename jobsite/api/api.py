@@ -15,6 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.head("/")
 async def head_root():
     """
@@ -43,6 +44,9 @@ async def get_data_by_position(position: str = Query(..., description="Position 
     await close_connection(db)
     return rows
 
+    
+
+
 @app.get("/data/")
 async def get_data(
     company: str = Query(None, description="Company name to search for (partial match)"),
@@ -53,37 +57,31 @@ async def get_data(
 ):
     offset = (page - 1) * page_size
 
-    if company is None and position is None:
-        # If neither company nor position is provided, return all data
-        query = "SELECT distinct * FROM jobs where scrape_date = (select max(scrape_date) from jobs ) ORDER BY scrape_date DESC OFFSET $1 LIMIT $2;"
-        rows = await db.fetch(query, offset, page_size)
-    elif company is not None and position is not None:
-        # If both company and position are provided, search by both
-        query = "SELECT distinct * FROM jobs WHERE scrape_date = (select max(scrape_date) from jobs ) and company ILIKE $1 AND vacancy ILIKE $2 ORDER BY scrape_date DESC OFFSET $3 LIMIT $4;"
+    if company and position:
+        query = """
+            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
+            AND company ILIKE $1 AND vacancy ILIKE $2 ORDER BY scrape_date DESC OFFSET $3 LIMIT $4;
+        """
         rows = await db.fetch(query, f"%{company}%", f"%{position}%", offset, page_size)
-    elif company is not None:
-        # If only company is provided, search by company with LIKE
-        query = "SELECT distinct * FROM jobs WHERE scrape_date = (select max(scrape_date) from jobs ) and company ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;"
+    elif company:
+        query = """
+            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
+            AND company ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;
+        """
         rows = await db.fetch(query, f"%{company}%", offset, page_size)
-    else:
-        # If only position is provided, search by position
-        query = "SELECT distinct * FROM jobs WHERE scrape_date = (select max(scrape_date) from jobs ) and vacancy ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;"
+    elif position:
+        query = """
+            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
+            AND vacancy ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;
+        """
         rows = await db.fetch(query, f"%{position}%", offset, page_size)
-
-    # Get total count of items for pagination
-    total_query = "SELECT COUNT(*) FROM jobs WHERE scrape_date = (select max(scrape_date) from jobs )"
-    if company:
-        total_query += f" AND company ILIKE '%{company}%'"
-    if position:
-        total_query += f" AND vacancy ILIKE '%{position}%'"
-
-    total_count = await db.fetchval(total_query)
-    total_pages = (total_count + page_size - 1) // page_size  # Calculate total pages
+    else:
+        query = """
+            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
+            ORDER BY scrape_date DESC OFFSET $1 LIMIT $2;
+        """
+        rows = await db.fetch(query, offset, page_size)
 
     await close_connection(db)
-    return {
-        "data": rows,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": total_pages
-    }
+    return {"results": rows, "page": page, "page_size": page_size}
+
