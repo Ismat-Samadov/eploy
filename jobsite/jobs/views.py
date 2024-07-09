@@ -123,7 +123,7 @@ def custom_logout(request):
 def job_list(request):
     query = request.GET.get('q')
     if query:
-        jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
+        jobs = JobPost.objects.filter(title__icontains(query, deleted=False)
     else:
         jobs = JobPost.objects.filter(deleted=False)
     return render(request, 'jobs/job_list.html', {'jobs': jobs})
