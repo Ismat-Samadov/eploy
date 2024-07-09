@@ -53,7 +53,7 @@ def scraped_jobs(request):
     except requests.exceptions.RequestException as e:
         jobs = []
         total_pages = 1
-        return JsonResponse({'error': f"Error fetching data from API: {e}"}, status=500)
+        print(f"Error fetching data from API: {e}")
 
     paginator = Paginator(jobs, page_size)
 
@@ -64,7 +64,8 @@ def scraped_jobs(request):
     except EmptyPage:
         jobs_page = paginator.page(paginator.num_pages)
 
-    return render(request, 'jobs/scraped_jobs.html', {'jobs': jobs_page, 'total_pages': total_pages, 'current_page': int(page)})
+    return render(request, 'jobs/scraped_jobs.html', {'jobs': jobs_page, 'total_pages': total_pages})
+
 
 def redirect_to_jobs(request):
     return redirect('fetch_jobs_from_api')
@@ -123,7 +124,7 @@ def custom_logout(request):
 def job_list(request):
     query = request.GET.get('q')
     if query:
-        jobs = JobPost.objects.filter(title__icontains(query, deleted=False)
+        jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
     else:
         jobs = JobPost.objects.filter(deleted=False)
     return render(request, 'jobs/job_list.html', {'jobs': jobs})
