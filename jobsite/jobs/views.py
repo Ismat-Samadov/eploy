@@ -1,7 +1,9 @@
 # jobs/views.py
 
+import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from .models import JobPost, JobApplication
 from .forms import JobPostForm, JobApplicationForm
 from users.forms import CustomUserCreationForm  # Import from users app
@@ -9,9 +11,63 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
+from django.http import JsonResponse
 import logging
+from django.core.paginator import EmptyPage, PageNotAnInteger
 
 logger = logging.getLogger(__name__)
+
+FASTAPI_URL = "https://job-api-cv1f.onrender.com"
+
+def fetch_jobs_from_api(request):
+    company = request.GET.get('company', '')
+    position = request.GET.get('position', '')
+    page = request.GET.get('page', 1)
+    page_size = request.GET.get('page_size', 10)
+
+    url = f"{FASTAPI_URL}/data/"
+    params = {
+        'company': company,
+        'position': position,
+        'page': page,
+        'page_size': page_size,
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        jobs = response.json()
+        return JsonResponse(jobs, safe=False)
+    else:
+        return JsonResponse({'error': 'Failed to fetch data from API'}, status=response.status_code)
+
+def scraped_jobs(request):
+    page = request.GET.get('page', 1)
+    page_size = 25  # Set page size to 25
+
+    try:
+        response = requests.get(f"{FASTAPI_URL}/data/?page={page}&page_size={page_size}")
+        response.raise_for_status()
+        data = response.json()
+        jobs = data['data']
+        total_pages = data['total_pages']
+    except requests.exceptions.RequestException as e:
+        jobs = []
+        total_pages = 1
+        return JsonResponse({'error': f"Error fetching data from API: {e}"}, status=500)
+
+    paginator = Paginator(jobs, page_size)
+
+    try:
+        jobs_page = paginator.page(page)
+    except PageNotAnInteger:
+        jobs_page = paginator.page(1)
+    except EmptyPage:
+        jobs_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'jobs/scraped_jobs.html', {'jobs': jobs_page, 'total_pages': total_pages, 'current_page': int(page)})
+
+def redirect_to_jobs(request):
+    return redirect('fetch_jobs_from_api')
 
 @login_required
 def user_dashboard(request):
@@ -67,7 +123,7 @@ def custom_logout(request):
 def job_list(request):
     query = request.GET.get('q')
     if query:
-        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)
+        jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
     else:
         jobs = JobPost.objects.filter(deleted=False)
     return render(request, 'jobs/job_list.html', {'jobs': jobs})

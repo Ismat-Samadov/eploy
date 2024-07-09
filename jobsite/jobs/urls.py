@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard
+from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard, scraped_jobs
 
 urlpatterns = [
     path('', job_list, name='job_list'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('edit-job/<int:job_id>/', edit_job, name='edit_job'),
     path('delete-job/<int:job_id>/', delete_job, name='delete_job'),
     path('user-dashboard/', user_dashboard, name='user_dashboard'),
+    path('scraped-jobs/', scraped_jobs, name='scraped_jobs'),
 ]
