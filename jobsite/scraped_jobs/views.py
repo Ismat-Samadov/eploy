@@ -1,45 +1,41 @@
-# scraped_jobs/views.py
-
 import requests
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-FASTAPI_URL = "https://job-scraper-api-n1wx.onrender.com"
-
+from django.contrib import messages
 
 def scraped_jobs(request):
     page = request.GET.get('page', 1)
-    page_size = 25  # Set page size to 25
+    page_size = 10
 
     try:
-        response = requests.get(f"{FASTAPI_URL}/data/", params={'page': page, 'page_size': page_size})
+        response = requests.get(f"https://job-scraper-api-n1wx.onrender.com/data/?page={page}&page_size={page_size}")
         response.raise_for_status()
-        jobs_data = response.json()
-        logger.info(f"Fetched {len(jobs_data)} jobs from the API.")
+        data = response.json()
+        jobs = data.get('results', [])
+        total_pages = data.get('total_pages', 1)
+        total_items = data.get('total_count', 0)
+        has_next = page < total_pages
+        has_previous = page > 1
+        
+        paginator = Paginator(jobs, page_size)
+        try:
+            jobs_page = paginator.page(page)
+        except PageNotAnInteger:
+            jobs_page = paginator.page(1)
+        except EmptyPage:
+            jobs_page = paginator.page(paginator.num_pages)
     except requests.exceptions.RequestException as e:
-        jobs_data = []
-        logger.error(f"Error fetching data from API: {e}")
-        return render(request, 'scraped_jobs/error.html', {'error': str(e)})
+        messages.error(request, f"Error fetching data from API: {e}")
+        jobs_page = Paginator([], page_size).page(1)
+    except ValueError as e:
+        messages.error(request, f"Error parsing data from API: {e}")
+        jobs_page = Paginator([], page_size).page(1)
 
-    # Convert jobs_data to a list if it's not already
-    if not isinstance(jobs_data, list):
-        jobs_data = list(jobs_data)
-        logger.info(f"Converted jobs_data to list: {jobs_data}")
+    context = {
+        'jobs': jobs_page,
+        'total_pages': total_pages,
+        'has_next': has_next,
+        'has_previous': has_previous
+    }
 
-    paginator = Paginator(jobs_data, page_size)
-
-    try:
-        jobs_page = paginator.page(page)
-        logger.info(f"Paginated jobs: {jobs_page.object_list}")
-    except PageNotAnInteger:
-        jobs_page = paginator.page(1)
-        logger.warning(f"PageNotAnInteger, defaulting to page 1.")
-    except EmptyPage:
-        jobs_page = paginator.page(paginator.num_pages)
-        logger.warning(f"EmptyPage, defaulting to last page: {paginator.num_pages}")
-
-    return render(request, 'scraped_jobs/scraped_jobs.html', {'jobs': jobs_page})
+    return render(request, 'scraped_jobs/scraped_jobs.html', context)

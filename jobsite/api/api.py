@@ -8,7 +8,6 @@ app = FastAPI()
 # CORS settings to allow only the specified origin
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=["https://capit.netlify.app","https://vacancy.streamlit.app/"],
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
@@ -44,8 +43,6 @@ async def get_data_by_position(position: str = Query(..., description="Position 
     await close_connection(db)
     return rows
 
-    
-
 
 @app.get("/data/")
 async def get_data(
@@ -57,31 +54,31 @@ async def get_data(
 ):
     offset = (page - 1) * page_size
 
-    if company and position:
-        query = """
-            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
-            AND company ILIKE $1 AND vacancy ILIKE $2 ORDER BY scrape_date DESC OFFSET $3 LIMIT $4;
-        """
-        rows = await db.fetch(query, f"%{company}%", f"%{position}%", offset, page_size)
-    elif company:
-        query = """
-            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
-            AND company ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;
-        """
-        rows = await db.fetch(query, f"%{company}%", offset, page_size)
-    elif position:
-        query = """
-            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
-            AND vacancy ILIKE $1 ORDER BY scrape_date DESC OFFSET $2 LIMIT $3;
-        """
-        rows = await db.fetch(query, f"%{position}%", offset, page_size)
-    else:
-        query = """
-            SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs) 
-            ORDER BY scrape_date DESC OFFSET $1 LIMIT $2;
-        """
-        rows = await db.fetch(query, offset, page_size)
+    base_query = "SELECT distinct * FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs)"
+    count_query = "SELECT COUNT(*) FROM jobs WHERE scrape_date = (SELECT MAX(scrape_date) FROM jobs)"
+
+    filters = []
+    if company:
+        filters.append(f"company ILIKE '%{company}%'")
+    if position:
+        filters.append(f"vacancy ILIKE '%{position}%'")
+    
+    if filters:
+        filter_query = " AND " + " AND ".join(filters)
+        base_query += filter_query
+        count_query += filter_query
+
+    query = f"{base_query} ORDER BY scrape_date DESC OFFSET $1 LIMIT $2;"
+    rows = await db.fetch(query, offset, page_size)
+    total_count = await db.fetchval(count_query)
 
     await close_connection(db)
-    return {"results": rows, "page": page, "page_size": page_size}
+    total_pages = (total_count // page_size) + (1 if total_count % page_size > 0 else 0)
 
+    return {
+        "results": rows,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "total_count": total_count
+    }
