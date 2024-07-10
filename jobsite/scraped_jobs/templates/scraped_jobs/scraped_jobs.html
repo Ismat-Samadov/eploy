@@ -5,6 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scraped Jobs</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .card {
+            height: 100%;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .pagination .page-link {
+            position: relative;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            margin-left: -1px;
+            line-height: 1.25;
+            color: #007bff;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            cursor: default;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        .pagination .page-item.active .page-link {
+            z-index: 1;
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .pagination .page-item .page-link:hover {
+            color: #0056b3;
+            text-decoration: none;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -37,20 +83,24 @@
         <h1>Scraped Jobs</h1>
 
         {% if jobs %}
-            <ul class="list-group">
+            <div class="row">
                 {% for job in jobs %}
-                    <li class="list-group-item">
-                        <h5>{{ job.vacancy }}</h5>
-                        <p>{{ job.company }}</p>
-                        <a href="{{ job.apply_link }}" target="_blank">Apply</a>
-                    </li>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ job.vacancy }}</h5>
+                                <p class="card-text">{{ job.company }}</p>
+                                <a href="{{ job.apply_link }}" class="btn btn-primary">Apply</a>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
 
-            {% if total_pages > 1 %}
+            {% if jobs.has_other_pages %}
                 <nav aria-label="Page navigation example">
                     <ul class="pagination">
-                        {% if has_previous %}
+                        {% if jobs.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ jobs.previous_page_number }}">Previous</a>
                             </li>
@@ -62,7 +112,7 @@
                                 <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                             {% endif %}
                         {% endfor %}
-                        {% if has_next %}
+                        {% if jobs.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ jobs.next_page_number }}">Next</a>
                             </li>
@@ -71,9 +121,14 @@
                 </nav>
             {% endif %}
         {% else %}
-            <p>No jobs found.</p>
+            <p>No jobs available.</p>
         {% endif %}
     </div>
+
+    <pre>{{ jobs }}</pre>
+    <pre>{{ total_pages }}</pre>
+    <pre>{{ jobs.has_next }}</pre>
+    <pre>{{ jobs.has_previous }}</pre>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>

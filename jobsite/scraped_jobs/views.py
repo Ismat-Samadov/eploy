@@ -13,7 +13,6 @@ def scraped_jobs(request):
         data = response.json()
         jobs = data.get('results', [])
         total_pages = data.get('total_pages', 1)
-        total_items = data.get('total_count', 0)
 
         paginator = Paginator(jobs, page_size)
         try:
@@ -23,26 +22,22 @@ def scraped_jobs(request):
         except EmptyPage:
             jobs_page = paginator.page(paginator.num_pages)
 
-        has_next = jobs_page.has_next()
-        has_previous = jobs_page.has_previous()
     except requests.exceptions.RequestException as e:
         messages.error(request, f"Error fetching data from API: {e}")
         jobs_page = Paginator([], page_size).page(1)
         total_pages = 1
-        has_next = False
-        has_previous = False
     except ValueError as e:
         messages.error(request, f"Error parsing data from API: {e}")
         jobs_page = Paginator([], page_size).page(1)
         total_pages = 1
-        has_next = False
-        has_previous = False
 
     context = {
         'jobs': jobs_page,
         'total_pages': total_pages,
-        'has_next': has_next,
-        'has_previous': has_previous
+        'has_next': jobs_page.has_next(),
+        'has_previous': jobs_page.has_previous(),
+        'page_obj': jobs_page,
+        'paginator': paginator,
     }
 
     return render(request, 'scraped_jobs/scraped_jobs.html', context)
