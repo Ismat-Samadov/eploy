@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'jobs',
     'users',
     'scraped_jobs',
+    'csp',
     'whitenoise.runserver_nostatic',
     'storages',
 ]
