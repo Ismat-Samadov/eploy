@@ -14,9 +14,7 @@ def scraped_jobs(request):
         jobs = data.get('results', [])
         total_pages = data.get('total_pages', 1)
         total_items = data.get('total_count', 0)
-        has_next = page < total_pages
-        has_previous = page > 1
-        
+
         paginator = Paginator(jobs, page_size)
         try:
             jobs_page = paginator.page(page)
@@ -24,12 +22,21 @@ def scraped_jobs(request):
             jobs_page = paginator.page(1)
         except EmptyPage:
             jobs_page = paginator.page(paginator.num_pages)
+
+        has_next = jobs_page.has_next()
+        has_previous = jobs_page.has_previous()
     except requests.exceptions.RequestException as e:
         messages.error(request, f"Error fetching data from API: {e}")
         jobs_page = Paginator([], page_size).page(1)
+        total_pages = 1
+        has_next = False
+        has_previous = False
     except ValueError as e:
         messages.error(request, f"Error parsing data from API: {e}")
         jobs_page = Paginator([], page_size).page(1)
+        total_pages = 1
+        has_next = False
+        has_previous = False
 
     context = {
         'jobs': jobs_page,
