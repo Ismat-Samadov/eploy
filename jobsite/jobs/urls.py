@@ -12,5 +12,4 @@ urlpatterns = [
     path('edit-job/<int:job_id>/', edit_job, name='edit_job'),
     path('delete-job/<int:job_id>/', delete_job, name='delete_job'),
     path('user-dashboard/', user_dashboard, name='user_dashboard'),
-    path('scraped-jobs/', include('scraped_jobs.urls')),
 ]
