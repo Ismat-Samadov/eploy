@@ -29,8 +29,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'jobs',
     'users',
-    'scraped_jobs',
-    'csp',
     'whitenoise.runserver_nostatic',
     'storages',
 ]

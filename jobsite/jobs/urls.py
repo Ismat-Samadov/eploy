@@ -1,4 +1,4 @@
-from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard, scraped_jobs
+from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard
 from django.urls import path, include
 
 urlpatterns = [
