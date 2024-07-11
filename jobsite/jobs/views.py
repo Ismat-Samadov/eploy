@@ -24,16 +24,23 @@ def redirect_to_jobs(request):
 
 @login_required
 def user_dashboard(request):
-    if request.user.user_type == 'HR':
-        jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-        applications = JobApplication.objects.filter(job__posted_by=request.user)
-        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
-    elif request.user.user_type == 'Candidate':
-        applications = JobApplication.objects.filter(applicant=request.user)
-        return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
-    else:
-        return HttpResponseForbidden("You are not authorized to view this page.")
-
+    try:
+        if request.user.user_type == 'HR':
+            jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
+            applications = JobApplication.objects.filter(job__posted_by=request.user)
+            logger.info(f'HR {request.user.username} accessed the dashboard with {jobs.count()} jobs and {applications.count()} applications.')
+            return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
+        elif request.user.user_type == 'Candidate':
+            applications = JobApplication.objects.filter(applicant=request.user)
+            logger.info(f'Candidate {request.user.username} accessed the dashboard with {applications.count()} applications.')
+            return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
+        else:
+            logger.warning(f'Unauthorized access attempt by {request.user.username}')
+            return HttpResponseForbidden("You are not authorized to view this page.")
+    except Exception as e:
+        logger.error(f'Error in user_dashboard for user {request.user.username}: {e}', exc_info=True)
+        raise
+    
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
