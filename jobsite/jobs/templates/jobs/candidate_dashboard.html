@@ -14,7 +14,11 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ application.job.title }}</h5>
                         <p class="card-text">{{ application.cover_letter }}</p>
-                        <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
+                        {% if application.resume %}
+                            <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
+                        {% else %}
+                            <p>No resume uploaded</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

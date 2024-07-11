@@ -53,6 +53,19 @@ def redirect_to_jobs(request):
 #     else:
 #         return HttpResponseForbidden("You are not authorized to view this page.")
 
+# @login_required
+# def user_dashboard(request):
+#     if request.user.user_type == 'HR':
+#         jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
+#         applications = JobApplication.objects.filter(job__posted_by=request.user).select_related('job', 'applicant')
+#         return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
+#     elif request.user.user_type == 'Candidate':
+#         applications = JobApplication.objects.filter(applicant=request.user).select_related('job', 'applicant')
+#         return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
+#     else:
+#         return HttpResponseForbidden("You are not authorized to view this page.")
+
+
 @login_required
 def user_dashboard(request):
     if request.user.user_type == 'HR':
@@ -64,7 +77,6 @@ def user_dashboard(request):
         return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
     else:
         return HttpResponseForbidden("You are not authorized to view this page.")
-
 
 def register(request):
     if request.method == 'POST':
