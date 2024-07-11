@@ -25,7 +25,7 @@
             <li class="list-group-item">
                 <h4>Job: {{ application.job.title }}</h4>
                 <p><strong>Applicant:</strong> {{ application.applicant.username }}</p>
-                <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">{{ application.resume }}</a></p>
+                <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">{{ application.resume.name }}</a></p>
                 <p><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
                 <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
             </li>
