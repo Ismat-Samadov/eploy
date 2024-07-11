@@ -1,3 +1,5 @@
+# jobs/management/commands/populate_jobs.py
+
 from django.core.management.base import BaseCommand
 from users.models import CustomUser  # Update this import
 from jobs.models import JobPost, JobApplication
@@ -21,6 +23,12 @@ class Command(BaseCommand):
             )
             hr_users.append(hr_user)
 
+        # Create a default user for scraped jobs
+        default_user, created = CustomUser.objects.get_or_create(
+            username='scraper_user',
+            defaults={'email': 'scraper@example.com', 'password': 'password123', 'user_type': 'HR'}
+        )
+
         # Create fake job posts
         job_descriptions = [
             "We are looking for a Java Developer with experience in building high-performing, scalable, enterprise-grade applications. You will be part of a talented software team that works on mission-critical applications. Java developer roles and responsibilities include managing Java/Java EE application development while providing expertise in the full software development lifecycle, from concept and design to testing. Java developer responsibilities include designing, developing and delivering high-volume, low-latency applications for mission-critical systems.",
@@ -42,6 +50,7 @@ class Command(BaseCommand):
             "Web Developer"
         ]
 
+        # Create fake job posts from website
         for i in range(len(job_titles)):
             job = JobPost.objects.create(
                 title=job_titles[i],
@@ -49,7 +58,21 @@ class Command(BaseCommand):
                 company="CareerHorizon",
                 location="Baku, Azerbaijan",
                 posted_by=random.choice(hr_users),
-                posted_at=fake.date_time_this_year()
+                posted_at=fake.date_time_this_year(),
+                is_scraped=False
+            )
+
+        # Create fake scraped job posts
+        for i in range(len(job_titles)):
+            job = JobPost.objects.create(
+                title=f"Scraped {job_titles[i]}",
+                description=job_descriptions[i],
+                company="ScrapedCompany",
+                location="Baku, Azerbaijan",
+                posted_by=default_user,  # Use the default user
+                posted_at=fake.date_time_this_year(),
+                is_scraped=True,
+                apply_link=fake.url()
             )
 
         # Create fake applicants
@@ -64,7 +87,7 @@ class Command(BaseCommand):
             applicant_users.append(applicant_user)
 
         # Create fake job applications
-        job_posts = JobPost.objects.all()
+        job_posts = JobPost.objects.filter(is_scraped=False)
         for job in job_posts:
             for _ in range(random.randint(1, 5)):
                 JobApplication.objects.create(
