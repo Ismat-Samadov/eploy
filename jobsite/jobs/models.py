@@ -2,10 +2,10 @@ from django.db import models
 from django.conf import settings
 
 class JobPost(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=500)
     description = models.TextField()
-    company = models.CharField(max_length=100)
-    location = models.CharField(max_length=100)
+    company = models.CharField(max_length=500)
+    location = models.CharField(max_length=500)
     posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     posted_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
@@ -13,7 +13,7 @@ class JobPost(models.Model):
     is_premium = models.BooleanField(default=False)
     premium_days = models.IntegerField(default=0)
     priority_level = models.IntegerField(default=0)
-    apply_link = models.URLField(max_length=200, default='')
+    apply_link = models.URLField(max_length=1000, default='')
 
     def __str__(self):
         return self.title
