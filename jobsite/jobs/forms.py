@@ -1,7 +1,8 @@
+# froms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import JobPost, JobApplication
-from users.models import CustomUser  # Import CustomUser model
+from users.models import CustomUser 
 
 class JobPostForm(forms.ModelForm):
     class Meta:

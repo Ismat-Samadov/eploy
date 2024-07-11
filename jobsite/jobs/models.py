@@ -1,5 +1,3 @@
-# jobs/models.py
-
 from django.db import models
 from django.conf import settings
 
@@ -11,6 +9,11 @@ class JobPost(models.Model):
     posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     posted_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
+    is_scraped = models.BooleanField(default=False)
+    is_premium = models.BooleanField(default=False)
+    premium_days = models.IntegerField(default=0)
+    priority_level = models.IntegerField(default=0)
+    apply_link = models.URLField(max_length=200, default='')
 
     def __str__(self):
         return self.title
