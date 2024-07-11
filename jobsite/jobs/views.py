@@ -70,15 +70,6 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
-# def job_list(request):
-#     query = request.GET.get('q')
-#     if query:
-#         jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
-#     else:
-#         jobs = JobPost.objects.filter(deleted=False)
-#     return render(request, 'jobs/job_list.html', {'jobs': jobs})
-
-
 def job_list(request):
     query = request.GET.get('q')
     page = request.GET.get('page', 1)
@@ -88,7 +79,7 @@ def job_list(request):
     else:
         jobs = JobPost.objects.filter(deleted=False)
 
-    paginator = Paginator(jobs, 10)  # Show 10 jobs per page
+    paginator = Paginator(jobs, 50)
 
     try:
         jobs_page = paginator.page(page)
