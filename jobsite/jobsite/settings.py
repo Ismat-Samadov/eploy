@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'jobs',
-    'users',
     'whitenoise.runserver_nostatic',
     'storages',
 ]
@@ -111,7 +110,7 @@ LOGIN_REDIRECT_URL = 'job_list'
 
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'jobs.CustomUser'
 
 # Google Cloud Storage configuration
 GS_BUCKET_NAME = config('GS_BUCKET_NAME')

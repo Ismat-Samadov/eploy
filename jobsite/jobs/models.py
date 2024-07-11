@@ -1,6 +1,14 @@
-# models.py
+# jobs/models.py
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+
+class CustomUser(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('HR', 'HR/Recruiter'),
+        ('Candidate', 'Candidate'),
+    )
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
 
 class JobPost(models.Model):
     title = models.CharField(max_length=500)

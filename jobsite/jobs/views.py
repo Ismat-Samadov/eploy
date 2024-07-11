@@ -1,23 +1,17 @@
-# jobs/views.py
 import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from .models import JobPost, JobApplication
-from .forms import JobPostForm, JobApplicationForm
-from users.forms import CustomUserCreationForm 
+from .forms import JobPostForm, JobApplicationForm, CustomUserCreationForm
 from django.http import HttpResponseForbidden
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from django.http import JsonResponse
 import logging
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import render, get_object_or_404, redirect
-
 
 logger = logging.getLogger(__name__)
-
 
 def redirect_to_jobs(request):
     return redirect('fetch_jobs_from_api')
@@ -40,7 +34,7 @@ def user_dashboard(request):
     except Exception as e:
         logger.error(f'Error in user_dashboard for user {request.user.username}: {e}', exc_info=True)
         raise
-    
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
