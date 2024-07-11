@@ -70,26 +70,6 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
-# def job_list(request):
-#     query = request.GET.get('q')
-#     page = request.GET.get('page', 1)
-
-#     if query:
-#         jobs = JobPost.objects.filter(title__icontains=query, deleted=False)
-#     else:
-#         jobs = JobPost.objects.filter(deleted=False)
-
-#     paginator = Paginator(jobs, 25)
-
-#     try:
-#         jobs_page = paginator.page(page)
-#     except PageNotAnInteger:
-#         jobs_page = paginator.page(1)
-#     except EmptyPage:
-#         jobs_page = paginator.page(paginator.num_pages)
-
-#     return render(request, 'jobs/job_list.html', {'jobs': jobs_page})
-
 def job_list(request):
     query = request.GET.get('q')
     page = request.GET.get('page', 1)
