@@ -1,4 +1,3 @@
-# settings.py
 from pathlib import Path
 import os
 from decouple import config
@@ -129,3 +128,6 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
     "auth_provider_x509_cert_url": config('GCS_AUTH_PROVIDER_CERT_URL'),
     "client_x509_cert_url": config('GCS_CLIENT_CERT_URL')
 })
+
+# Ensure the Google credentials are used
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(BASE_DIR, "path_to_your_google_credentials_file.json")
