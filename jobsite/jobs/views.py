@@ -52,6 +52,7 @@ def redirect_to_jobs(request):
 #         return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
 #     else:
 #         return HttpResponseForbidden("You are not authorized to view this page.")
+
 @login_required
 def user_dashboard(request):
     if request.user.user_type == 'HR':
