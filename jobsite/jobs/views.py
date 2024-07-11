@@ -13,6 +13,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 import logging
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render, get_object_or_404, redirect
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,24 +22,15 @@ logger = logging.getLogger(__name__)
 def redirect_to_jobs(request):
     return redirect('fetch_jobs_from_api')
 
-
 @login_required
 def user_dashboard(request):
     if request.user.user_type == 'HR':
-        try:
-            jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-            applications = JobApplication.objects.filter(job__posted_by=request.user)
-            return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
-        except Exception as e:
-            logger.error(f"Error fetching dashboard data: {e}")
-            return HttpResponseServerError("An error occurred while fetching the dashboard data.")
+        jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
+        applications = JobApplication.objects.filter(job__posted_by=request.user)
+        return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
     elif request.user.user_type == 'Candidate':
-        try:
-            applications = JobApplication.objects.filter(applicant=request.user)
-            return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
-        except Exception as e:
-            logger.error(f"Error fetching candidate dashboard data: {e}")
-            return HttpResponseServerError("An error occurred while fetching the candidate dashboard data.")
+        applications = JobApplication.objects.filter(applicant=request.user)
+        return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
     else:
         return HttpResponseForbidden("You are not authorized to view this page.")
 
@@ -89,7 +82,7 @@ def job_list(request):
     else:
         jobs = JobPost.objects.filter(deleted=False).order_by('-posted_at')
 
-    paginator = Paginator(jobs, 25)
+    paginator = Paginator(jobs, 50)
 
     try:
         jobs_page = paginator.page(page)
