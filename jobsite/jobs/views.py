@@ -1,5 +1,4 @@
 # jobs/views.py
-
 import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -13,7 +12,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.http import JsonResponse
 import logging
-from django.core.paginator import EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +70,35 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
+# def job_list(request):
+#     query = request.GET.get('q')
+#     if query:
+#         jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
+#     else:
+#         jobs = JobPost.objects.filter(deleted=False)
+#     return render(request, 'jobs/job_list.html', {'jobs': jobs})
+
+
 def job_list(request):
     query = request.GET.get('q')
+    page = request.GET.get('page', 1)
+
     if query:
-        jobs = JobPost.objects.filter(title__icontains(query, deleted=False))
+        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)
     else:
         jobs = JobPost.objects.filter(deleted=False)
-    return render(request, 'jobs/job_list.html', {'jobs': jobs})
+
+    paginator = Paginator(jobs, 10)  # Show 10 jobs per page
+
+    try:
+        jobs_page = paginator.page(page)
+    except PageNotAnInteger:
+        jobs_page = paginator.page(1)
+    except EmptyPage:
+        jobs_page = paginator.page(paginator.num_pages)
+
+    return render(request, 'jobs/job_list.html', {'jobs': jobs_page})
+
 
 @login_required
 def post_job(request):
