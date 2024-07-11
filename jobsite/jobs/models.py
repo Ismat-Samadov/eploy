@@ -9,7 +9,6 @@ class CustomUser(AbstractUser):
         ('Candidate', 'Candidate'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
-
 class JobPost(models.Model):
     title = models.CharField(max_length=500)
     description = models.TextField()
