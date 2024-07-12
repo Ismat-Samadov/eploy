@@ -10,6 +10,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 import logging
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import F
+from django.utils.timezone import now, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -77,11 +79,26 @@ def custom_logout(request):
 def job_list(request):
     query = request.GET.get('q')
     page = request.GET.get('page', 1)
-
+    
+    now = datetime.now()
+    six_hours_ago = now - timedelta(hours=6)
+    ten_days_ago = now - timedelta(days=10)
+    
+    jobs = JobPost.objects.filter(deleted=False).annotate(
+        adjusted_posted_at=Case(
+            When(is_scraped=True, then=F('posted_at') + timedelta(hours=6)),
+            default=F('posted_at') + timedelta(days=10),
+            output_field=DateTimeField(),
+        )
+    )
+    
     if query:
-        jobs = JobPost.objects.filter(title__icontains=query, deleted=False).order_by('-posted_at')
-    else:
-        jobs = JobPost.objects.filter(deleted=False).order_by('-posted_at')
+        jobs = jobs.filter(title__icontains=query)
+    
+    jobs = jobs.filter(
+        Q(is_scraped=True, posted_at__gte=six_hours_ago) |
+        Q(is_scraped=False, posted_at__gte=ten_days_ago)
+    ).order_by('-adjusted_posted_at')
 
     paginator = Paginator(jobs, 50)
 
