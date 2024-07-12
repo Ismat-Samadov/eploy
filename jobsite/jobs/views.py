@@ -77,8 +77,14 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
+from django.utils import timezone
+from datetime import timedelta
+from django.db import models
+
 def job_list(request):
     query = request.GET.get('q')
+    if query is None:
+        query = ''
     page = request.GET.get('page', 1)
 
     now = timezone.now()
@@ -92,14 +98,14 @@ def job_list(request):
         ).filter(
             models.Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
             models.Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
-        ).order_by('is_scraped', '-posted_at')  # Order by non-scraped first and then by posted_at
+        ).order_by('is_scraped', '-posted_at')
     else:
         jobs = JobPost.objects.filter(
             deleted=False,
         ).filter(
             models.Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
             models.Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
-        ).order_by('is_scraped', '-posted_at')  # Order by non-scraped first and then by posted_at
+        ).order_by('is_scraped', '-posted_at')
 
     paginator = Paginator(jobs, 50)
 
