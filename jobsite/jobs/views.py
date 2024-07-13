@@ -77,9 +77,6 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
-from django.utils import timezone
-from datetime import timedelta
-from django.db import models
 
 def job_list(request):
     query = request.GET.get('q')
