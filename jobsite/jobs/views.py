@@ -127,6 +127,7 @@ def custom_login(request):
         form = AuthenticationForm()
     return render(request, 'jobs/login.html', {'form': form})
 
+
 def custom_logout(request):
     logout(request)
     return redirect('login')
