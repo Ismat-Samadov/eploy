@@ -1,6 +1,4 @@
 {% extends 'jobs/base.html' %}
-{% load static %}
-
 {% load custom_tags %}
 
 {% block title %}Apply for {{ job.title }}{% endblock %}
@@ -10,7 +8,6 @@
     <div class="apply-container">
         <div class="circle circle-one"></div>
         <div class="form-container">
-            <img src="{% static 'images/illustration.png' %}" alt="illustration" class="illustration" />
             <h1 class="opacity">Apply for {{ job.title }}</h1>
             <h5 class="card-subtitle mb-2 text-muted">{{ job.company }}</h5>
             <p class="card-text">{{ job.location }}</p>
@@ -25,7 +22,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_resume">Resume:</label>
-                    {{ form.resume|add_class:"form-control" }}
+                    {{ form.resume|add_class:"form-control-file" }}
                 </div>
                 <div class="form-group">
                     <label for="id_cover_letter">Cover letter:</label>
@@ -66,7 +63,7 @@
 
     a {
         text-decoration: none;
-        color: var(--primary-color); /* Changed color to primary color for better visibility */
+        color: var(--primary-color);
         font-weight: bold;
     }
 
@@ -79,12 +76,12 @@
         justify-content: center;
         align-items: center;
         min-height: 100vh;
-        padding-top: 100px; /* Added padding to avoid overlap with navbar */
+        padding-top: 100px;
     }
 
     .apply-container {
         position: relative;
-        width: 40rem; /* Increased width for better readability */
+        width: 40rem;
     }
 
     .form-container {
@@ -114,6 +111,10 @@
         backdrop-filter: blur(15px);
     }
 
+    .form-container input[type="file"] {
+        padding: 3px;
+    }
+
     .form-container input:focus,
     .form-container button:focus,
     .form-container textarea:focus {
@@ -138,8 +139,8 @@
     }
 
     .circle {
-        width: 5rem; /* Adjusted size to prevent overlapping */
-        height: 5rem; /* Adjusted size to prevent overlapping */
+        width: 5rem;
+        height: 5rem;
         background: var(--primary-color);
         border-radius: 50%;
         position: absolute;
@@ -149,7 +150,7 @@
         position: absolute;
         top: -14%;
         right: -2px;
-        width: 40%; /* Adjusted width to prevent overlapping */
+        width: 40%;
     }
 
     .circle-one {

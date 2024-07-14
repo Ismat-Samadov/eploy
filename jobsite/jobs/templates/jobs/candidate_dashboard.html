@@ -3,28 +3,29 @@
 {% block title %}Candidate Dashboard{% endblock %}
 
 {% block content %}
-<section class="container">
+<section class="container mt-5">
     <div class="dashboard-container">
         <div class="circle circle-one"></div>
         <div class="form-container">
             <h1 class="opacity">Applied Jobs</h1>
-            <div class="row">
+            <ul class="list-group">
                 {% for application in applications %}
-                    <div class="col-md-4">
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ application.job.title }}</h5>
-                                <p class="card-text">{{ application.cover_letter|truncatewords:20 }} <span class="text-muted">({{ application.cover_letter|length }} characters)</span></p>
-                                {% if application.resume %}
-                                    <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
-                                {% else %}
-                                    <p>No resume uploaded</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                    <li class="list-group-item mb-3">
+                        <h5>{{ application.job.title }}</h5>
+                        <p>
+                            <span class="cover-letter-short">{{ application.cover_letter|truncatewords:20 }}</span>
+                            <span class="cover-letter-full d-none">{{ application.cover_letter }}</span>
+                            <span class="text-muted">({{ application.cover_letter|length }} characters)</span>
+                            <a href="javascript:void(0);" class="read-more" onclick="toggleReadMore(this)">Read More</a>
+                        </p>
+                        {% if application.resume %}
+                            <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
+                        {% else %}
+                            <p>No resume uploaded</p>
+                        {% endif %}
+                    </li>
                 {% endfor %}
-            </div>
+            </ul>
 
             {% if applications.has_other_pages %}
                 <nav aria-label="Application pagination">
@@ -60,7 +61,7 @@
 <style>
     :root {
         --background: #1a1a2e;
-        --color: #ffffff;
+        --color: #d55252;
         --primary-color: #0f3460;
     }
 
@@ -95,7 +96,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
     }
 
     .dashboard-container {
@@ -110,14 +111,13 @@
         backdrop-filter: blur(20px);
         z-index: 99;
         padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
     .form-container input,
     .form-container button {
         display: block;
         padding: 14.5px;
-        width: 100%;
-        margin: 2rem 0;
         color: var(--color);
         outline: none;
         background-color: #9191911f;
@@ -206,6 +206,10 @@
             transform: scale(1);
         }
     }
+
+    .cover-letter-full.d-none {
+        display: none;
+    }
 </style>
 
 <script>
@@ -261,5 +265,20 @@
     };
 
     displayThemeButtons();
+
+    const toggleReadMore = (link) => {
+        const shortText = link.parentElement.querySelector('.cover-letter-short');
+        const fullText = link.parentElement.querySelector('.cover-letter-full');
+
+        if (fullText.classList.contains('d-none')) {
+            shortText.classList.add('d-none');
+            fullText.classList.remove('d-none');
+            link.textContent = 'Read Less';
+        } else {
+            shortText.classList.remove('d-none');
+            fullText.classList.add('d-none');
+            link.textContent = 'Read More';
+        }
+    };
 </script>
 {% endblock %}
