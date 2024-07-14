@@ -152,7 +152,7 @@ def job_list(request):
         Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
     ).order_by('is_scraped', '-posted_at')
 
-    paginator = Paginator(jobs, 50)
+    paginator = Paginator(jobs, 10)
     page = request.GET.get('page', 1)
 
     try:
