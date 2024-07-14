@@ -20,6 +20,24 @@ logger = logging.getLogger(__name__)
 def redirect_to_jobs(request):
     return redirect('fetch_jobs_from_api')
 
+@login_required
+def hr_applicants(request):
+    if request.user.user_type != 'HR':
+        return HttpResponseForbidden("You are not authorized to view this page.")
+
+    applications = JobApplication.objects.filter(job__posted_by=request.user)
+    applications_page = request.GET.get('applications_page', 1)
+    applications_paginator = Paginator(applications, 5)
+
+    try:
+        applications = applications_paginator.page(applications_page)
+    except PageNotAnInteger:
+        applications = applications_paginator.page(1)
+    except EmptyPage:
+        applications = applications_paginator.page(applications_paginator.num_pages)
+
+    return render(request, 'jobs/hr_applicants.html', {'applications': applications})
+
 
 @login_required
 def user_dashboard(request):

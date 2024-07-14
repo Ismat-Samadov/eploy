@@ -20,9 +20,6 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'job_list' %}">Home</a>
                 </li>
-                <!-- <li class="nav-item">
-                    <a class="nav-link" href="https://vacancy.streamlit.app/">Scraped Jobs</a>
-                </li> -->
                 {% if user.is_authenticated %}
                     {% if user.user_type == 'HR' %}
                         <li class="nav-item">
@@ -30,6 +27,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'user_dashboard' %}">Posted Jobs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'hr_applicants' %}">Applicants</a>
                         </li>
                     {% elif user.user_type == 'Candidate' %}
                         <li class="nav-item">
