@@ -3,64 +3,229 @@
 {% block title %}Job Listings{% endblock %}
 
 {% block content %}
-<h1>Job Listings</h1>
-<form class="form-inline my-2" method="get" action="{% url 'job_list' %}">
-    <div class="input-group mb-3">
-        <input type="search" class="form-control" placeholder="Search for jobs" aria-label="Search" name="q" value="{{ query }}">
-        <div class="input-group-append">
-            <button class="btn btn-outline-success" type="submit">Search</button>
+<section class="container mt-5">
+    <div class="listings-container">
+        <div class="form-container">
+            <h1 class="opacity">Job Listings</h1>
+            <form class="form-inline my-2" method="get" action="{% url 'job_list' %}">
+                <div class="input-group mb-3">
+                    <input type="search" class="form-control" placeholder="Search by job title" aria-label="Search by job title" name="job_title" value="{{ request.GET.job_title }}">
+                </div>
+                <div class="input-group mb-3">
+                    <input type="search" class="form-control" placeholder="Search by company" aria-label="Search by company" name="company" value="{{ request.GET.company }}">
+                </div>
+                <div class="input-group-append mb-3">
+                    <button class="btn btn-outline-success btn-block" type="submit">Search</button>
+                </div>
+            </form>
+            <ul class="list-group">
+                {% for job in jobs %}
+                    <li class="list-group-item mb-3">
+                        <h5>{{ job.title }}</h5>
+                        <h6 class="text-muted">{{ job.company }}</h6>
+                        <p>{{ job.description|truncatewords:20 }}</p>
+                        <p class="text-muted">{{ job.location }}</p>
+                        <div>
+                            {% if job.is_scraped %}
+                                <a href="{{ job.apply_link }}" class="btn btn-primary" target="_blank">Apply</a>
+                            {% else %}
+                                <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
+                            {% endif %}
+                            {% if user == job.posted_by %}
+                                <a href="{% url 'edit_job' job.id %}" class="btn btn-secondary mt-2">Edit</a>
+                                <a href="{% url 'delete_job' job.id %}" class="btn btn-danger mt-2">Delete</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% if jobs.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if jobs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?job_title={{ request.GET.job_title }}&company={{ request.GET.company }}&page={{ jobs.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% for num in jobs.paginator.page_range %}
+                            {% if jobs.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > jobs.number|add:-3 and num < jobs.number|add:3 %}
+                                <li class="page-item"><a class="page-link" href="?job_title={{ request.GET.job_title }}&company={{ request.GET.company }}&page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if jobs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?job_title={{ request.GET.job_title }}&company={{ request.GET.company }}&page={{ jobs.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
         </div>
     </div>
-</form>
-<div class="row">
-    {% for job in jobs %}
-        <div class="col-md-4 mb-4 d-flex align-items-stretch">
-            <div class="card flex-fill">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ job.title }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
-                    <p class="card-text flex-grow-1">{{ job.description|truncatewords:20 }}</p>
-                    <p class="card-text"><small class="text-muted">{{ job.location }}</small></p>
-                    {% if job.is_scraped %}
-                        <a href="{{ job.apply_link }}" class="btn btn-primary mt-auto" target="_blank">Apply</a>
-                    {% else %}
-                        <a href="{% url 'apply_job' job.id %}" class="btn btn-primary mt-auto">Apply</a>
-                    {% endif %}
-                    {% if user == job.posted_by %}
-                        <a href="{% url 'edit_job' job.id %}" class="btn btn-secondary mt-2">Edit</a>
-                        <a href="{% url 'delete_job' job.id %}" class="btn btn-danger mt-2">Delete</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    {% endfor %}
-</div>
+</section>
 
-{% if jobs.has_other_pages %}
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {% if jobs.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?q={{ query }}&page={{ jobs.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-            {% endif %}
-            {% for num in jobs.paginator.page_range %}
-                {% if jobs.number == num %}
-                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
-                {% elif num > jobs.number|add:-3 and num < jobs.number|add:3 %}
-                    <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-            {% endfor %}
-            {% if jobs.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?q={{ query }}&page={{ jobs.next_page_number }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-{% endif %}
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #d55252;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "poppins";
+        background: var(--background);
+        color: var(--color);
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color);
+    }
+
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding-top: 5rem;
+    }
+
+    .listings-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .form-container {
+        border: 1px solid hsla(0, 0%, 65%, 0.158);
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        z-index: 99;
+        padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-container .input-group {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .form-container input,
+    .form-container button {
+        display: block;
+        padding: 14.5px;
+        color: var(--color);
+        outline: none;
+        background-color: #9191911f;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        font-size: 15px;
+        backdrop-filter: blur(15px);
+    }
+
+    .form-container input:focus,
+    .form-container button:focus {
+        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        animation: wobble 0.3s ease-in;
+    }
+
+    .form-container .btn {
+        width: 100%;
+        white-space: nowrap;
+        background-color: var(--primary-color);
+        color: var(--color);
+        padding: 14.5px;
+        font-size: 18px;
+        letter-spacing: 1.5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+    }
+
+    .form-container .btn:hover {
+        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+    }
+
+    .circle {
+        width: 8rem;
+        height: 8rem;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .circle-one {
+        top: 0;
+        left: 0;
+        z-index: -1;
+        transform: translate(-45%, -45%);
+    }
+
+    .circle-two {
+        bottom: 0;
+        right: 0;
+        z-index: -1;
+        transform: translate(45%, 45%);
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+
+    .theme-btn-container {
+        position: absolute;
+        left: 0;
+        bottom: 2rem;
+    }
+
+    .theme-btn {
+        cursor: pointer;
+        transition: all 0.3s ease-in;
+    }
+
+    .theme-btn:hover {
+        width: 40px !important;
+    }
+
+    @keyframes wobble {
+        0% {
+            transform: scale(1.025);
+        }
+        25% {
+            transform: scale(1);
+        }
+        75% {
+            transform: scale(1.025);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
 {% endblock %}

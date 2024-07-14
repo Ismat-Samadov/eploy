@@ -13,11 +13,13 @@ import logging
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
 from django.db import models
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
 def redirect_to_jobs(request):
     return redirect('fetch_jobs_from_api')
+
 
 @login_required
 def user_dashboard(request):
@@ -25,11 +27,44 @@ def user_dashboard(request):
         if request.user.user_type == 'HR':
             jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
             applications = JobApplication.objects.filter(job__posted_by=request.user)
-            logger.info(f'HR {request.user.username} accessed the dashboard with {jobs.count()} jobs and {applications.count()} applications.')
+
+            # Pagination for jobs
+            jobs_page = request.GET.get('jobs_page', 1)
+            jobs_paginator = Paginator(jobs, 5)
+            try:
+                jobs = jobs_paginator.page(jobs_page)
+            except PageNotAnInteger:
+                jobs = jobs_paginator.page(1)
+            except EmptyPage:
+                jobs = jobs_paginator.page(jobs_paginator.num_pages)
+
+            # Pagination for applications
+            applications_page = request.GET.get('applications_page', 1)
+            applications_paginator = Paginator(applications, 5)
+            try:
+                applications = applications_paginator.page(applications_page)
+            except PageNotAnInteger:
+                applications = applications_paginator.page(1)
+            except EmptyPage:
+                applications = applications_paginator.page(applications_paginator.num_pages)
+
+            logger.info(f'HR {request.user.username} accessed the dashboard with {jobs_paginator.count} jobs and {applications_paginator.count} applications.')
             return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'applications': applications})
+        
         elif request.user.user_type == 'Candidate':
             applications = JobApplication.objects.filter(applicant=request.user)
-            logger.info(f'Candidate {request.user.username} accessed the dashboard with {applications.count()} applications.')
+
+            # Pagination for applications
+            applications_page = request.GET.get('applications_page', 1)
+            applications_paginator = Paginator(applications, 5)
+            try:
+                applications = applications_paginator.page(applications_page)
+            except PageNotAnInteger:
+                applications = applications_paginator.page(1)
+            except EmptyPage:
+                applications = applications_paginator.page(applications_paginator.num_pages)
+
+            logger.info(f'Candidate {request.user.username} accessed the dashboard with {applications_paginator.count} applications.')
             return render(request, 'jobs/candidate_dashboard.html', {'applications': applications})
         else:
             logger.warning(f'Unauthorized access attempt by {request.user.username}')
@@ -37,6 +72,7 @@ def user_dashboard(request):
     except Exception as e:
         logger.error(f'Error in user_dashboard for user {request.user.username}: {e}', exc_info=True)
         raise
+
 
 def register(request):
     if request.method == 'POST':
@@ -79,32 +115,27 @@ def custom_logout(request):
 
 
 def job_list(request):
-    query = request.GET.get('q')
-    if query is None:
-        query = ''
-    page = request.GET.get('page', 1)
+    job_title = request.GET.get('job_title', '')
+    company = request.GET.get('company', '')
+    query = Q(deleted=False)
+
+    if job_title:
+        query &= Q(title__icontains=job_title)
+    if company:
+        query &= Q(company__icontains=company)
 
     now = timezone.now()
     scraped_time_threshold = now - timedelta(hours=6)
     non_scraped_time_threshold = now - timedelta(days=10)
 
-    if query:
-        jobs = JobPost.objects.filter(
-            title__icontains=query, 
-            deleted=False,
-        ).filter(
-            models.Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
-            models.Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
-        ).order_by('is_scraped', '-posted_at')
-    else:
-        jobs = JobPost.objects.filter(
-            deleted=False,
-        ).filter(
-            models.Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
-            models.Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
-        ).order_by('is_scraped', '-posted_at')
+    jobs = JobPost.objects.filter(
+        query,
+        Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
+        Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
+    ).order_by('is_scraped', '-posted_at')
 
     paginator = Paginator(jobs, 50)
+    page = request.GET.get('page', 1)
 
     try:
         jobs_page = paginator.page(page)
@@ -113,7 +144,8 @@ def job_list(request):
     except EmptyPage:
         jobs_page = paginator.page(paginator.num_pages)
 
-    return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'query': query})
+    return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
+
 
 @login_required
 def post_job(request):

@@ -1,28 +1,265 @@
-<!-- jobs/templates/jobs/candidate_dashboard.html -->
-
 {% extends 'jobs/base.html' %}
 
 {% block title %}Candidate Dashboard{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2>Applied Jobs</h2>
-    <div class="row">
-        {% for application in applications %}
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ application.job.title }}</h5>
-                        <p class="card-text">{{ application.cover_letter }}</p>
-                        {% if application.resume %}
-                            <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
-                        {% else %}
-                            <p>No resume uploaded</p>
-                        {% endif %}
+<section class="container">
+    <div class="dashboard-container">
+        <div class="circle circle-one"></div>
+        <div class="form-container">
+            <h1 class="opacity">Applied Jobs</h1>
+            <div class="row">
+                {% for application in applications %}
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ application.job.title }}</h5>
+                                <p class="card-text">{{ application.cover_letter|truncatewords:20 }} <span class="text-muted">({{ application.cover_letter|length }} characters)</span></p>
+                                {% if application.resume %}
+                                    <a href="{{ application.resume.url }}" class="btn btn-primary">Download Resume</a>
+                                {% else %}
+                                    <p>No resume uploaded</p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+
+            {% if applications.has_other_pages %}
+                <nav aria-label="Application pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if applications.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?applications_page={{ applications.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in applications.paginator.page_range %}
+                            {% if applications.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > applications.number|add:-3 and num < applications.number|add:3 %}
+                                <li class="page-item"><a class="page-link" href="?applications_page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if applications.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?applications_page={{ applications.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+        <div class="circle circle-two"></div>
     </div>
-</div>
+    <div class="theme-btn-container"></div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #ffffff;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "poppins";
+        background: var(--background);
+        color: var(--color);
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color);
+    }
+
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .dashboard-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .form-container {
+        border: 1px solid hsla(0, 0%, 65%, 0.158);
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        z-index: 99;
+        padding: 2rem;
+    }
+
+    .form-container input,
+    .form-container button {
+        display: block;
+        padding: 14.5px;
+        width: 100%;
+        margin: 2rem 0;
+        color: var(--color);
+        outline: none;
+        background-color: #9191911f;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        font-size: 15px;
+        backdrop-filter: blur(15px);
+    }
+
+    .form-container input:focus,
+    .form-container button:focus {
+        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        animation: wobble 0.3s ease-in;
+    }
+
+    .form-container button {
+        background-color: var(--primary-color);
+        color: var(--color);
+        padding: 13px;
+        font-size: 18px;
+        letter-spacing: 1.5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+    }
+
+    .form-container button:hover {
+        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+    }
+
+    .circle {
+        width: 8rem;
+        height: 8rem;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .circle-one {
+        top: 0;
+        left: 0;
+        z-index: -1;
+        transform: translate(-45%, -45%);
+    }
+
+    .circle-two {
+        bottom: 0;
+        right: 0;
+        z-index: -1;
+        transform: translate(45%, 45%);
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+
+    .theme-btn-container {
+        position: absolute;
+        left: 0;
+        bottom: 2rem;
+    }
+
+    .theme-btn {
+        cursor: pointer;
+        transition: all 0.3s ease-in;
+    }
+
+    .theme-btn:hover {
+        width: 40px !important;
+    }
+
+    @keyframes wobble {
+        0% {
+            transform: scale(1.025);
+        }
+        25% {
+            transform: scale(1);
+        }
+        75% {
+            transform: scale(1.025);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<script>
+    const themes = [
+        {
+            background: "#1A1A2E",
+            color: "#FFFFFF",
+            primaryColor: "#0F3460"
+        },
+        {
+            background: "#461220",
+            color: "#FFFFFF",
+            primaryColor: "#E94560"
+        },
+        {
+            background: "#192A51",
+            color: "#FFFFFF",
+            primaryColor: "#967AA1"
+        },
+        {
+            background: "#F7B267",
+            color: "#000000",
+            primaryColor: "#F4845F"
+        },
+        {
+            background: "#F25F5C",
+            color: "#000000",
+            primaryColor: "#642B36"
+        },
+        {
+            background: "#231F20",
+            color: "#FFF",
+            primaryColor: "#BB4430"
+        }
+    ];
+
+    const setTheme = (theme) => {
+        const root = document.querySelector(":root");
+        root.style.setProperty("--background", theme.background);
+        root.style.setProperty("--color", theme.color);
+        root.style.setProperty("--primary-color", theme.primaryColor);
+    };
+
+    const displayThemeButtons = () => {
+        const btnContainer = document.querySelector(".theme-btn-container");
+        themes.forEach((theme) => {
+            const div = document.createElement("div");
+            div.className = "theme-btn";
+            div.style.cssText = `background: ${theme.background}; width: 25px; height: 25px`;
+            btnContainer.appendChild(div);
+            div.addEventListener("click", () => setTheme(theme));
+        });
+    };
+
+    displayThemeButtons();
+</script>
 {% endblock %}

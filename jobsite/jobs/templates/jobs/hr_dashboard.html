@@ -3,31 +3,188 @@
 {% block title %}HR Dashboard{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2>HR Dashboard</h2>
-    <h3>Your Posted Jobs</h3>
-    <ul class="list-group mb-4">
-        {% for job in jobs %}
-            <li class="list-group-item">
-                <h4>{{ job.title }}</h4>
-                <p>{{ job.description }}</p>
-                <p><strong>Location:</strong> {{ job.location }}</p>
-                <p><strong>Posted At:</strong> {{ job.posted_at }}</p>
-            </li>
-        {% endfor %}
-    </ul>
+<section class="container">
+    <div class="dashboard-container">
+        <div class="section">
+            <h2 class="section-title">Your Posted Jobs</h2>
+            <ul class="list-group mb-4">
+                {% for job in jobs %}
+                    <li class="list-group-item">
+                        <h4>{{ job.title }}</h4>
+                        <p>{{ job.description }}</p>
+                        <p><strong>Location:</strong> {{ job.location }}</p>
+                        <p><strong>Posted At:</strong> {{ job.posted_at }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="pagination">
+                {% if jobs.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if jobs.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?jobs_page={{ jobs.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% for num in jobs.paginator.page_range %}
+                                {% if jobs.number == num %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                                {% elif num > jobs.number|add:-3 and num < jobs.number|add:3 %}
+                                    <li class="page-item"><a class="page-link" href="?jobs_page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if jobs.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?jobs_page={{ jobs.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
 
-    <h3>Applications</h3>
-    <ul class="list-group">
-        {% for application in applications %}
-            <li class="list-group-item">
-                <h4>Job: {{ application.job.title }}</h4>
-                <p><strong>Applicant:</strong> {{ application.applicant.username }}</p>
-                <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">Download Resume</a></p>
-                <p><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
-                <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-</div>
+        <div class="section">
+            <h3 class="section-title">Applications</h3>
+            <ul class="list-group">
+                {% for application in applications %}
+                    <li class="list-group-item">
+                        <h4>Job: {{ application.job.title }}</h4>
+                        <p><strong>Applicant:</strong> {{ application.applicant.username }}</p>
+                        <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">Download Resume</a></p>
+                        <p><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
+                        <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="pagination">
+                {% if applications.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if applications.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?applications_page={{ applications.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% for num in applications.paginator.page_range %}
+                                {% if applications.number == num %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                                {% elif num > applications.number|add:-3 and num < applications.number|add:3 %}
+                                    <li class="page-item"><a class="page-link" href="?applications_page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if applications.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?applications_page={{ applications.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #ffffff;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "poppins";
+        background: var(--background);
+        color: var(--color);
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color);
+    }
+
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        padding: 20px;
+    }
+
+    .dashboard-container {
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .list-group-item {
+        background: #0f3460;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        padding: 20px;
+        transition: transform 0.2s;
+    }
+
+    .list-group-item:hover {
+        transform: scale(1.02);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination .page-item .page-link {
+        color: var(--color);
+        background: var(--primary-color);
+        border: none;
+        border-radius: 5px;
+        margin: 0 5px;
+        padding: 10px 15px;
+        transition: background 0.2s;
+    }
+
+    .pagination .page-item .page-link:hover {
+        background: var(--color);
+        color: var (--primary-color);
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+</style>
 {% endblock %}
