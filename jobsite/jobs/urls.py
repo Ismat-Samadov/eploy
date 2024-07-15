@@ -1,6 +1,8 @@
+# jobs/urls.py
+
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard, hr_applicants
+from .views import job_list, post_job, apply_job, job_applicants, register, custom_login, custom_logout, edit_job, delete_job, user_dashboard, hr_applicants, parse_cv_and_check_similarity, job_search, test_openai_api
 
 urlpatterns = [
     path('', job_list, name='job_list'),
@@ -18,4 +20,7 @@ urlpatterns = [
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='jobs/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='jobs/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='jobs/password_reset_complete.html'), name='password_reset_complete'),
+    path('parse-cv/', parse_cv_and_check_similarity, name='parse_cv'),
+    path('search/', job_search, name='job_search'),
+    path('test-openai/', test_openai_api, name='test_openai_api'),
 ]

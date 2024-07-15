@@ -1,6 +1,8 @@
+# jobs/forms.py
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import JobPost, JobApplication, CustomUser  # Ensure CustomUser is imported
+from .models import JobPost, JobApplication, CustomUser
 
 class JobPostForm(forms.ModelForm):
     class Meta:
@@ -10,7 +12,7 @@ class JobPostForm(forms.ModelForm):
 class JobApplicationForm(forms.ModelForm):
     class Meta:
         model = JobApplication
-        fields = ['resume', 'cover_letter']
+        fields = ['resume']
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -27,3 +29,13 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class JobSearchForm(forms.Form):
+    query = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={
+        'placeholder': 'Search for jobs...',
+        'class': 'form-control'
+    }))
+
+class ResumeUploadForm(forms.Form):
+    resume = forms.FileField(required=True)
+    job_id = forms.IntegerField(widget=forms.HiddenInput(), required=True)
