@@ -37,5 +37,5 @@ class JobSearchForm(forms.Form):
     }))
 
 class ResumeUploadForm(forms.Form):
-    resume = forms.FileField(required=True)
-    job_id = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+    resume = forms.FileField(label='Upload Resume (PDF only)')
+    job_id = forms.CharField(widget=forms.HiddenInput())

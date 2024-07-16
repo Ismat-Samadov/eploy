@@ -1,5 +1,3 @@
-# jobs/views.py
-
 import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -7,23 +5,37 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from .models import JobPost, JobApplication
 from .forms import JobPostForm, JobApplicationForm, CustomUserCreationForm, JobSearchForm, ResumeUploadForm
-from django.http import HttpResponseForbidden
-from django.http import JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 import logging
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
-from django.db import models
 from django.db.models import Q
-from .utils import extract_info, check_similarity
 import openai
 import PyPDF2
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+import base64
+import numpy as np
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Log to console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+
+logger.addHandler(console_handler)
 
 def redirect_to_jobs(request):
     return redirect('job_list')
@@ -95,7 +107,7 @@ def job_list(request):
     if job_title:
         query &= Q(title__icontains=job_title)
     if company:
-        query &= Q(company__icontains(company))
+        query &= Q(company__icontains=company)
 
     now = timezone.now()
     scraped_time_threshold = now - timedelta(hours=6)
@@ -184,7 +196,7 @@ def test_openai_api(request):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": "Say this is a test"}
@@ -198,7 +210,7 @@ def test_openai_api(request):
 def job_search(request):
     query = request.GET.get('query', '')
     if query:
-        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)[:10]
+        jobs = JobPost.objects.filter(Q(title__icontains=query) | Q(company__icontains=query), deleted=False)[:10]
         job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
     else:
         job_list = []
@@ -269,7 +281,7 @@ def parse_pdf(file):
 def get_openai_analysis(prompt):
     openai.api_key = settings.OPENAI_API_KEY
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt}
@@ -277,8 +289,58 @@ def get_openai_analysis(prompt):
     )
     return response['choices'][0]['message']['content']
 
+def calculate_similarity(cv_text, job_text):
+    vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
+    vectors = vectorizer.toarray()
+    return cosine_similarity(vectors)[0, 1]
+
+
+def create_similarity_chart(score):
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Pie chart for similarity score
+    ax[0].pie([score, 1 - score], labels=['Similarity', 'Difference'], colors=['blue', 'gray'], autopct='%1.1f%%')
+    ax[0].set_title('CV and Job Description Similarity')
+
+    # Bar chart for detailed similarity breakdown (if available)
+    labels = ['Overall Similarity']
+    values = [score]
+    x = np.arange(len(labels))
+
+    ax[1].bar(x, values, color='blue', alpha=0.7)
+    ax[1].set_xticks(x)
+    ax[1].set_xticklabels(labels)
+    ax[1].set_ylim(0, 1)
+    ax[1].set_ylabel('Score')
+    ax[1].set_title('Detailed Similarity Breakdown')
+
+    # Save the figure to a BytesIO object
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    string = base64.b64encode(buf.read())
+    uri = 'data:image/png;base64,' + string.decode('utf-8')
+    buf.close()
+    
+    return uri
+
+
 @login_required
-def parse_cv_and_check_similarity(request):
+def search_jobs_for_cv(request):
+    query = request.GET.get('query', '')
+    if query:
+        jobs = JobPost.objects.filter(Q(title__icontains=query) | Q(company__icontains=query), deleted=False)[:10]
+        job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
+    else:
+        job_list = []
+    return JsonResponse(job_list, safe=False)
+
+@login_required
+def parse_cv_page(request):
+    job_search_form = JobSearchForm()
+    resume_upload_form = ResumeUploadForm()
+
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
         logger.debug(f'Form data: {request.POST}')
@@ -295,28 +357,38 @@ def parse_cv_and_check_similarity(request):
                 logger.error(f'Invalid job ID: {job_id}')
                 return JsonResponse({'error': 'Invalid job ID'}, status=400)
 
-            # Parse the uploaded CV file
             file_ext = resume_file.name.split('.')[-1].lower()
             if file_ext == 'pdf':
                 cv_text = parse_pdf(resume_file)
             else:
                 return JsonResponse({'error': 'Unsupported file format. Only PDF is supported at this moment.'}, status=400)
 
-            # Create prompts for OpenAI
             cv_prompt = f"Extract the key skills and experience from this CV: {cv_text}"
             job_prompt = f"Extract the key skills and experience from this job description: {job.description}"
+            advice_prompt = f"Give some advice to improve this CV for the job at {job.company}: {cv_text}"
+            cover_letter_prompt = f"Generate a personalized cover letter for the job description: {job.description} at {job.company} based on the following CV: {cv_text}"
 
             try:
                 cv_skills = get_openai_analysis(cv_prompt)
                 job_skills = get_openai_analysis(job_prompt)
+                advice = get_openai_analysis(advice_prompt)
+                cover_letter = get_openai_analysis(cover_letter_prompt)
+                similarity_score = calculate_similarity(cv_skills, job_skills)
+                chart_uri = create_similarity_chart(similarity_score)
 
-                # Calculate similarity score (this is a placeholder; you might want to use a more sophisticated method)
-                similarity_score = "Similarity score calculation is not implemented yet."
-
-                return JsonResponse({
+                logger.debug(f'CV Skills: {cv_skills}')
+                logger.debug(f'Job Skills: {job_skills}')
+                logger.debug(f'Similarity Score: {similarity_score}')
+                
+                return render(request, 'jobs/similarity_results.html', {
                     'cv_skills': cv_skills,
                     'job_skills': job_skills,
-                    'similarity_score': similarity_score
+                    'similarity_score': similarity_score,
+                    'chart_uri': chart_uri,
+                    'advice': advice,
+                    'cover_letter': cover_letter,
+                    'job_title': job.title,
+                    'company_name': job.company
                 })
             except Exception as e:
                 logger.error(f"Error analyzing CV or job description with OpenAI: {e}")
@@ -325,5 +397,7 @@ def parse_cv_and_check_similarity(request):
             logger.error(f'Form is not valid: {form.errors}')
             return JsonResponse({'error': 'Invalid form data.'}, status=400)
 
-    form = ResumeUploadForm()
-    return render(request, 'jobs/parse_cv.html', {'form': form})
+    return render(request, 'jobs/parse_cv.html', {
+        'job_search_form': job_search_form,
+        'resume_upload_form': resume_upload_form
+    })
