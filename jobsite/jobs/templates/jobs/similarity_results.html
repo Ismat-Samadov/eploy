@@ -6,41 +6,32 @@
 <section class="container mt-5">
     <div class="similarity-results">
         <h2>Similarity Results</h2>
-        
         <div class="result-section">
             <h3>CV Skills and Experience</h3>
             <p><strong>Key Skills and Experience from {{ cv_name }}'s CV:</strong></p>
             <ul>
-                {% for skill in cv_skills %}
-                    <li>{{ skill }}</li>
-                {% endfor %}
+                {{ cv_skills }}
             </ul>
         </div>
-
         <div class="result-section">
             <h3>Job Skills and Experience</h3>
             <p><strong>Key skills and experience required from the job description:</strong></p>
             <ul>
-                {% for skill in job_skills %}
-                    <li>{{ skill }}</li>
-                {% endfor %}
+                {{ job_skills }}
             </ul>
         </div>
-
         <div class="result-section">
             <h3>Similarity Score</h3>
             <p>Similarity Score: {{ similarity_score }}</p>
             <img src="{{ chart_uri }}" alt="Similarity Chart">
         </div>
-
         <div class="result-section">
             <h3>Advice to Improve Your CV</h3>
-            <p>{{ advice|linebreaks }}</p>
+            <p>{{ advice }}</p>
         </div>
-
         <div class="result-section">
             <h3>Generated Cover Letter</h3>
-            <p>{{ cover_letter|linebreaks }}</p>
+            <p>{{ cover_letter }}</p>
         </div>
     </div>
 </section>
