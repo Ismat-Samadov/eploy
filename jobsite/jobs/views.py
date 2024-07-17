@@ -196,7 +196,7 @@ def test_openai_api(request):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": "Say this is a test"}
@@ -210,7 +210,7 @@ def test_openai_api(request):
 def job_search(request):
     query = request.GET.get('query', '')
     if query:
-        jobs = JobPost.objects.filter(Q(title__icontains=query) | Q(company__icontains=query), deleted=False)[:10]
+        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)[:10]
         job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
     else:
         job_list = []
@@ -280,20 +280,23 @@ def parse_pdf(file):
 
 def get_openai_analysis(prompt):
     openai.api_key = settings.OPENAI_API_KEY
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response['choices'][0]['message']['content']
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        logger.error(f"Error with OpenAI API: {e}")
+        raise
 
 def calculate_similarity(cv_text, job_text):
     vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]
-
 
 def create_similarity_chart(score):
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -325,12 +328,11 @@ def create_similarity_chart(score):
     
     return uri
 
-
 @login_required
 def search_jobs_for_cv(request):
     query = request.GET.get('query', '')
     if query:
-        jobs = JobPost.objects.filter(Q(title__icontains=query) | Q(company__icontains=query), deleted=False)[:10]
+        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)[:10]
         job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
     else:
         job_list = []
