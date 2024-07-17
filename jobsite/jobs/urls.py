@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from .views import (
     hr_applicants, 
     register, 
@@ -32,5 +33,9 @@ urlpatterns = [
     path('job-search/', job_search, name='job_search'),
     path('user-dashboard/', user_dashboard, name='user_dashboard'),
     path('search-jobs-for-cv/', search_jobs_for_cv, name='search_jobs_for_cv'),
-    path('parse-cv/', parse_cv_page, name='parse_cv_page'),  # Ensure this path is correct
+    path('parse-cv/', parse_cv_page, name='parse_cv_page'),
+    path('accounts/password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    path('accounts/password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('accounts/reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete')
 ]
