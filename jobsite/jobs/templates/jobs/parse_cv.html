@@ -1,4 +1,5 @@
 {% extends 'jobs/base.html' %}
+{% load static %}
 
 {% block title %}Parse CV{% endblock %}
 
@@ -14,6 +15,7 @@
                 {{ job_search_form.query }}
                 <button type="button" id="search-jobs-btn" class="btn btn-primary">Search Jobs</button>
             </form>
+            <div id="job-results" class="mt-4"></div>
             <form id="resume-upload-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="job_id" id="job-id-input">
@@ -21,38 +23,193 @@
                 {{ resume_upload_form.resume }}
                 <button type="submit" class="btn btn-primary">Upload and Parse CV</button>
             </form>
-            <div id="job-results" class="mt-4"></div>
         </div>
         <div class="circle circle-two"></div>
     </div>
     <div class="theme-btn-container"></div>
 </section>
 
-<script>
-document.getElementById('search-jobs-btn').addEventListener('click', function() {
-    var query = document.getElementById('id_query').value;
-    fetch(`/jobs/search-jobs-for-cv/?query=${query}`)
-        .then(response => response.json())
-        .then(data => {
-            var jobResults = document.getElementById('job-results');
-            jobResults.innerHTML = '';
-            data.forEach(job => {
-                var jobElement = document.createElement('div');
-                jobElement.classList.add('job-item');
-                jobElement.innerHTML = `<input type="radio" name="job_id" value="${job.id}"> ${job.title} at ${job.company}`;
-                jobResults.appendChild(jobElement);
-            });
-        });
-});
-
-document.getElementById('resume-upload-form').addEventListener('submit', function(e) {
-    var selectedJob = document.querySelector('input[name="job_id"]:checked');
-    if (selectedJob) {
-        document.getElementById('job-id-input').value = selectedJob.value;
-    } else {
-        alert('Please select a job before submitting.');
-        e.preventDefault();
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #d55252;
+        --primary-color: #0f3460;
     }
-});
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        font-family: "poppins", sans-serif;
+        background: var(--background);
+        color: var(--color);
+        transition: background 0.2s ease;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color);
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .dashboard-container {
+        position: relative;
+        max-width: 600px;
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .form-container {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-container input,
+    .form-container button {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 1rem;
+        color: var(--color);
+        background-color: rgba(145, 145, 145, 0.1);
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        font-size: 14px;
+        backdrop-filter: blur(15px);
+    }
+
+    .form-container input:focus,
+    .form-container button:focus {
+        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-container button {
+        background-color: var(--primary-color);
+        color: var(--color);
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.1s ease-in-out;
+        border: none;
+    }
+
+    .form-container button:hover {
+        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+    }
+
+    .circle {
+        width: 6rem;
+        height: 6rem;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .circle-one {
+        top: 0;
+        left: 0;
+        transform: translate(-45%, -45%);
+    }
+
+    .circle-two {
+        bottom: 0;
+        right: 0;
+        transform: translate(45%, 45%);
+    }
+
+    .opacity {
+        opacity: 0.8;
+    }
+
+    .theme-btn-container {
+        position: absolute;
+        left: 0;
+        bottom: 1rem;
+    }
+
+    .theme-btn {
+        cursor: pointer;
+        transition: transform 0.3s ease-in;
+    }
+
+    .theme-btn:hover {
+        transform: scale(1.2);
+    }
+
+    #job-results {
+        margin-top: 1rem;
+    }
+
+    .job-item {
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 5px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .job-item:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .selected-job {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+<script>
+    document.getElementById('id_query').addEventListener('input', function() {
+        var query = document.getElementById('id_query').value;
+        fetch(`/jobs/search-jobs-for-cv/?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                var jobResults = document.getElementById('job-results');
+                jobResults.innerHTML = '';
+                data.forEach(job => {  // Limit results to 20
+                    var jobElement = document.createElement('div');
+                    jobElement.classList.add('job-item');
+                    jobElement.innerHTML = `${job.title} at ${job.company}`;
+                    jobElement.addEventListener('click', function() {
+                        document.querySelectorAll('.job-item').forEach(item => item.classList.remove('selected-job'));
+                        jobElement.classList.add('selected-job');
+                        document.getElementById('job-id-input').value = job.id;
+                    });
+                    jobResults.appendChild(jobElement);
+                });
+            });
+    });
+
+    document.getElementById('resume-upload-form').addEventListener('submit', function(e) {
+        var selectedJobId = document.getElementById('job-id-input').value;
+        if (!selectedJobId) {
+            alert('Please select a job before submitting.');
+            e.preventDefault();
+        }
+    });
 </script>
 {% endblock %}

@@ -1,7 +1,7 @@
 import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from .models import JobPost, JobApplication
 from .forms import JobPostForm, JobApplicationForm, CustomUserCreationForm, JobSearchForm, ResumeUploadForm
@@ -99,6 +99,7 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
+
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
@@ -110,16 +111,31 @@ def job_list(request):
         query &= Q(company__icontains=company)
 
     now = timezone.now()
-    scraped_time_threshold = now - timedelta(hours=6)
     non_scraped_time_threshold = now - timedelta(days=10)
+    scraped_time_threshold = now - timedelta(hours=5)
 
-    jobs = JobPost.objects.filter(
+    non_scraped_jobs = JobPost.objects.filter(
         query,
-        Q(is_scraped=True, posted_at__gte=scraped_time_threshold) | 
-        Q(is_scraped=False, posted_at__gte=non_scraped_time_threshold)
-    ).order_by('is_scraped', '-posted_at')
+        is_scraped=False,
+        posted_at__gte=non_scraped_time_threshold
+    ).order_by('-posted_at')
 
-    paginator = Paginator(jobs, 10)
+    scraped_jobs = JobPost.objects.filter(
+        query,
+        is_scraped=True,
+        posted_at__gte=scraped_time_threshold
+    ).order_by('-posted_at')
+
+    # Combine the querysets and ensure uniqueness
+    jobs = list(non_scraped_jobs) + list(scraped_jobs)
+    unique_jobs = []
+    seen_titles = set()
+    for job in jobs:
+        if job.title not in seen_titles:
+            unique_jobs.append(job)
+            seen_titles.add(job.title)
+
+    paginator = Paginator(unique_jobs, 10)
     page = request.GET.get('page', 1)
 
     try:
@@ -208,13 +224,41 @@ def test_openai_api(request):
 
 @login_required
 def job_search(request):
-    query = request.GET.get('query', '')
+    query = request.GET.get('query', '').lower()
+    
     if query:
-        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)[:10]
-        job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
+        now = timezone.now()
+        non_scraped_time_threshold = now - timedelta(days=10)
+        scraped_time_threshold = now - timedelta(hours=5)
+
+        non_scraped_jobs = JobPost.objects.filter(
+            title__icontains=query,
+            deleted=False,
+            is_scraped=False,
+            posted_at__gte=non_scraped_time_threshold
+        ).order_by('-posted_at')
+
+        scraped_jobs = JobPost.objects.filter(
+            title__icontains=query,
+            deleted=False,
+            is_scraped=True,
+            posted_at__gte=scraped_time_threshold
+        ).order_by('-posted_at')
+
+        # Combine the querysets and ensure uniqueness
+        jobs = list(non_scraped_jobs) + list(scraped_jobs)
+        unique_jobs = []
+        seen_titles = set()
+        for job in jobs:
+            if (job.title, job.company) not in seen_titles:
+                unique_jobs.append({'id': job.id, 'title': job.title, 'company': job.company})
+                seen_titles.add((job.title, job.company))
+
+        unique_jobs = unique_jobs[:20]
     else:
-        job_list = []
-    return JsonResponse(job_list, safe=False)
+        unique_jobs = []
+
+    return JsonResponse(unique_jobs, safe=False)
 
 @login_required
 def user_dashboard(request):
@@ -330,13 +374,33 @@ def create_similarity_chart(score):
 
 @login_required
 def search_jobs_for_cv(request):
-    query = request.GET.get('query', '')
+    query = request.GET.get('query', '').lower()
     if query:
-        jobs = JobPost.objects.filter(title__icontains=query, deleted=False)[:10]
-        job_list = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
+        now = timezone.now()
+        time_threshold = now - timedelta(days=10)
+
+        non_scraped_jobs = JobPost.objects.filter(
+            Q(title__icontains=query) &
+            Q(deleted=False) &
+            Q(is_scraped=False) &
+            Q(description__isnull=False) &
+            Q(description__gt='') &
+            Q(posted_at__gte=time_threshold)
+        ).order_by('-posted_at')
+
+        # Ensure uniqueness by title and company
+        unique_jobs = []
+        seen_titles = set()
+        for job in non_scraped_jobs:
+            if (job.title, job.company) not in seen_titles:
+                unique_jobs.append({'id': job.id, 'title': job.title, 'company': job.company})
+                seen_titles.add((job.title, job.company))
+
+        unique_jobs = unique_jobs[:20]  # Limit to 20 results
     else:
-        job_list = []
-    return JsonResponse(job_list, safe=False)
+        unique_jobs = []
+
+    return JsonResponse(unique_jobs, safe=False)
 
 @login_required
 def parse_cv_page(request):

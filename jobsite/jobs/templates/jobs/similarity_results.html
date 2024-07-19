@@ -5,7 +5,7 @@
 {% block content %}
 <section class="container mt-5">
     <div class="similarity-results">
-        <h2>Similarity Results</h2>
+        <h2 class="opacity">Similarity Results</h2>
         <div class="result-section">
             <h3>CV Skills and Experience</h3>
             <p><strong>Key Skills and Experience from {{ cv_name }}'s CV:</strong></p>
@@ -35,4 +35,66 @@
         </div>
     </div>
 </section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #d55252;
+        --primary-color: #0f3460;
+    }
+
+    body {
+        background: var(--background);
+        color: var(--color);
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 2rem;
+    }
+
+    .similarity-results {
+        width: 100%;
+        max-width: 800px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        padding: 2rem;
+        backdrop-filter: blur(20px);
+    }
+
+    .result-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .result-section h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .result-section p,
+    .result-section ul {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .result-section ul {
+        list-style-type: disc;
+        margin-left: 1.5rem;
+    }
+
+    .result-section img {
+        width: 100%;
+        max-width: 600px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .opacity {
+        opacity: 0.8;
+    }
+</style>
 {% endblock %}

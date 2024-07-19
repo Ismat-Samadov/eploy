@@ -54,30 +54,6 @@
                     </ul>
                 </nav>
             {% endif %}
-
-            <div class="mt-4">
-                <h2 class="opacity">Parse Your CV</h2>
-                <form method="post" id="cvForm" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="jobSearch">Search for Jobs:</label>
-                        <input type="text" name="job_search" id="jobSearchInput" placeholder="Search for jobs..." class="form-control mb-3">
-                        <input type="hidden" name="job_id" id="jobIdInput">
-                        <ul id="jobSearchResults" class="list-group"></ul>
-                    </div>
-                    <div class="form-group">
-                        <label for="resume">Upload Resume:</label>
-                        <input type="file" name="resume" accept=".pdf" class="form-control mb-3">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Check Similarity</button>
-                </form>
-                <div id="result" style="display:none;" class="mt-4">
-                    <h3>Results:</h3>
-                    <p><strong>CV Skills and Experience:</strong> <span id="cvSkills"></span></p>
-                    <p><strong>Job Skills and Experience:</strong> <span id="jobSkills"></span></p>
-                    <p><strong>Similarity Score:</strong> <span id="similarityScore"></span></p>
-                </div>
-            </div>
         </div>
         <div class="circle circle-two"></div>
     </div>
@@ -311,39 +287,5 @@
             link.textContent = 'Read More';
         }
     };
-
-    document.getElementById('cvForm').onsubmit = async function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
-        const response = await fetch("{% url 'parse_cv' %}", {
-            method: 'POST',
-            body: formData,
-        });
-        const result = await response.json();
-        document.getElementById('cvSkills').textContent = result.cv_skills;
-        document.getElementById('jobSkills').textContent = result.job_skills;
-        document.getElementById('similarityScore').textContent = result.similarity_score;
-        document.getElementById('result').style.display = 'block';
-    };
-
-    document.getElementById('jobSearchInput').addEventListener('input', async function() {
-        const query = this.value;
-        const response = await fetch(`/jobs/search/?query=${query}`);
-        const jobs = await response.json();
-        const jobSearchResults = document.getElementById('jobSearchResults');
-        jobSearchResults.innerHTML = '';
-        jobs.forEach(job => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = `${job.title} at ${job.company}`;
-            li.dataset.jobId = job.id;
-            li.addEventListener('click', function() {
-                document.getElementById('jobIdInput').value = this.dataset.jobId;
-                document.getElementById('jobSearchInput').value = this.textContent;
-                jobSearchResults.innerHTML = '';
-            });
-            jobSearchResults.appendChild(li);
-        });
-    });
 </script>
 {% endblock %}
