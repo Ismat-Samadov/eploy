@@ -12,7 +12,7 @@ class JobPostForm(forms.ModelForm):
 class JobApplicationForm(forms.ModelForm):
     class Meta:
         model = JobApplication
-        fields = ['resume']
+        fields = ['resume', 'cover_letter']
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)

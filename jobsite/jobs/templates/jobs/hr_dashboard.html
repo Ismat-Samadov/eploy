@@ -1,6 +1,3 @@
-<!-- jobs/templates/jobs/hr_dashboard.html -->
-
-
 {% extends 'jobs/base.html' %}
 
 {% block title %}HR Dashboard{% endblock %}
@@ -17,6 +14,10 @@
                         <p>{{ job.description }}</p>
                         <p><strong>Location:</strong> {{ job.location }}</p>
                         <p><strong>Posted At:</strong> {{ job.posted_at }}</p>
+                        <div>
+                            <a href="{% url 'edit_job' job.id %}" class="btn btn-secondary mt-2">Edit</a>
+                            <a href="{% url 'delete_job' job.id %}" class="btn btn-danger mt-2">Delete</a>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>

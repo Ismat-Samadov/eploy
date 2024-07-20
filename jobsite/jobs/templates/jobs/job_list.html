@@ -31,10 +31,6 @@
                             {% else %}
                                 <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
                             {% endif %}
-                            {% if user == job.posted_by %}
-                                <a href="{% url 'edit_job' job.id %}" class="btn btn-secondary mt-2">Edit</a>
-                                <a href="{% url 'delete_job' job.id %}" class="btn btn-danger mt-2">Delete</a>
-                            {% endif %}
                         </div>
                     </li>
                 {% endfor %}
