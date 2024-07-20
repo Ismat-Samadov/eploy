@@ -12,7 +12,7 @@ ALLOWED_HOSTS = ['.onrender.com',
                  '127.0.0.1', 
                  'localhost',
                  'careerhorizon.llc',
-                 'careerhorizon.co']
+                 'www.careerhorizon.llc']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
