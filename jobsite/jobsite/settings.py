@@ -7,7 +7,12 @@ from google.oauth2 import service_account
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['.onrender.com', 'careerhorizon.onrender.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['.onrender.com', 
+                 'careerhorizon.onrender.com', 
+                 '127.0.0.1', 
+                 'localhost',
+                 'careerhorizon.llc',
+                 'careerhorizon.co']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

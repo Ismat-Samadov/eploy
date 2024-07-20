@@ -160,25 +160,6 @@ def post_job(request):
         form = JobPostForm()
     return render(request, 'jobs/post_job.html', {'form': form})
 
-# @login_required
-# def apply_job(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id, deleted=False)
-#     if request.method == 'POST':
-#         form = JobApplicationForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             try:
-#                 application = form.save(commit=False)
-#                 application.job = job
-#                 application.applicant = request.user
-#                 application.save()
-#                 return redirect('job_list')
-#             except Exception as e:
-#                 logger.error(f"Error applying for job {job_id}: {e}")
-#                 return render(request, 'jobs/apply_job.html', {'form': form, 'job': job, 'error': 'An error occurred while applying. Please try again.'})
-#     else:
-#         form = JobApplicationForm()
-#     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
-
 @login_required
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, deleted=False)
