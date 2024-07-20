@@ -1,0 +1,100 @@
+<!-- jobs/templates/jobs/congrats.html -->
+
+{% extends 'jobs/base.html' %}
+
+{% block title %}Application Successful{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="congrats-container">
+        <div class="circle circle-one"></div>
+        <div class="form-container">
+            <h1 class="opacity">Congratulations!</h1>
+            <p>You have successfully applied for the job.</p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary">Back to Job Listings</a>
+        </div>
+        <div class="circle circle-two"></div>
+    </div>
+    <div class="theme-btn-container"></div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #ffffff;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "poppins";
+        background: var(--background);
+        color: var(--color);
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding-top: 100px;
+    }
+
+    .congrats-container {
+        position: relative;
+        width: 40rem;
+    }
+
+    .form-container {
+        border: 1px solid hsla(0, 0%, 65%, 0.158);
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        z-index: 99;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .form-container a {
+        margin-top: 20px;
+        display: inline-block;
+    }
+
+    .circle {
+        width: 5rem;
+        height: 5rem;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .circle-one {
+        top: 0;
+        left: 0;
+        z-index: -1;
+        transform: translate(-45%, -45%);
+    }
+
+    .circle-two {
+        bottom: 0;
+        right: 0;
+        z-index: -1;
+        transform: translate(45%, 45%);
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+</style>
+{% endblock %}

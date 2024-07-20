@@ -13,6 +13,14 @@ class JobApplicationForm(forms.ModelForm):
     class Meta:
         model = JobApplication
         fields = ['resume', 'cover_letter']
+        widgets = {
+            'resume': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super(JobApplicationForm, self).__init__(*args, **kwargs)
+        self.fields['cover_letter'].required = False  # Make cover letter optional
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)

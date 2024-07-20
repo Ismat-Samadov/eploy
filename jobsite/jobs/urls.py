@@ -8,6 +8,7 @@ from .views import (
     job_list,
     post_job,
     apply_job,
+    congrats,
     job_applicants,
     edit_job,
     delete_job,
@@ -17,6 +18,7 @@ from .views import (
     search_jobs_for_cv,
     parse_cv_page
 )
+from . import views
 
 urlpatterns = [
     path('', job_list, name='job_list'),
@@ -25,6 +27,7 @@ urlpatterns = [
     path('logout/', custom_logout, name='logout'),
     path('post-job/', post_job, name='post_job'),
     path('apply-job/<int:job_id>/', apply_job, name='apply_job'),
+    path('congrats/', views.congrats, name='congrats'),
     path('job-applicants/<int:job_id>/', job_applicants, name='job_applicants'),
     path('edit-job/<int:job_id>/', edit_job, name='edit_job'),
     path('delete-job/<int:job_id>/', delete_job, name='delete_job'),

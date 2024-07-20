@@ -9,6 +9,7 @@ class CustomUser(AbstractUser):
         ('Candidate', 'Candidate'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+
 class JobPost(models.Model):
     title = models.CharField(max_length=500)
     description = models.TextField()
@@ -30,7 +31,7 @@ class JobApplication(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     resume = models.FileField(upload_to='resumes/')
-    cover_letter = models.TextField()
+    cover_letter = models.TextField(blank=True, null=True)  # Make cover letter optional
     applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
