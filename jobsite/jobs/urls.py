@@ -8,7 +8,6 @@ from .views import (
     job_list,
     post_job,
     apply_job,
-    congrats,
     job_applicants,
     edit_job,
     delete_job,
@@ -25,6 +24,9 @@ urlpatterns = [
     path('register/', register, name='register'),
     path('login/', custom_login, name='login'),
     path('logout/', custom_logout, name='logout'),
+    path('company/<int:company_id>/', views.company_description, name='company_description'),
+    # path('profile/', views.user_profile, name='user_profile'),
+    path('jobs/profile/', views.user_profile, name='user_profile'),  # Ensure this is named 'user_profile'
     path('post-job/', post_job, name='post_job'),
     path('apply-job/<int:job_id>/', apply_job, name='apply_job'),
     path('congrats/', views.congrats, name='congrats'),

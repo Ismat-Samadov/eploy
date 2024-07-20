@@ -1,0 +1,150 @@
+{% extends 'jobs/base.html' %}
+{% load custom_tags %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="profile-container">
+        <h1 class="opacity">User Profile</h1>
+        <form method="post">
+            {% csrf_token %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            <div class="form-group">
+                <label for="id_username">Username:</label>
+                {{ form.username|add_class:"form-control" }}
+                {% if form.username.errors %}
+                    <div class="alert alert-danger">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_email">Email:</label>
+                {{ form.email|add_class:"form-control" }}
+                {% if form.email.errors %}
+                    <div class="alert alert-danger">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_first_name">First Name:</label>
+                {{ form.first_name|add_class:"form-control" }}
+                {% if form.first_name.errors %}
+                    <div class="alert alert-danger">{{ form.first_name.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_last_name">Last Name:</label>
+                {{ form.last_name|add_class:"form-control" }}
+                {% if form.last_name.errors %}
+                    <div class="alert alert-danger">{{ form.last_name.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #ffffff;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "poppins";
+        background: var(--background);
+        color: var(--color);
+        letter-spacing: 1px;
+        transition: background 0.2s ease;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        padding: 20px;
+    }
+
+    .profile-container {
+        width: 100%;
+        max-width: 600px;
+        background: #0f3460;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-control {
+        background-color: #9191911f;
+        border: none;
+        border-radius: 5px;
+        padding: 14.5px;
+        color: var(--color);
+        outline: none;
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        font-size: 15px;
+        backdrop-filter: blur(15px);
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        animation: wobble 0.3s ease-in;
+    }
+
+    .btn {
+        background-color: var(--primary-color);
+        color: var(--color);
+        padding: 13px;
+        font-size: 18px;
+        letter-spacing: 1.5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+        width: 100%;
+    }
+
+    .btn:hover {
+        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+    }
+
+    @keyframes wobble {
+        0% {
+            transform: scale(1.025);
+        }
+        25% {
+            transform: scale(1);
+        }
+        75% {
+            transform: scale(1.025);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+</style>
+{% endblock %}

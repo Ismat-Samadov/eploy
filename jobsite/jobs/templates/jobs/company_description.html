@@ -1,0 +1,61 @@
+<!-- jobs/templates/jobs/company_description.html -->
+
+{% extends 'jobs/base.html' %}
+
+{% block title %}{{ company_name }}{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="company-description-container">
+        <h1 class="opacity">{{ company_name }}</h1>
+        <ul class="list-group">
+            {% for job in company_jobs %}
+                <li class="list-group-item mb-3">
+                    <h5>{{ job.title }}</h5>
+                    <p>{{ job.description|truncatewords:20 }}</p>
+                    <p class="text-muted">{{ job.location }}</p>
+                    <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #d55252;
+        --primary-color: #0f3460;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding-top: 5rem;
+    }
+
+    .company-description-container {
+        width: 100%;
+    }
+
+    .list-group-item {
+        background: var(--primary-color);
+        border: none;
+        color: var(--color);
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        color: var(--color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color);
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}

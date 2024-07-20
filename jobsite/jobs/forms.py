@@ -1,7 +1,6 @@
-# jobs/forms.py
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from .models import JobPost, JobApplication, CustomUser
 
 class JobPostForm(forms.ModelForm):
@@ -47,3 +46,14 @@ class JobSearchForm(forms.Form):
 class ResumeUploadForm(forms.Form):
     resume = forms.FileField(label='Upload Resume (PDF only)')
     job_id = forms.CharField(widget=forms.HiddenInput())
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if CustomUser.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('This username is already taken.')
+        return username

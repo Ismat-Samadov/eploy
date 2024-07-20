@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from .models import JobPost, JobApplication
-from .forms import JobPostForm, JobApplicationForm, CustomUserCreationForm, JobSearchForm, ResumeUploadForm
+from .forms import JobPostForm, JobApplicationForm, CustomUserCreationForm, JobSearchForm, ResumeUploadForm, UserProfileForm
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import numpy as np
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -160,25 +161,6 @@ def post_job(request):
         form = JobPostForm()
     return render(request, 'jobs/post_job.html', {'form': form})
 
-# @login_required
-# def apply_job(request, job_id):
-#     job = get_object_or_404(JobPost, id=job_id, deleted=False)
-#     if request.method == 'POST':
-#         form = JobApplicationForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             try:
-#                 application = form.save(commit=False)
-#                 application.job = job
-#                 application.applicant = request.user
-#                 application.save()
-#                 return redirect('job_list')
-#             except Exception as e:
-#                 logger.error(f"Error applying for job {job_id}: {e}")
-#                 return render(request, 'jobs/apply_job.html', {'form': form, 'job': job, 'error': 'An error occurred while applying. Please try again.'})
-#     else:
-#         form = JobApplicationForm()
-#     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
-
 @login_required
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, deleted=False)
@@ -200,6 +182,30 @@ def apply_job(request, job_id):
 
 def congrats(request):
     return render(request, 'jobs/congrats.html')
+
+def company_description(request, company_id):
+    company_jobs = JobPost.objects.filter(company_id=company_id, deleted=False)
+    company_name = company_jobs.first().company if company_jobs.exists() else "Unknown Company"
+    return render(request, 'jobs/company_description.html', {'company_name': company_name, 'company_jobs': company_jobs})
+
+@login_required
+def user_profile(request):
+    user = request.user
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Profile updated successfully.')
+            except ValidationError as e:
+                form.add_error(None, e.message)
+                messages.error(request, e.message)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserProfileForm(instance=user)
+
+    return render(request, 'jobs/user_profile.html', {'form': form})
 
 @login_required
 def job_applicants(request, job_id):

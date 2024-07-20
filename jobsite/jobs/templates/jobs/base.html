@@ -1,6 +1,8 @@
 <!-- jobs/templates/jobs/base.html -->
 
 {% load static %}
+{% load custom_tags %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -39,6 +41,9 @@
                             <a class="nav-link" href="{% url 'parse_cv_page' %}">Parse CV</a>
                         </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user_profile' %}">Profile</a>
+                    </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav">
