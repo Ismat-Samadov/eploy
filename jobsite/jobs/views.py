@@ -148,7 +148,7 @@ def job_list(request):
             unique_jobs.append(job)
             seen_titles.add(job.title)
 
-    paginator = Paginator(unique_jobs, 10)
+    paginator = Paginator(unique_jobs, 50)
     page = request.GET.get('page', 1)
 
     try:
