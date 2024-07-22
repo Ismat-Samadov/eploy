@@ -91,6 +91,9 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
     "auth_provider_x509_cert_url": config('GCS_AUTH_PROVIDER_CERT_URL'),
     "client_x509_cert_url": config('GCS_CLIENT_CERT_URL')
 })
+
+OPENAI_API_KEY = config('OPENAI_API_KEY')
+
 EMAIL_BACKEND = config('EMAIL_BACKEND')
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_PORT = config('EMAIL_PORT', cast=int)
@@ -98,4 +101,3 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
-OPENAI_API_KEY = config('OPENAI_API_KEY')
