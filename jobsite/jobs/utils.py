@@ -1,8 +1,17 @@
 # jobs/utils.py
 import openai
 from django.conf import settings
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 openai.api_key = settings.OPENAI_API_KEY
+
+
+def calculate_similarity(cv_text, job_text):
+    vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
+    vectors = vectorizer.toarray()
+    return cosine_similarity(vectors)[0, 1] * 100  # Return percentage
 
 def extract_info(text, info_type):
     prompt = f"Extract the {info_type} from the following text:\n\n{text}"

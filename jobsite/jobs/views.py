@@ -25,6 +25,7 @@ import io
 import base64
 import numpy as np
 from django.core.exceptions import ValidationError
+from .utils import calculate_similarity
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -57,7 +58,18 @@ def hr_applicants(request):
     except EmptyPage:
         applications = applications_paginator.page(applications_paginator.num_pages)
 
-    return render(request, 'jobs/hr_applicants.html', {'applications': applications})
+    # Calculate similarity scores
+    application_data = []
+    for application in applications:
+        cv_text = parse_pdf(application.resume)  # Ensure parse_pdf function is defined to extract text from the PDF resume
+        job_text = application.job.description
+        similarity_score = calculate_similarity(cv_text, job_text)
+        application_data.append({
+            'application': application,
+            'similarity_score': similarity_score
+        })
+
+    return render(request, 'jobs/hr_applicants.html', {'applications': application_data})
 
 def register(request):
     if request.method == 'POST':
@@ -349,6 +361,7 @@ def parse_pdf(file):
         page = pdf_reader.pages[page_num]
         full_text.append(page.extract_text())
     return '\n'.join(full_text)
+
 
 def get_openai_analysis(prompt):
     openai.api_key = settings.OPENAI_API_KEY

@@ -8,17 +8,18 @@
         <div class="section">
             <h2 class="section-title">Applications</h2>
             <ul class="list-group">
-                {% for application in applications %}
+                {% for data in applications %}
                     <li class="list-group-item">
-                        <h4>Job: {{ application.job.title }}</h4>
-                        <p><strong>Applicant:</strong> {{ application.applicant.username }}</p>
-                        <p><strong>Resume:</strong> <a href="{{ application.resume.url }}">Download Resume</a></p>
+                        <h4>Job: {{ data.application.job.title }}</h4>
+                        <p><strong>Applicant:</strong> {{ data.application.applicant.username }}</p>
+                        <p><strong>Resume:</strong> <a href="{{ data.application.resume.url }}">Download Resume</a></p>
                         <p><strong>Cover Letter:</strong> 
-                            <span class="cover-letter-preview">{{ application.cover_letter|truncatewords:20 }}</span>
-                            <span class="cover-letter-full d-none">{{ application.cover_letter }}</span>
+                            <span class="cover-letter-preview">{{ data.application.cover_letter|truncatewords:20 }}</span>
+                            <span class="cover-letter-full d-none">{{ data.application.cover_letter }}</span>
                             <button class="btn btn-link read-more-btn">Read more</button>
                         </p>
-                        <p><strong>Applied At:</strong> {{ application.applied_at }}</p>
+                        <p><strong>Applied At:</strong> {{ data.application.applied_at }}</p>
+                        <p><strong>Fit Score:</strong> {{ data.similarity_score|floatformat:2 }}%</p>
                     </li>
                 {% endfor %}
             </ul>
