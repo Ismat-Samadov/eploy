@@ -6,20 +6,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    
     <title>{% block title %}CareerHorizon{% endblock %}</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-NPPBBBSH42"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-NPPBBBSH42');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NPPBBBSH42"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-NPPBBBSH42');
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -31,6 +42,9 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'job_list' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'about' %}">About</a>
                 </li>
                 {% if user.is_authenticated %}
                     {% if user.user_type == 'HR' %}
@@ -75,7 +89,7 @@
             </ul>
         </div>
     </nav>
-    <div class="container mt-4">
+    <div class="content container mt-4">
         {% block content %}{% endblock %}
     </div>
 

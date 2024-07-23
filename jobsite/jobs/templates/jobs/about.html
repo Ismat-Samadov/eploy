@@ -1,0 +1,170 @@
+<!-- jobs/templates/jobs/about.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="about-container">
+        <div class="circle circle-one"></div>
+        <div class="content-container">
+            <h1 class="opacity">About CareerHorizon</h1>
+            <p>Welcome to CareerHorizon. We are dedicated to connecting job seekers with their dream jobs and helping recruiters find the best talent.</p>
+            <p>CareerHorizon LLC is an innovative company dedicated to consolidating job vacancies from various Azerbaijani job posting websites and providing a comprehensive platform for users to access these opportunities. 
+                CareerHorizon LLC operates a dynamic website, accessible at https://www.careerhorizon.llc/, which serves as a centralized hub for job seekers and human resources (HR) professionals in Azerbaijan. By aggregating job listings from multiple sources and enabling direct job postings by HR personnel, CareerHorizon LLC aims to streamline the job search process and enhance employment opportunities within the region.</p>
+        </div>
+        <div class="circle circle-two"></div>
+    </div>
+    <div class="theme-btn-container"></div>
+</section>
+
+<style>
+    :root {
+        --background: #1a1a2e;
+        --color: #d55252;
+        --primary-color: #0f3460;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        font-family: "poppins", sans-serif;
+        background: var(--background);
+        color: var(--color);
+        transition: background 0.2s ease;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color);
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .about-container {
+        position: relative;
+        max-width: 800px;
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .content-container {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .circle {
+        width: 6rem;
+        height: 6rem;
+        background: var(--primary-color);
+        border-radius: 50%;
+        position: absolute;
+    }
+
+    .circle-one {
+        top: 0;
+        left: 0;
+        transform: translate(-45%, -45%);
+    }
+
+    .circle-two {
+        bottom: 0;
+        right: 0;
+        transform: translate(45%, 45%);
+    }
+
+    .opacity {
+        opacity: 0.6;
+    }
+
+    .theme-btn-container {
+        position: absolute;
+        left: 0;
+        bottom: 1rem;
+    }
+
+    .theme-btn {
+        cursor: pointer;
+        transition: transform 0.3s ease-in;
+    }
+
+    .theme-btn:hover {
+        transform: scale(1.2);
+    }
+</style>
+
+<script>
+    const themes = [
+        {
+            background: "#1A1A2E",
+            color: "#FFFFFF",
+            primaryColor: "#0F3460"
+        },
+        {
+            background: "#461220",
+            color: "#FFFFFF",
+            primaryColor: "#E94560"
+        },
+        {
+            background: "#192A51",
+            color: "#FFFFFF",
+            primaryColor: "#967AA1"
+        },
+        {
+            background: "#F7B267",
+            color: "#000000",
+            primaryColor: "#F4845F"
+        },
+        {
+            background: "#F25F5C",
+            color: "#000000",
+            primaryColor: "#642B36"
+        },
+        {
+            background: "#231F20",
+            color: "#FFF",
+            primaryColor: "#BB4430"
+        }
+    ];
+
+    const setTheme = (theme) => {
+        const root = document.querySelector(":root");
+        root.style.setProperty("--background", theme.background);
+        root.style.setProperty("--color", theme.color);
+        root.style.setProperty("--primary-color", theme.primaryColor);
+    };
+
+    const displayThemeButtons = () => {
+        const btnContainer = document.querySelector(".theme-btn-container");
+        themes.forEach((theme) => {
+            const div = document.createElement("div");
+            div.className = "theme-btn";
+            div.style.cssText = `background: ${theme.background}; width: 25px; height: 25px`;
+            btnContainer.appendChild(div);
+            div.addEventListener("click", () => setTheme(theme));
+        });
+    };
+
+    displayThemeButtons();
+</script>
+{% endblock %}

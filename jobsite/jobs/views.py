@@ -195,6 +195,12 @@ def apply_job(request, job_id):
 def congrats(request):
     return render(request, 'jobs/congrats.html')
 
+
+
+def about(request):
+    return render(request, 'jobs/about.html')
+
+
 def company_description(request, company_id):
     company_jobs = JobPost.objects.filter(company_id=company_id, deleted=False)
     company_name = company_jobs.first().company if company_jobs.exists() else "Unknown Company"

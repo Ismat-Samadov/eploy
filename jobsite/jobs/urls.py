@@ -15,7 +15,8 @@ from .views import (
     job_search,
     user_dashboard,
     search_jobs_for_cv,
-    parse_cv_page
+    parse_cv_page,
+    about
 )
 from . import views
 
@@ -26,6 +27,7 @@ urlpatterns = [
     path('logout/', custom_logout, name='logout'),
     path('company/<int:company_id>/', views.company_description, name='company_description'),
     # path('profile/', views.user_profile, name='user_profile'),
+    path('about/', about, name='about'),  # Add this line for the About page
     path('jobs/profile/', views.user_profile, name='user_profile'),  # Ensure this is named 'user_profile'
     path('post-job/', post_job, name='post_job'),
     path('apply-job/<int:job_id>/', apply_job, name='apply_job'),
