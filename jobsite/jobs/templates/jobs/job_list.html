@@ -8,31 +8,22 @@
         <div class="form-container">
             <h1 class="opacity">Job Listings</h1>
             <form class="form-inline my-2" method="get" action="{% url 'job_list' %}">
-                <div class="input-group mb-3">
+                <div class="input-group mb-2">
                     <input type="search" class="form-control" placeholder="Search by job title" aria-label="Search by job title" name="job_title" value="{{ request.GET.job_title }}">
                 </div>
-                <div class="input-group mb-3">
+                <div class="input-group mb-2">
                     <input type="search" class="form-control" placeholder="Search by company" aria-label="Search by company" name="company" value="{{ request.GET.company }}">
                 </div>
-                <div class="input-group-append mb-3">
+                <div class="input-group-append mb-2">
                     <button class="btn btn-outline-success btn-block" type="submit">Search</button>
                 </div>
             </form>
             <ul class="list-group">
                 {% for job in jobs %}
-                    <li class="list-group-item mb-3">
-                        <h5>{{ job.title }}</h5>
-                        <h6 class="text-muted">{{ job.company }}</h6>
-                        <p>{{ job.description|truncatewords:20 }}</p>
-                        <p class="text-muted">{{ job.location }}</p>
-                        <div>
-                            {% if job.is_scraped %}
-                                <a href="{{ job.apply_link }}" class="btn btn-primary" target="_blank">Apply</a>
-                            {% else %}
-                                <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply</a>
-                            {% endif %}
-                        </div>
-                    </li>
+                    <a href="{% if job.is_scraped %}{{ job.apply_link }}{% else %}{% url 'apply_job' job.id %}{% endif %}" class="list-group-item mb-2 job-listing" target="_blank">
+                        <div class="job-title">{{ job.title }}</div>
+                        <div class="job-company">{{ job.company }}</div>
+                    </a>
                 {% endfor %}
             </ul>
 
@@ -98,7 +89,7 @@
     }
 
     h1 {
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
 
     .container {
@@ -110,7 +101,8 @@
     }
 
     .listings-container {
-        width: 100%;
+        width: 90%;
+        max-width: 800px; /* Set a max width for larger screens */
     }
 
     .form-container {
@@ -118,18 +110,18 @@
         box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
         border-radius: 10px;
         backdrop-filter: blur(20px);
-        padding: 2rem;
+        padding: 1.5rem;
         background-color: rgba(255, 255, 255, 0.1);
     }
 
     .form-container .input-group {
         width: 100%;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .form-container input,
     .form-container button {
-        padding: 14.5px;
+        padding: 10px;
         color: var(--color);
         outline: none;
         background-color: #9191911f;
@@ -137,7 +129,7 @@
         border-radius: 5px;
         font-weight: 500;
         letter-spacing: 0.8px;
-        font-size: 15px;
+        font-size: 13px;
         backdrop-filter: blur(15px);
     }
 
@@ -151,8 +143,8 @@
         white-space: nowrap;
         background-color: var(--primary-color);
         color: var(--color);
-        padding: 14.5px;
-        font-size: 18px;
+        padding: 10px;
+        font-size: 14px;
         letter-spacing: 1.5px;
         font-weight: bold;
         cursor: pointer;
@@ -164,45 +156,34 @@
         transform: scale(1.02);
     }
 
-    .circle {
-        width: 8rem;
-        height: 8rem;
-        background: var(--primary-color);
-        border-radius: 50%;
-        position: absolute;
+    .job-listing {
+        display: block;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: #0f3460;
+        color: white;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        margin-bottom: 1rem;
     }
 
-    .circle-one {
-        top: 0;
-        left: 0;
-        z-index: -1;
-        transform: translate(-45%, -45%);
+    .job-listing:hover {
+        background-color: #1f456e;
+        text-decoration: none;
+        transform: scale(1.02);
     }
 
-    .circle-two {
-        bottom: 0;
-        right: 0;
-        z-index: -1;
-        transform: translate(45%, 45%);
+    .job-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+
+    .job-company {
+        font-size: 1rem;
+        opacity: 0.8;
     }
 
     .opacity {
         opacity: 0.6;
-    }
-
-    .theme-btn-container {
-        position: absolute;
-        left: 0;
-        bottom: 2rem;
-    }
-
-    .theme-btn {
-        cursor: pointer;
-        transition: all 0.3s ease-in;
-    }
-
-    .theme-btn:hover {
-        width: 40px !important;
     }
 
     @keyframes wobble {
@@ -217,6 +198,35 @@
         }
         100% {
             transform: scale(1);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding-top: 3rem;
+        }
+
+        .form-container {
+            padding: 1rem;
+        }
+
+        .form-container input,
+        .form-container button {
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .form-container .btn {
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .job-title {
+            font-size: 1rem;
+        }
+
+        .job-company {
+            font-size: 0.875rem;
         }
     }
 </style>
