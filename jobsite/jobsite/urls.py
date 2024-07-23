@@ -10,6 +10,7 @@ urlpatterns = [
     path('', redirect_to_jobs, name='home'),
     path('admin/', admin.site.urls),
     path('jobs/', include('jobs.urls')),
+    path('blog/', include('blog.urls')),
     path('test-openai/', test_openai_api, name='test_openai_api'),
 ]
 

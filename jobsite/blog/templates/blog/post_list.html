@@ -1,0 +1,16 @@
+{% extends 'jobs/base.html' %}
+
+{% block title %}Blog{% endblock %}
+
+{% block content %}
+<h1>Blog Posts</h1>
+<a class="btn btn-primary" href="{% url 'post_new' %}">New Post</a>
+<ul>
+    {% for post in posts %}
+    <li>
+        <a href="{% url 'post_detail' post.pk %}">{{ post.title }}</a>
+        <small>by {{ post.author }} on {{ post.created_at }}</small>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

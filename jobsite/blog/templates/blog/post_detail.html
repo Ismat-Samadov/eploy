@@ -1,0 +1,14 @@
+{% extends 'jobs/base.html' %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ post.title }}</h1>
+<p>{{ post.content }}</p>
+<small>by {{ post.author }} on {{ post.created_at }}</small>
+{% if user == post.author %}
+<a class="btn btn-primary" href="{% url 'post_edit' post.pk %}">Edit</a>
+<a class="btn btn-danger" href="{% url 'post_delete' post.pk %}">Delete</a>
+{% endif %}
+<a class="btn btn-secondary" href="{% url 'post_list' %}">Back to Blog</a>
+{% endblock %}
