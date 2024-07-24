@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'jobs',
     'blog',
+    'channels',
+    'chat',
     'whitenoise.runserver_nostatic',
     'storages',
 ]
@@ -51,7 +53,21 @@ TEMPLATES = [
         },
     },
 ]
+
+ASGI_APPLICATION = 'jobsite.asgi.application'
+
 WSGI_APPLICATION = 'jobsite.wsgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+
 DATABASES = {
     'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)
 }

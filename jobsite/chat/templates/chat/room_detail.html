@@ -1,0 +1,40 @@
+{% extends 'jobs/base.html' %}
+
+{% block title %}{{ room_name }}{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <h1 class="opacity">{{ room_name }}</h1>
+    <div id="chat-log"></div>
+    <form id="chat-form">
+        <input type="text" id="chat-message-input" autocomplete="off" placeholder="Type a message..." />
+        <input type="submit" id="chat-message-submit" value="Send" />
+    </form>
+</section>
+
+<script>
+    const roomName = "{{ room_name }}";
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/' + encodeURIComponent(roomName) + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        document.querySelector('#chat-log').innerHTML += ('<div>' + data.message + '</div>');
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-form').onsubmit = function(e) {
+        e.preventDefault();
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}
