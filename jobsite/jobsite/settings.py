@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'blog',
     'channels',
     'chat',
+    'whitenoise',
     'whitenoise.runserver_nostatic',
     'storages',
 ]
