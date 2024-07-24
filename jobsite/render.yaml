@@ -38,6 +38,6 @@ services:
       - key: GCS_CLIENT_CERT_URL
         fromFile: .env
       - key: DJANGO_SETTINGS_MODULE
-        value: .env
+        value: jobsite.settings
       - key: REDIS_URL
-        value: .env
+        value: rediss://red-cqge05iju9rs73ccdgg0:xaeKQoMyidu7laNl8AmZMAjolgrjogZ9@oregon-redis.render.com:6379
