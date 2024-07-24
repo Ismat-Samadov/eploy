@@ -40,4 +40,4 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: jobsite.settings
       - key: REDIS_URL
-        value: rediss://red-cqge05iju9rs73ccdgg0:xaeKQoMyidu7laNl8AmZMAjolgrjogZ9@oregon-redis.render.com:6379
+        fromFile: .env
