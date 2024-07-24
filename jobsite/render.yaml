@@ -7,7 +7,7 @@ services:
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
       python manage.py migrate"
-    startCommand: "gunicorn jobsite.wsgi"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT jobsite.asgi:application"
     envVars:
       - key: DATABASE_URL
         fromFile: .env
@@ -37,3 +37,7 @@ services:
         fromFile: .env
       - key: GCS_CLIENT_CERT_URL
         fromFile: .env
+      - key: DJANGO_SETTINGS_MODULE
+        value: .env
+      - key: REDIS_URL
+        value: .env
