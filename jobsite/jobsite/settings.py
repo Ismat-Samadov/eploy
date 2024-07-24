@@ -125,6 +125,7 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
 })
 
 OPENAI_API_KEY = config('OPENAI_API_KEY')
+REDIS_URL = config('REDIS_URL')
 
 EMAIL_BACKEND = config('EMAIL_BACKEND')
 EMAIL_HOST = config('EMAIL_HOST')
@@ -133,4 +134,3 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
-REDIS_URL = config('REDIS_URL')
