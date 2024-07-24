@@ -17,3 +17,12 @@ def room_list(request):
 def room_detail(request, room_name):
     room = Room.objects.get(name=room_name)
     return render(request, 'chat/room_detail.html', {'room_name': room_name, 'room': room})
+
+
+def room(request, room_name):
+    room, created = Room.objects.get_or_create(name=room_name)
+    messages = Message.objects.filter(room=room).order_by('timestamp')
+    return render(request, 'chat/room.html', {
+        'room_name': room_name,
+        'messages': messages,
+    })
