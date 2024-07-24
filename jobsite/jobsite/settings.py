@@ -1,22 +1,26 @@
-# settings.py
 from pathlib import Path
 import os
 from decouple import config
 import dj_database_url
 from google.oauth2 import service_account
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['.onrender.com', 
-                 'careerhorizon.onrender.com', 
-                 '127.0.0.1', 
-                 'localhost',
-                 'careerhorizon.llc',
-                 'www.careerhorizon.llc']
+ALLOWED_HOSTS = [
+    '.onrender.com', 
+    'careerhorizon.onrender.com', 
+    '127.0.0.1', 
+    'localhost',
+    'careerhorizon.llc',
+    'www.careerhorizon.llc'
+]
+
 CSRF_TRUSTED_ORIGINS = [
     'https://www.careerhorizon.llc',
 ]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -31,6 +35,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'storages',
 ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -41,7 +46,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 ROOT_URLCONF = 'jobsite.urls'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -59,7 +66,6 @@ TEMPLATES = [
 ]
 
 ASGI_APPLICATION = 'jobsite.asgi.application'
-
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
 CHANNEL_LAYERS = {
@@ -71,33 +77,38 @@ CHANNEL_LAYERS = {
     },
 }
 
-
 DATABASES = {
     'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)
 }
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_REDIRECT_URL = 'job_list'
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 AUTH_USER_MODEL = 'jobs.CustomUser'
+
 GS_BUCKET_NAME = config('GS_BUCKET_NAME')
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
