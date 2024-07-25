@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'jobs',
     'blog',
     'channels',
-    'chat',
     'whitenoise',
     'whitenoise.runserver_nostatic',
     'storages',
@@ -69,14 +68,7 @@ TEMPLATES = [
 ASGI_APPLICATION = 'jobsite.asgi.application'
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [config('REDIS_URL')],
-        },
-    },
-}
+
 
 DATABASES = {
     'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)
@@ -126,7 +118,6 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
 })
 
 OPENAI_API_KEY = config('OPENAI_API_KEY')
-REDIS_URL = config('REDIS_URL')
 
 EMAIL_BACKEND = config('EMAIL_BACKEND')
 EMAIL_HOST = config('EMAIL_HOST')
