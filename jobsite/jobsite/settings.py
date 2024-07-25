@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'jobs',
     'blog',
-    'channels',
+    'ckeditor',
+    'ckeditor_uploader',
     'whitenoise',
     'whitenoise.runserver_nostatic',
     'storages',
@@ -68,6 +69,19 @@ TEMPLATES = [
 ASGI_APPLICATION = 'jobsite.asgi.application'
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'uploadimage',
+            'uploadfile',
+            'image2',
+        ]),
+    },
+}
 
 
 DATABASES = {
