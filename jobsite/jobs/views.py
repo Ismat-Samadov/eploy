@@ -24,8 +24,10 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import numpy as np
+from django.views.generic import DetailView
 from django.core.exceptions import ValidationError
 from .utils import calculate_similarity
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -42,6 +44,15 @@ logger.addHandler(console_handler)
 def redirect_to_jobs(request):
     return redirect('job_list')
 
+
+class JobDetailView(DetailView):
+    model = JobPost
+    template_name = 'jobs/job_detail.html'
+    context_object_name = 'job'
+
+    def get_object(self):
+        id_ = self.kwargs.get("id")
+        return get_object_or_404(JobPost, id=id_)
 @login_required
 def hr_applicants(request):
     if request.user.user_type != 'HR':
@@ -514,3 +525,11 @@ def parse_cv_page(request):
         'job_search_form': job_search_form,
         'resume_upload_form': resume_upload_form
     })
+
+def robots_txt(request):
+    lines = [
+        "User-Agent: *",
+        "Disallow: /admin/",
+        "Sitemap: https://www.careerhorizon.llc/sitemap.xml"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
