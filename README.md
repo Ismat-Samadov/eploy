@@ -1,4 +1,4 @@
-# CareerHorizon
+### CareerHorizon
 
 CareerHorizon is a Django-based job posting website where employees can apply for jobs and HRs can post jobs.
 
@@ -30,13 +30,31 @@ CareerHorizon is a Django-based job posting website where employees can apply fo
 
 4. Set up the environment variables by creating a `.env` file in the root directory and adding your credentials:
     ```dotenv
+    DATABASE_URL=your-database-url
     SECRET_KEY=your-secret-key
     DEBUG=True
-    DATABASE_NAME=your-database-name
-    DATABASE_USER=your-database-user
-    DATABASE_PASSWORD=your-database-password
-    DATABASE_HOST=your-database-host
-    DATABASE_PORT=your-database-port
+    GS_BUCKET_NAME=your-bucket-name
+    GCS_TYPE=service_account
+    GCS_PROJECT_ID=your-project-id
+    GCS_PRIVATE_KEY_ID=your-private-key-id
+    GCS_PRIVATE_KEY="your-private-key"
+    GCS_CLIENT_EMAIL=your-client-email
+    GCS_CLIENT_ID=your-client-id
+    GCS_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+    GCS_TOKEN_URI=https://oauth2.googleapis.com/token
+    GCS_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+    GCS_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/your-client-email
+    ACCESS_TOKEN=your-access-token
+    OPENAI_API_KEY=your-openai-api-key
+    DJANGO_SETTINGS_MODULE=jobsite.settings
+    EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+    EMAIL_HOST=smtp.office365.com
+    EMAIL_PORT=587
+    EMAIL_USE_TLS=True
+    EMAIL_USE_SSL=False
+    EMAIL_HOST_USER=your-email
+    EMAIL_HOST_PASSWORD=your-email-password
+    DEFAULT_FROM_EMAIL=your-email
     ```
 
 5. Run the initial migrations:
@@ -139,4 +157,3 @@ This will create fake HR users, job posts, and applications.
 3. Commit your changes (`git commit -m 'Add some feature'`)
 4. Push to the branch (`git push origin feature-branch`)
 5. Open a pull request
-
