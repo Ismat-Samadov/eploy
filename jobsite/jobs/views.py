@@ -526,6 +526,9 @@ def parse_cv_page(request):
         'resume_upload_form': resume_upload_form
     })
 
+
+
+
 def robots_txt(request):
     lines = [
         "User-Agent: *",
