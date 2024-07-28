@@ -11,8 +11,79 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+    <style>
+        :root {
+            --background: #1a1a2e;
+            --color: #d55252;
+            --primary-color: #0f3460;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: var(--background);
+            color: var(--color);
+            transition: background 0.2s ease;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--color);
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .content {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(20px);
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .theme-btn-container {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .theme-btn {
+            cursor: pointer;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            transition: transform 0.3s ease-in;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.2);
+        }
+    </style>
 </head>
 <body>
+    <div class="theme-btn-container"></div>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="{% url 'job_list' %}">CareerHorizon</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,39 +143,76 @@
             </ul>
         </div>
     </nav>
-    <div class="content container mt-4">
-        <h1>Privacy Policy</h1>
-        <p>Last updated: 27.07.2024</p>
+    <div class="container mt-4">
+        <div class="content">
+            <h1>Privacy Policy</h1>
+            <p>Last updated: 27.07.2024</p>
 
-        <h2>Introduction</h2>
-        <p>Welcome to CareerHorizon. We are committed to protecting and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website [careerhorizon.llc], use our services, or interact with us.</p>
+            <h2>Introduction</h2>
+            <p>Welcome to CareerHorizon. We are committed to protecting and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website [careerhorizon.llc], use our services, or interact with us.</p>
 
-        <h2>Information We Collect</h2>
-        <p>We may collect and process the following data about you:</p>
-        <ul>
-            <li><strong>Personal Identification Information:</strong> Name, email address, phone number, etc.</li>
-            <li><strong>Technical Data:</strong> IP address, browser type and version, time zone setting, browser plug-in types and versions, operating system and platform, and other technology on the devices you use to access this website.</li>
-            <li><strong>Usage Data:</strong> Information about how you use our website, products, and services.</li>
-            <li><strong>Marketing and Communications Data:</strong> Your preferences in receiving marketing from us and your communication preferences.</li>
-        </ul>
+            <h2>Information We Collect</h2>
+            <p>We may collect and process the following data about you:</p>
+            <ul>
+                <li><strong>Personal Identification Information:</strong> Name, email address, phone number, etc.</li>
+                <li><strong>Technical Data:</strong> IP address, browser type and version, time zone setting, browser plug-in types and versions, operating system and platform, and other technology on the devices you use to access this website.</li>
+                <li><strong>Usage Data:</strong> Information about how you use our website, products, and services.</li>
+                <li><strong>Marketing and Communications Data:</strong> Your preferences in receiving marketing from us and your communication preferences.</li>
+            </ul>
 
-        <h2>How We Use Your Information</h2>
-        <p>We use the information we collect in the following ways:</p>
-        <ul>
-            <li>To provide, operate, and maintain our services.</li>
-            <li>To improve, personalize, and expand our services.</li>
-            <li>To understand and analyze how you use our services.</li>
-            <li>To develop new products, services, features, and functionality.</li>
-        </ul>
+            <h2>How We Use Your Information</h2>
+            <p>We use the information we collect in the following ways:</p>
+            <ul>
+                <li>To provide, operate, and maintain our services.</li>
+                <li>To improve, personalize, and expand our services.</li>
+                <li>To understand and analyze how you use our services.</li>
+                <li>To develop new products, services, features, and functionality.</li>
+            </ul>
 
-        <h2>Changes to This Privacy Policy</h2>
-        <p>We may update this Privacy Policy from time to time, including to reflect changes to our practices or for other operational, legal, or regulatory reasons. We will post the revised Privacy Policy on the Site, update the "Last updated" date and take any other steps required by applicable law.</p>
+            <h2>Changes to This Privacy Policy</h2>
+            <p>We may update this Privacy Policy from time to time, including to reflect changes to our practices or for other operational, legal, or regulatory reasons. We will post the revised Privacy Policy on the Site, update the "Last updated" date and take any other steps required by applicable law.</p>
 
-        <h2>Contact</h2>
-        <p>Should you have any questions about our privacy practices or this Privacy Policy, or if you would like to exercise any of the rights available to you, email us at ismatsamadov@careerhorizon.llc or contact us at Baku, Baku, AZ 1005, Azerbaijan.</p>
+            <h2>Contact</h2>
+            <p>Should you have any questions about our privacy practices or this Privacy Policy, or if you would like to exercise any of the rights available to you, email us at ismatsamadov@careerhorizon.llc .</p>
+        </div>
     </div>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+    <script>
+        const themes = [
+            {
+                background: "#1A1A2E",
+                color: "#FFFFFF",
+                primaryColor: "#0F3460"
+            },
+            {
+                background: "#461220",
+                color: "#FFFFFF",
+                primaryColor: "#E94560"
+            },
+            {
+                background: "#192A51",
+                color: "#FFFFFF",
+                primaryColor: "#967AA1"
+            },
+            {
+                background: "#F7B267",
+                color: "#000000",
+                primaryColor: "#F4845F"
+            },
+            {
+                background: "#F25F5C",
+                color: "#000000",
+                primaryColor: "#642B36"
+            },
+            {
+                background: "#231F20",
+                color: "#FFF",
+                primaryColor: "#BB4430"
+            }
+        ];
+
+        const setTheme = (theme) => {
+            const root =
