@@ -1,0 +1,45 @@
+name: Scheduled Scraper Job
+
+on:
+  schedule:
+    # - cron: '0 */5 * * *' # Runs every 5 hours
+    # - cron: '*/1 * * * *' # Runs every minute for testing purposes
+
+jobs:
+  scrape:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install virtualenv
+      run: pip install virtualenv
+
+    - name: Create virtual environment
+      run: virtualenv venv
+
+    - name: Activate virtual environment and install dependencies
+      shell: bash
+      run: |
+        source venv/bin/activate
+        pip install -r scraper/requirements.txt
+
+    - name: Run parser and save to database
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        EMAIL: ${{ secrets.EMAIL }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+      shell: bash
+      run: |
+        source venv/bin/activate
+        python scraper/parser.py
