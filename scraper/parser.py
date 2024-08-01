@@ -77,8 +77,48 @@ class JobScraper:
                 logger.warning("Vacancies section not found on the Azercell page.")
         return pd.DataFrame(columns=['company', 'vacancy', 'location', 'apply_link'])
 
+    def parse_pashabank(self):
+        logger.info("Scraping Pashabank")
+        url = "https://careers.pashabank.az/az/page/vakansiyalar?q=&branch="
+        response = self.fetch_url(url)
+
+        if response:
+            # Retry the request if the initial response is a 503 (Service Unavailable)
+            if response.status_code == 503:
+                logger.warning("Service unavailable for Pashabank (status code 503). Retrying...")
+                response = self.fetch_url(url)
+
+            if response and response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Find all job listing items
+                job_listings = soup.find_all('div', class_='what-we-do-item')
+
+                # Extract job details: vacancy, location, and apply link
+                vacancy_list = [listing.find('h3').text.strip() for listing in job_listings]
+                location_list = [listing.find('span').text.strip() for listing in job_listings]
+                apply_link_list = [listing.find('a')['href'].strip() for listing in job_listings]
+
+                # Create DataFrame with the extracted data
+                df = pd.DataFrame({
+                    'company': 'pashabank',
+                    'vacancy': vacancy_list,
+                    'location': location_list,
+                    'apply_link': apply_link_list
+                })
+
+                # Remove any duplicates based on 'company', 'vacancy', 'location', and 'apply_link'
+                df = df.drop_duplicates(subset=['company', 'vacancy', 'location', 'apply_link'])
+
+                logger.info("Pashabank Scraping completed")
+                return df
+
+        # Return an empty DataFrame if scraping fails
+        return pd.DataFrame(columns=['company', 'vacancy', 'location', 'apply_link'])
+
     def get_data(self):
-        methods = [self.parse_azercell]
+        methods = [self.parse_azercell,
+                   self.parse_pashabank]
         results = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_method = {executor.submit(method): method for method in methods}
@@ -98,53 +138,45 @@ class JobScraper:
             self.data = pd.DataFrame(columns=['company', 'vacancy', 'location', 'apply_link', 'scrape_date'])
 
         return self.data
-
-    def fetch_existing_jobs(self):
-        query = """
-        SELECT title AS vacancy, company
-        FROM jobs_jobpost
-        WHERE is_scraped = TRUE
-        """
-        return pd.read_sql_query(query, self.engine)
-
+    
     def save_to_db(self, df, batch_size=100):
         try:
-            existing_jobs = self.fetch_existing_jobs()
-            new_jobs = df.merge(existing_jobs, on=['vacancy', 'company'], how='left', indicator=True)
-            new_jobs = new_jobs[new_jobs['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-            if new_jobs.empty:
-                logger.info("No new jobs to insert.")
-                return
-
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
-                    insert_query = sql.SQL("""
-                        INSERT INTO jobs_jobpost (title, description, company, location, posted_by_id, is_scraped, is_premium, premium_days, priority_level, posted_at, deleted, apply_link)
-                        VALUES %s
-                    """)
+                    # Iterate over the rows in the DataFrame
+                    for _, row in df.iterrows():
+                        # Check if the entry already exists
+                        check_query = sql.SQL("""
+                            SELECT 1 FROM jobs_jobpost
+                            WHERE company = %s AND title = %s AND apply_link = %s
+                        """)
+                        cur.execute(check_query, (row['company'], row['vacancy'], row['apply_link']))
+                        exists = cur.fetchone()
 
-                    data_tuples = [
-                        (
-                            row['vacancy'][:500],
-                            '',
-                            row['company'][:500],
-                            row['location'][:500],
-                            1,
-                            True,
-                            False,
-                            0,
-                            99,
-                            datetime.now(),
-                            False,
-                            row['apply_link'][:1000]
-                        )
-                        for _, row in new_jobs.iterrows()
-                    ]
-
-                    extras.execute_values(cur, insert_query, data_tuples, template=None, page_size=batch_size)
-                    conn.commit()
-                    logger.info("Data successfully saved to the database.")
+                        # If the entry does not exist, insert it
+                        if not exists:
+                            insert_query = sql.SQL("""
+                                INSERT INTO jobs_jobpost (title, description, company, location, posted_by_id, is_scraped, is_premium, premium_days, priority_level, posted_at, deleted, apply_link)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            """)
+                            cur.execute(insert_query, (
+                                row['vacancy'][:500],
+                                '',
+                                row['company'][:500],
+                                row['location'][:500],
+                                1,  # assuming posted_by_id is 1
+                                True,
+                                False,
+                                0,
+                                99,
+                                datetime.now(),  # current datetime as posted_at
+                                False,
+                                row['apply_link'][:1000]
+                            ))
+                            conn.commit()
+                            logger.info(f"Inserted: {row['vacancy']} at {row['company']}")
+                        else:
+                            logger.info(f"Skipped existing entry: {row['vacancy']} at {row['company']}")
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
 
@@ -162,3 +194,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
