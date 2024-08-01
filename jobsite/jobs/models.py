@@ -1,4 +1,3 @@
-# jobs/models.py
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -15,6 +14,11 @@ class JobPost(models.Model):
     description = models.TextField()
     company = models.CharField(max_length=500)
     location = models.CharField(max_length=500)
+    function = models.CharField(max_length=500, blank=True, null=True)  # New field for job function
+    schedule = models.CharField(max_length=500, blank=True, null=True)  # New field for work schedule
+    deadline = models.DateField(blank=True, null=True)  # New field for application deadline
+    responsibilities = models.TextField(blank=True, null=True)  # New field for job responsibilities
+    requirements = models.TextField(blank=True, null=True)  # New field for job requirements
     posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     posted_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
