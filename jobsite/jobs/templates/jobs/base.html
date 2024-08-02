@@ -2,22 +2,22 @@
 {% load custom_tags %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CareerHorizon{% endblock %}</title>
-    <meta name="description" content="{% block description %}CareerHorizon is your go-to job platform...{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}jobs, work, careers, elan, employment{% endblock %}">
+    <meta name="description" content="{% block description %}CareerHorizon is your go-to platform for job opportunities in Azerbaijan. Find jobs, work, careers, iş elanları, vakansiyalar, and employment across various sectors in Baku and beyond.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}jobsearch, jobsearch az, job search, vakansiya 2024, iş elanları, jobs in Baku, career opportunities, employment in Azerbaijan, iş elanları 2024, vakansiyalar, socar,  boss az{% endblock %}">
     <link rel="canonical" href="{{ request.build_absolute_uri }}">
-    <meta property="og:title" content="{% block og_title %}CareerHorizon{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Find your dream job on CareerHorizon...{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}CareerHorizon - Find Jobs in Azerbaijan{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Explore job listings, career opportunities, and vakansiyalar in Azerbaijan. Start your job search today!{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{% static 'images/logo.png' %}{% endblock %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}CareerHorizon{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Find your dream job on CareerHorizon...{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}CareerHorizon - Find Your Dream Job{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Discover your next career move with CareerHorizon. Browse job listings and apply now.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{% static 'images/logo.png' %}{% endblock %}">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
@@ -39,9 +39,14 @@
             margin: 0;
             display: flex;
             flex-direction: column;
+            font-family: "Poppins", sans-serif;
+            background: #f8f9fa;
         }
         .content {
             flex: 1;
+        }
+        .navbar {
+            margin-bottom: 20px;
         }
     </style>
 </head>
