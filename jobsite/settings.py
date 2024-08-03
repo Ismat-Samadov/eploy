@@ -4,25 +4,19 @@ from decouple import config
 import dj_database_url
 from google.oauth2 import service_account
 from google.cloud import secretmanager
-import logging  # Add this import
+import logging
 from pathlib import Path
 
 def get_secret(secret_name):
-    project_id = os.getenv("GCS_PROJECT_ID")
-    if project_id is None:
-        logging.error("GCS_PROJECT_ID environment variable is not set.")
-    else:
-        logging.info(f"Using project ID: {project_id}")
-
+    """
+    Access the secret value from Google Cloud Secret Manager.
+    """
+    project_id = "jobs-428816"
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    response = client.access_secret_version(request={"name": name})
+    return response.payload.data.decode("UTF-8")
 
-    try:
-        response = client.access_secret_version(request={"name": name})
-        return response.payload.data.decode('UTF-8')
-    except Exception as e:
-        logging.error(f"Error retrieving secret {secret_name}: {str(e)}")
-        raise
     
 BASE_DIR = Path(__file__).resolve().parent.parent
 
