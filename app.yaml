@@ -1,0 +1,64 @@
+runtime: python311
+env: standard 
+entrypoint: gunicorn -b :$PORT --workers 3 --timeout 120 jobsite.wsgi:application
+
+resources:
+  cpu: 4
+  memory_gb: 4
+  disk_size_gb: 10
+
+env_variables:
+  DJANGO_SETTINGS_MODULE: jobsite.settings
+  # Remove hardcoded secrets and use Secret Manager
+  SECRET_KEY: '{{sm://[PROJECT_ID]/SECRET_KEY}}'
+  DEBUG: '{{sm://[PROJECT_ID]/DEBUG}}'
+  ALLOWED_HOSTS: '{{sm://[PROJECT_ID]/ALLOWED_HOSTS}}'
+  DATABASE_URL: '{{sm://[PROJECT_ID]/DATABASE_URL}}'
+  GS_BUCKET_NAME: '{{sm://[PROJECT_ID]/GS_BUCKET_NAME}}'
+  GCS_TYPE: '{{sm://[PROJECT_ID]/GCS_TYPE}}'
+  GCS_PROJECT_ID: '{{sm://[PROJECT_ID]/GCS_PROJECT_ID}}'
+  GCS_PRIVATE_KEY_ID: '{{sm://[PROJECT_ID]/GCS_PRIVATE_KEY_ID}}'
+  GCS_PRIVATE_KEY: '{{sm://[PROJECT_ID]/GCS_PRIVATE_KEY}}'
+  GCS_CLIENT_EMAIL: '{{sm://[PROJECT_ID]/GCS_CLIENT_EMAIL}}'
+  GCS_CLIENT_ID: '{{sm://[PROJECT_ID]/GCS_CLIENT_ID}}'
+  GCS_AUTH_URI: '{{sm://[PROJECT_ID]/GCS_AUTH_URI}}'
+  GCS_TOKEN_URI: '{{sm://[PROJECT_ID]/GCS_TOKEN_URI}}'
+  GCS_AUTH_PROVIDER_CERT_URL: '{{sm://[PROJECT_ID]/GCS_AUTH_PROVIDER_CERT_URL}}'
+  GCS_CLIENT_CERT_URL: '{{sm://[PROJECT_ID]/GCS_CLIENT_CERT_URL}}'
+  ACCESS_TOKEN: '{{sm://[PROJECT_ID]/ACCESS_TOKEN}}'
+  OPENAI_API_KEY: '{{sm://[PROJECT_ID]/OPENAI_API_KEY}}'
+  EMAIL_BACKEND: '{{sm://[PROJECT_ID]/EMAIL_BACKEND}}'
+  EMAIL_HOST: '{{sm://[PROJECT_ID]/EMAIL_HOST}}'
+  EMAIL_PORT: '{{sm://[PROJECT_ID]/EMAIL_PORT}}'
+  EMAIL_USE_TLS: '{{sm://[PROJECT_ID]/EMAIL_USE_TLS}}'
+  EMAIL_USE_SSL: '{{sm://[PROJECT_ID]/EMAIL_USE_SSL}}'
+  EMAIL_HOST_USER: '{{sm://[PROJECT_ID]/EMAIL_HOST_USER}}'
+  EMAIL_HOST_PASSWORD: '{{sm://[PROJECT_ID]/EMAIL_HOST_PASSWORD}}'
+  DEFAULT_FROM_EMAIL: '{{sm://[PROJECT_ID]/DEFAULT_FROM_EMAIL}}'
+
+beta_settings:
+  cloud_sql_instances: jobs-428816:us-central
+
+instance_class: F1
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 2
+  target_cpu_utilization: 0.8
+  min_pending_latency: automatic
+  max_pending_latency: automatic
+
+handlers:
+- url: /static
+  static_dir: static/
+  
+- url: /.*
+  script: auto
+
+health_check:
+  enable_health_check: true
+  check_interval_sec: 30
+  timeout_sec: 4
+  unhealthy_threshold: 2
+  healthy_threshold: 2
+  restart_threshold: 60

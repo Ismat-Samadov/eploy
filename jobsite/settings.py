@@ -3,21 +3,39 @@ import os
 from decouple import config
 import dj_database_url
 from google.oauth2 import service_account
+from google.cloud import secretmanager
+import logging  # Add this import
+from pathlib import Path
 
+def get_secret(secret_name):
+    project_id = os.getenv("GCS_PROJECT_ID")
+    if project_id is None:
+        logging.error("GCS_PROJECT_ID environment variable is not set.")
+    else:
+        logging.info(f"Using project ID: {project_id}")
+
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+
+    try:
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode('UTF-8')
+    except Exception as e:
+        logging.error(f"Error retrieving secret {secret_name}: {str(e)}")
+        raise
+    
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = get_secret('SECRET_KEY')
+DEBUG = get_secret('DEBUG') == 'True'
 
 ALLOWED_HOSTS = [
-    '.onrender.com',
-    'careerhorizon.onrender.com',
     '127.0.0.1',
     'localhost',
     'careerhorizon.llc',
     'www.careerhorizon.llc',
-    '.appspot.com',  # Add App Engine dynamic subdomain
+    '.appspot.com',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -100,13 +118,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Email settings
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+EMAIL_BACKEND = get_secret('EMAIL_BACKEND')  # Update the secret name to match
+EMAIL_HOST = get_secret('EMAIL_HOST')
+EMAIL_PORT = int(get_secret('EMAIL_PORT'))
+EMAIL_USE_TLS = get_secret('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = get_secret('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = get_secret('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = get_secret('DEFAULT_FROM_EMAIL')
 
 # Custom user model
 AUTH_USER_MODEL = 'jobs.CustomUser'
@@ -121,20 +139,21 @@ AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Google Cloud Storage
-GS_BUCKET_NAME = config('GS_BUCKET_NAME')
+GS_BUCKET_NAME = get_secret('GS_BUCKET_NAME')
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
-    "type": config('GCS_TYPE'),
-    "project_id": config('GCS_PROJECT_ID'),
-    "private_key_id": config('GCS_PRIVATE_KEY_ID'),
-    "private_key": config('GCS_PRIVATE_KEY').replace('\\n', '\n'),
-    "client_email": config('GCS_CLIENT_EMAIL'),
-    "client_id": config('GCS_CLIENT_ID'),
-    "auth_uri": config('GCS_AUTH_URI'),
-    "token_uri": config('GCS_TOKEN_URI'),
-    "auth_provider_x509_cert_url": config('GCS_AUTH_PROVIDER_CERT_URL'),
-    "client_x509_cert_url": config('GCS_CLIENT_CERT_URL')
+    "type": get_secret('GCS_TYPE'),
+    "project_id": get_secret('GCS_PROJECT_ID'),
+    "private_key_id": get_secret('GCS_PRIVATE_KEY_ID'),
+    "private_key": get_secret('GCS_PRIVATE_KEY').replace('\\n', '\n'),
+    "client_email": get_secret('GCS_CLIENT_EMAIL'),
+    "client_id": get_secret('GCS_CLIENT_ID'),
+    "auth_uri": get_secret('GCS_AUTH_URI'),
+    "token_uri": get_secret('GCS_TOKEN_URI'),
+    "auth_provider_x509_cert_url": get_secret('GCS_AUTH_PROVIDER_CERT_URL'),
+    "client_x509_cert_url": get_secret('GCS_CLIENT_CERT_URL')
 })
 
 # OpenAI API Key
-OPENAI_API_KEY = config('OPENAI_API_KEY')
+OPENAI_API_KEY = get_secret('OPENAI_API_KEY')
+ACCESS_TOKEN = get_secret('ACCESS_TOKEN')
