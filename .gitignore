@@ -1,4 +1,5 @@
 .venv
+*.yaml
 .vscode
 .env
 .export

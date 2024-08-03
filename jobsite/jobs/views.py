@@ -38,6 +38,8 @@ console_handler.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
+applications = JobApplication.objects.all().order_by('id')
+applications_paginator = Paginator(applications, 5)
 
 logger.addHandler(console_handler)
 
@@ -528,6 +530,11 @@ def parse_cv_page(request):
 
 
 
+def health_check(request):
+    return HttpResponse('OK', status=200)
+
+def start_check(request):
+    return HttpResponse('Starting', status=200)
 
 def robots_txt(request):
     lines = [

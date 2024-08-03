@@ -5,22 +5,26 @@ import dj_database_url
 from google.oauth2 import service_account
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Security settings
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
-    '.onrender.com', 
-    'careerhorizon.onrender.com', 
-    '127.0.0.1', 
+    '.onrender.com',
+    'careerhorizon.onrender.com',
+    '127.0.0.1',
     'localhost',
     'careerhorizon.llc',
-    'www.careerhorizon.llc'
+    'www.careerhorizon.llc',
+    '.appspot.com',  # Add App Engine dynamic subdomain
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://www.careerhorizon.llc',
 ]
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,7 +34,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
     'jobs',
-    'whitenoise',
     'whitenoise.runserver_nostatic',
     'storages',
 ]
@@ -64,13 +67,14 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = 'jobsite.asgi.application'
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
+# Database configuration
 DATABASES = {
     'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)
 }
 
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -78,27 +82,45 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
 
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Email settings
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
+# Custom user model
+AUTH_USER_MODEL = 'jobs.CustomUser'
+
+# Login settings
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_REDIRECT_URL = 'job_list'
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-AUTH_USER_MODEL = 'jobs.CustomUser'
 
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Google Cloud Storage
 GS_BUCKET_NAME = config('GS_BUCKET_NAME')
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
@@ -114,12 +136,5 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
     "client_x509_cert_url": config('GCS_CLIENT_CERT_URL')
 })
 
+# OpenAI API Key
 OPENAI_API_KEY = config('OPENAI_API_KEY')
-
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
