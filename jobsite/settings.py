@@ -23,6 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = get_secret('SECRET_KEY')
 DEBUG = get_secret('DEBUG') == 'True'
+ 
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -151,3 +155,17 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
 # OpenAI API Key
 OPENAI_API_KEY = get_secret('OPENAI_API_KEY')
 ACCESS_TOKEN = get_secret('ACCESS_TOKEN')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
