@@ -1,24 +1,83 @@
 <!-- jobs/templates/jobs/job_applicants.html -->
 
-{% extends 'jobs/base.html' %}
-
-{% block title %}Applicants for {{ job.title }}{% endblock %}
-
-{% block content %}
-<h1>Applicants for {{ job.title }}</h1>
-<div class="row">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicants for {{ job.title }}</title>
+</head>
+<body>
+    <h1>Applicants for {{ job.title }}</h1>
     {% for application in applications %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Applicant: {{ application.applicant.username }}</h5>
-                    <p class="card-text"><strong>Cover Letter:</strong> {{ application.cover_letter }}</p>
-                    <p class="card-text"><strong>Applied at:</strong> {{ application.applied_at }}</p>
-                    <a href="{{ application.resume.url }}" class="btn btn-primary">Download CV</a>
+        <div>
+            <h2>{{ application.applicant.username }}</h2>
+            <p>Birth Date: {{ application.birth_date }}</p>
+            <p>Gender: {{ application.gender }}</p>
+            <p>Nationality: {{ application.nationality }}</p>
+            <p>Address: {{ application.address }}</p>
+            <p>Email: {{ application.email }}</p>
+            <p>Phone Number: {{ application.phone_number }}</p>
+            <p>Social Network Profile: <a href="{{ application.social_network_profile }}">{{ application.social_network_profile }}</a></p>
+
+            <h3>About</h3>
+            <p>{{ application.about }}</p>
+
+            <h3>Work Experience</h3>
+            {% for work_experience in application.work_experiences.all %}
+                <div>
+                    <p>Company: {{ work_experience.company }}</p>
+                    <p>Job Title: {{ work_experience.job_title }}</p>
+                    <p>Start Date: {{ work_experience.start_date }}</p>
+                    <p>End Date: {{ work_experience.end_date }}</p>
                 </div>
-            </div>
+            {% endfor %}
+
+            <h3>Education</h3>
+            {% for education in application.educations.all %}
+                <div>
+                    <p>University: {{ education.university }}</p>
+                    <p>Degree: {{ education.degree }}</p>
+                    <p>Speciality: {{ education.speciality }}</p>
+                    <p>Start Date: {{ education.start_date }}</p>
+                    <p>End Date: {{ education.end_date }}</p>
+                </div>
+            {% endfor %}
+
+            <h3>Projects</h3>
+            {% for project in application.projects.all %}
+                <div>
+                    <p>Project Name: {{ project.project_name }}</p>
+                    <p>Project Link: <a href="{{ project.project_link }}">{{ project.project_link }}</a></p>
+                </div>
+            {% endfor %}
+
+            <h3>Skills</h3>
+            {% for skill in application.skills.all %}
+                <div>
+                    <p>Skill Name: {{ skill.skill_name }}</p>
+                    <p>Skill Level: {{ skill.skill_level }}</p>
+                </div>
+            {% endfor %}
+
+            <h3>Languages</h3>
+            {% for language in application.languages.all %}
+                <div>
+                    <p>Language: {{ language.language }}</p>
+                    <p>Language Level: {{ language.language_level }}</p>
+                </div>
+            {% endfor %}
+
+            <h3>Certifications</h3>
+            {% for certification in application.certifications.all %}
+                <div>
+                    <p>Certificate Name: {{ certification.certificate_name }}</p>
+                    <p>Certification Date: {{ certification.certification_date }}</p>
+                    <p>Certificate Link: <a href="{{ certification.certificate_link }}">{{ certification.certificate_link }}</a></p>
+                </div>
+            {% endfor %}
         </div>
+        <hr>
     {% endfor %}
-</div>
-<a href="{% url 'job_list' %}" class="btn btn-secondary mt-3">Back to Job Listings</a>
-{% endblock %}
+</body>
+</html>

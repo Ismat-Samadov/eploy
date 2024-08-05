@@ -2,28 +2,19 @@ from pathlib import Path
 import os
 from decouple import config
 import dj_database_url
-from google.oauth2 import service_account
-from google.cloud import secretmanager
 import logging
-from pathlib import Path
 
-def get_secret(secret_name):
-    """
-    Access the secret value from Google Cloud Secret Manager.
-    """
-    project_id = "jobs-428816"
-    client = secretmanager.SecretManagerServiceClient()
-    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
-
-    
 BASE_DIR = Path(__file__).resolve().parent.parent
+# TEMPLATE_DIR = os.path.join(BASE_DIR, "jobsite/templates")
+
+# Helper function for loading environment variables
+def get_secret(secret_name):
+    return os.environ.get(secret_name) or config(secret_name)
 
 # Security settings
 SECRET_KEY = get_secret('SECRET_KEY')
 DEBUG = get_secret('DEBUG') == 'True'
- 
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
@@ -33,7 +24,6 @@ ALLOWED_HOSTS = [
     'localhost',
     'careerhorizon.llc',
     'www.careerhorizon.llc',
-    '.appspot.com',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -49,9 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    # 'users.apps.UsersConfig',
     'jobs',
+    'users',
     'whitenoise.runserver_nostatic',
-    'storages',
 ]
 
 MIDDLEWARE = [
@@ -71,7 +62,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
+        'APP_DIRS': True,  
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -83,11 +74,14 @@ TEMPLATES = [
     },
 ]
 
+
+
+
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
 # Database configuration
 DATABASES = {
-    'default': dj_database_url.config(default=config('DATABASE_URL'), conn_max_age=600)
+    'default': dj_database_url.config(default=get_secret('DATABASE_URL'), conn_max_age=600)
 }
 
 # Password validation
@@ -116,7 +110,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Email settings
-EMAIL_BACKEND = get_secret('EMAIL_BACKEND')  # Update the secret name to match
+EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
 EMAIL_HOST = get_secret('EMAIL_HOST')
 EMAIL_PORT = int(get_secret('EMAIL_PORT'))
 EMAIL_USE_TLS = get_secret('EMAIL_USE_TLS') == 'True'
@@ -125,7 +119,7 @@ EMAIL_HOST_PASSWORD = get_secret('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = get_secret('DEFAULT_FROM_EMAIL')
 
 # Custom user model
-AUTH_USER_MODEL = 'jobs.CustomUser'
+AUTH_USER_MODEL = 'users.CustomUser'
 
 # Login settings
 LOGIN_URL = 'login'
@@ -133,24 +127,7 @@ LOGOUT_REDIRECT_URL = 'login'
 LOGIN_REDIRECT_URL = 'job_list'
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Google Cloud Storage
-GS_BUCKET_NAME = get_secret('GS_BUCKET_NAME')
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_CREDENTIALS = service_account.Credentials.from_service_account_info({
-    "type": get_secret('GCS_TYPE'),
-    "project_id": get_secret('GCS_PROJECT_ID'),
-    "private_key_id": get_secret('GCS_PRIVATE_KEY_ID'),
-    "private_key": get_secret('GCS_PRIVATE_KEY').replace('\\n', '\n'),
-    "client_email": get_secret('GCS_CLIENT_EMAIL'),
-    "client_id": get_secret('GCS_CLIENT_ID'),
-    "auth_uri": get_secret('GCS_AUTH_URI'),
-    "token_uri": get_secret('GCS_TOKEN_URI'),
-    "auth_provider_x509_cert_url": get_secret('GCS_AUTH_PROVIDER_CERT_URL'),
-    "client_x509_cert_url": get_secret('GCS_CLIENT_CERT_URL')
-})
 
 # OpenAI API Key
 OPENAI_API_KEY = get_secret('OPENAI_API_KEY')

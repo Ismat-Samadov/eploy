@@ -1,4 +1,4 @@
-{% extends 'jobs/base.html' %}
+<!-- {% extends 'jobs/base.html' %}
 {% load custom_tags %}
 
 {% block title %}Apply for {{ job.title }}{% endblock %}
@@ -270,4 +270,32 @@
         });
     }
 </script>
-{% endblock %}
+{% endblock %} -->
+
+<!-- jobs/apply_job.html -->
+<h2>Apply for {{ job.title }} at {{ job.company }}</h2>
+
+<!-- Display profile information -->
+<h4>Your Profile</h4>
+<p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
+<p><strong>Email:</strong> {{ request.user.email }}</p>
+
+<!-- Display other relevant profile fields -->
+{% if profile %}
+<p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
+<p><strong>Address:</strong> {{ profile.address }}</p>
+<!-- Add more fields as needed -->
+{% else %}
+<p>Please complete your profile.</p>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="form-group">
+        <label for="{{ form.cover_letter.id_for_label }}">{{ form.cover_letter.label }}</label>
+        {{ form.cover_letter|add_class:"form-control" }}
+        {{ form.cover_letter.errors }}
+    </div>
+    <button type="submit" class="btn btn-primary">Apply Now</button>
+</form>

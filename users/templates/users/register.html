@@ -12,15 +12,59 @@
             <h1 class="opacity">REGISTER</h1>
             <form method="post">
                 {% csrf_token %}
-                <input type="text" name="username" placeholder="USERNAME" required id="id_username" />
-                <input type="email" name="email" placeholder="EMAIL" required id="id_email" />
-                <select name="user_type" required id="id_user_type">
-                    <option value="">SELECT USER TYPE</option>
-                    <option value="HR">HR/Recruiter</option>
-                    <option value="Candidate">Candidate</option>
-                </select>
-                <input type="password" name="password1" placeholder="PASSWORD" required id="id_password1" />
-                <input type="password" name="password2" placeholder="CONFIRM PASSWORD" required id="id_password2" />
+                
+                <!-- Display non-field errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                
+                <!-- Username Field -->
+                <div class="form-group">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="errorlist">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Email Field -->
+                <div class="form-group">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="errorlist">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- User Type Field -->
+                <div class="form-group">
+                    {{ form.user_type.label_tag }}
+                    {{ form.user_type }}
+                    {% if form.user_type.errors %}
+                        <div class="errorlist">{{ form.user_type.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Password1 Field -->
+                <div class="form-group">
+                    {{ form.password1.label_tag }}
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="errorlist">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Password2 Field -->
+                <div class="form-group">
+                    {{ form.password2.label_tag }}
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="errorlist">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+
                 <button class="opacity" type="submit">REGISTER</button>
             </form>
             <div class="register-forget opacity">

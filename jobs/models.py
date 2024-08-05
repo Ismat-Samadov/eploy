@@ -1,25 +1,20 @@
-from django.db import models
-from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+# jobs/models.py
 
-class CustomUser(AbstractUser):
-    USER_TYPE_CHOICES = (
-        ('HR', 'HR/Recruiter'),
-        ('Candidate', 'Candidate'),
-    )
-    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+from django.db import models
+from users.models import CustomUser
+from django.conf import settings
 
 class JobPost(models.Model):
     title = models.CharField(max_length=500)
     description = models.TextField()
     company = models.CharField(max_length=500)
     location = models.CharField(max_length=500)
-    function = models.CharField(max_length=500, blank=True, null=True)  # New field for job function
-    schedule = models.CharField(max_length=500, blank=True, null=True)  # New field for work schedule
-    deadline = models.DateField(blank=True, null=True)  # New field for application deadline
-    responsibilities = models.TextField(blank=True, null=True)  # New field for job responsibilities
-    requirements = models.TextField(blank=True, null=True)  # New field for job requirements
-    posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    function = models.CharField(max_length=500, blank=True, null=True)
+    schedule = models.CharField(max_length=500, blank=True, null=True)
+    deadline = models.DateField(blank=True, null=True)
+    responsibilities = models.TextField(blank=True, null=True)
+    requirements = models.TextField(blank=True, null=True)
+    posted_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     posted_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
     is_scraped = models.BooleanField(default=False)
@@ -34,8 +29,7 @@ class JobPost(models.Model):
 class JobApplication(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    resume = models.FileField(upload_to='resumes/')
-    cover_letter = models.TextField(blank=True, null=True)  # Make cover letter optional
+    cover_letter = models.TextField(blank=True, null=True)  
     applied_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
