@@ -5,7 +5,6 @@ import dj_database_url
 import logging
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# TEMPLATE_DIR = os.path.join(BASE_DIR, "jobsite/templates")
 
 # Helper function for loading environment variables
 def get_secret(secret_name):
@@ -22,7 +21,6 @@ X_FRAME_OPTIONS = 'DENY'
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.onrender.com',
     'careerhorizon-lms0.onrender.com',
     'careerhorizon.llc',
     'www.careerhorizon.llc',
@@ -41,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
-    # 'users.apps.UsersConfig',
     'jobs',
     'users',
     'whitenoise.runserver_nostatic',

@@ -1,108 +1,164 @@
-<!-- users/templates/users/user_profile.html -->
+{% extends 'jobs/base.html' %}
+{% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-</head>
-<body>
-    <h1>User Profile</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ profile_form.as_p }}
-        <button type="submit">Update Profile</button>
-    </form>
+{% block title %}User Profile{% endblock %}
 
-    <h2>Work Experience</h2>
-    <form method="post" action="{% url 'add_work_experience' %}">
-        {% csrf_token %}
-        {{ work_experience_form.as_p }}
-        <button type="submit">Add Work Experience</button>
-    </form>
+{% block content %}
+<section class="container mt-5">
+    <h1 class="text-center">User Profile</h1>
+    
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post">
+            {% csrf_token %}
+            {{ profile_form.as_p }}
+            <button class="btn btn-primary" type="submit">Update Profile</button>
+        </form>
+    </div>
+
+    <h2 class="text-center">Work Experience</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_work_experience' %}">
+            {% csrf_token %}
+            {{ work_experience_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Work Experience</button>
+        </form>
+    </div>
+
     {% for work_experience in work_experiences %}
-        <div>
-            <p>Company: {{ work_experience.company }}</p>
-            <p>Job Title: {{ work_experience.job_title }}</p>
-            <p>Start Date: {{ work_experience.start_date }}</p>
-            <p>End Date: {{ work_experience.end_date }}</p>
-            <a href="{% url 'delete_work_experience' work_experience.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>Company:</strong> {{ work_experience.company }}</p>
+        <p><strong>Job Title:</strong> {{ work_experience.job_title }}</p>
+        <p><strong>Start Date:</strong> {{ work_experience.start_date }}</p>
+        <p><strong>End Date:</strong> {{ work_experience.end_date }}</p>
+        <a class="btn btn-danger" href="{% url 'delete_work_experience' work_experience.pk %}">Delete</a>
+    </div>
     {% endfor %}
 
-    <h2>Education</h2>
-    <form method="post" action="{% url 'add_education' %}">
-        {% csrf_token %}
-        {{ education_form.as_p }}
-        <button type="submit">Add Education</button>
-    </form>
+    <h2 class="text-center">Education</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_education' %}">
+            {% csrf_token %}
+            {{ education_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Education</button>
+        </form>
+    </div>
+
     {% for education in educations %}
-        <div>
-            <p>University: {{ education.university }}</p>
-            <p>Degree: {{ education.degree }}</p>
-            <p>Speciality: {{ education.speciality }}</p>
-            <p>Start Date: {{ education.start_date }}</p>
-            <p>End Date: {{ education.end_date }}</p>
-            <a href="{% url 'delete_education' education.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>University:</strong> {{ education.university }}</p>
+        <p><strong>Degree:</strong> {{ education.degree }}</p>
+        <p><strong>Speciality:</strong> {{ education.speciality }}</p>
+        <p><strong>Start Date:</strong> {{ education.start_date }}</p>
+        <p><strong>End Date:</strong> {{ education.end_date }}</p>
+        <a class="btn btn-danger" href="{% url 'delete_education' education.pk %}">Delete</a>
+    </div>
     {% endfor %}
 
-    <h2>Projects</h2>
-    <form method="post" action="{% url 'add_project' %}">
-        {% csrf_token %}
-        {{ project_form.as_p }}
-        <button type="submit">Add Project</button>
-    </form>
+    <h2 class="text-center">Projects</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_project' %}">
+            {% csrf_token %}
+            {{ project_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Project</button>
+        </form>
+    </div>
+
     {% for project in projects %}
-        <div>
-            <p>Project Name: {{ project.project_name }}</p>
-            <p>Project Link: <a href="{{ project.project_link }}">{{ project.project_link }}</a></p>
-            <a href="{% url 'delete_project' project.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>Project Name:</strong> {{ project.project_name }}</p>
+        <p><strong>Project Link:</strong> <a href="{{ project.project_link }}" class="text-light">{{ project.project_link }}</a></p>
+        <a class="btn btn-danger" href="{% url 'delete_project' project.pk %}">Delete</a>
+    </div>
     {% endfor %}
 
-    <h2>Skills</h2>
-    <form method="post" action="{% url 'add_skill' %}">
-        {% csrf_token %}
-        {{ skill_form.as_p }}
-        <button type="submit">Add Skill</button>
-    </form>
+    <h2 class="text-center">Skills</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_skill' %}">
+            {% csrf_token %}
+            {{ skill_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Skill</button>
+        </form>
+    </div>
+
     {% for skill in skills %}
-        <div>
-            <p>Skill Name: {{ skill.skill_name }}</p>
-            <p>Skill Level: {{ skill.skill_level }}</p>
-            <a href="{% url 'delete_skill' skill.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>Skill Name:</strong> {{ skill.skill_name }}</p>
+        <p><strong>Skill Level:</strong> {{ skill.skill_level }}</p>
+        <a class="btn btn-danger" href="{% url 'delete_skill' skill.pk %}">Delete</a>
+    </div>
     {% endfor %}
 
-    <h2>Languages</h2>
-    <form method="post" action="{% url 'add_language' %}">
-        {% csrf_token %}
-        {{ language_form.as_p }}
-        <button type="submit">Add Language</button>
-    </form>
+    <h2 class="text-center">Languages</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_language' %}">
+            {% csrf_token %}
+            {{ language_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Language</button>
+        </form>
+    </div>
+
     {% for language in languages %}
-        <div>
-            <p>Language: {{ language.language }}</p>
-            <p>Language Level: {{ language.language_level }}</p>
-            <a href="{% url 'delete_language' language.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>Language:</strong> {{ language.language }}</p>
+        <p><strong>Language Level:</strong> {{ language.language_level }}</p>
+        <a class="btn btn-danger" href="{% url 'delete_language' language.pk %}">Delete</a>
+    </div>
     {% endfor %}
 
-    <h2>Certifications</h2>
-    <form method="post" action="{% url 'add_certification' %}">
-        {% csrf_token %}
-        {{ certification_form.as_p }}
-        <button type="submit">Add Certification</button>
-    </form>
+    <h2 class="text-center">Certifications</h2>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <form method="post" action="{% url 'add_certification' %}">
+            {% csrf_token %}
+            {{ certification_form.as_p }}
+            <button class="btn btn-primary" type="submit">Add Certification</button>
+        </form>
+    </div>
+
     {% for certification in certifications %}
-        <div>
-            <p>Certificate Name: {{ certification.certificate_name }}</p>
-            <p>Certification Date: {{ certification.certification_date }}</p>
-            <p>Certificate Link: <a href="{{ certification.certificate_link }}">{{ certification.certificate_link }}</a></p>
-            <a href="{% url 'delete_certification' certification.pk %}">Delete</a>
-        </div>
+    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+        <p><strong>Certificate Name:</strong> {{ certification.certificate_name }}</p>
+        <p><strong>Certification Date:</strong> {{ certification.certification_date }}</p>
+        <p><strong>Certificate Link:</strong> <a href="{{ certification.certificate_link }}" class="text-light">{{ certification.certificate_link }}</a></p>
+        <a class="btn btn-danger" href="{% url 'delete_certification' certification.pk %}">Delete</a>
+    </div>
     {% endfor %}
-</body>
-</html>
+</section>
+
+<style>
+    :root {
+        /* --background: #1a1a2e; */
+        --color: #d55252;
+        --primary-color: #0a59b9;
+        --text-color: #e70f0f;
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--text-color);
+    }
+
+    h1, h2 {
+        color: var(--text-color);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #ffffff;
+    }
+
+    .btn-danger {
+        background-color: #f25f5c;
+        border-color: #f25f5c;
+        color: #0ff30b;
+    }
+
+    .btn-primary:hover, .btn-danger:hover {
+        opacity: 0.8;
+    }
+
+    .profile-section {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}

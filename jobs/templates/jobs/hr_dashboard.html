@@ -1,0 +1,59 @@
+{% extends 'jobs/base.html' %}
+
+{% block content %}
+<h2>My Posted Jobs</h2>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+{% if jobs %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Date Posted</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>{{ job.company }}</td>
+                <td>{{ job.posted_at }}</td>
+                <td>
+                    <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_job' job.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    <a href="{% url 'hr_applicants' job.id %}" class="btn btn-sm btn-info">View Applicants</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if jobs.has_previous %}
+                <a href="?jobs_page=1">&laquo; first</a>
+                <a href="?jobs_page={{ jobs.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ jobs.number }} of {{ jobs.paginator.num_pages }}.
+            </span>
+
+            {% if jobs.has_next %}
+                <a href="?jobs_page={{ jobs.next_page_number }}">next</a>
+                <a href="?jobs_page={{ jobs.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% else %}
+    <p>No jobs posted yet.</p>
+{% endif %}
+
+{% endblock %}

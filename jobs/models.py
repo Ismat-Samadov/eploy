@@ -14,7 +14,7 @@ class JobPost(models.Model):
     deadline = models.DateField(blank=True, null=True)
     responsibilities = models.TextField(blank=True, null=True)
     requirements = models.TextField(blank=True, null=True)
-    posted_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    posted_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='job_posts')
     posted_at = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
     is_scraped = models.BooleanField(default=False)

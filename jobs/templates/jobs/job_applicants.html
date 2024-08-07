@@ -1,83 +1,41 @@
-<!-- jobs/templates/jobs/job_applicants.html -->
+{% extends 'jobs/base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Applicants for {{ job.title }}</title>
-</head>
-<body>
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
+{% block content %}
+<section class="container">
     <h1>Applicants for {{ job.title }}</h1>
-    {% for application in applications %}
-        <div>
-            <h2>{{ application.applicant.username }}</h2>
-            <p>Birth Date: {{ application.birth_date }}</p>
-            <p>Gender: {{ application.gender }}</p>
-            <p>Nationality: {{ application.nationality }}</p>
-            <p>Address: {{ application.address }}</p>
-            <p>Email: {{ application.email }}</p>
-            <p>Phone Number: {{ application.phone_number }}</p>
-            <p>Social Network Profile: <a href="{{ application.social_network_profile }}">{{ application.social_network_profile }}</a></p>
-
-            <h3>About</h3>
-            <p>{{ application.about }}</p>
-
-            <h3>Work Experience</h3>
-            {% for work_experience in application.work_experiences.all %}
-                <div>
-                    <p>Company: {{ work_experience.company }}</p>
-                    <p>Job Title: {{ work_experience.job_title }}</p>
-                    <p>Start Date: {{ work_experience.start_date }}</p>
-                    <p>End Date: {{ work_experience.end_date }}</p>
-                </div>
-            {% endfor %}
-
-            <h3>Education</h3>
-            {% for education in application.educations.all %}
-                <div>
-                    <p>University: {{ education.university }}</p>
-                    <p>Degree: {{ education.degree }}</p>
-                    <p>Speciality: {{ education.speciality }}</p>
-                    <p>Start Date: {{ education.start_date }}</p>
-                    <p>End Date: {{ education.end_date }}</p>
-                </div>
-            {% endfor %}
-
-            <h3>Projects</h3>
-            {% for project in application.projects.all %}
-                <div>
-                    <p>Project Name: {{ project.project_name }}</p>
-                    <p>Project Link: <a href="{{ project.project_link }}">{{ project.project_link }}</a></p>
-                </div>
-            {% endfor %}
-
-            <h3>Skills</h3>
-            {% for skill in application.skills.all %}
-                <div>
-                    <p>Skill Name: {{ skill.skill_name }}</p>
-                    <p>Skill Level: {{ skill.skill_level }}</p>
-                </div>
-            {% endfor %}
-
-            <h3>Languages</h3>
-            {% for language in application.languages.all %}
-                <div>
-                    <p>Language: {{ language.language }}</p>
-                    <p>Language Level: {{ language.language_level }}</p>
-                </div>
-            {% endfor %}
-
-            <h3>Certifications</h3>
-            {% for certification in application.certifications.all %}
-                <div>
-                    <p>Certificate Name: {{ certification.certificate_name }}</p>
-                    <p>Certification Date: {{ certification.certification_date }}</p>
-                    <p>Certificate Link: <a href="{{ certification.certificate_link }}">{{ certification.certificate_link }}</a></p>
-                </div>
-            {% endfor %}
-        </div>
-        <hr>
-    {% endfor %}
-</body>
-</html>
+    <h3>Company: {{ job.company }}</h3>
+    <h3>Location: {{ job.location }}</h3>
+    <p>{{ job.description }}</p>
+    
+    <h2>Applicants:</h2>
+    <ul>
+        {% for application in applications %}
+        <li>
+            <strong>{{ application.applicant.username }}</strong>
+            <p>Email: {{ application.applicant.email }}</p>
+            <p>Cover Letter: {{ application.cover_letter }}</p>
+            <h4>Profile</h4>
+            <p>Phone: {{ application.applicant.userprofile.phone_number }}</p>
+            <p>Address: {{ application.applicant.userprofile.address }}</p>
+            <p>About: {{ application.applicant.userprofile.about }}</p>
+            <h4>Work Experiences</h4>
+            <ul>
+                {% for exp in application.applicant.userprofile.work_experiences.all %}
+                <li>{{ exp.company }} - {{ exp.job_title }} ({{ exp.start_date }} - {{ exp.end_date }})</li>
+                {% endfor %}
+            </ul>
+            <h4>Education</h4>
+            <ul>
+                {% for edu in application.applicant.userprofile.educations.all %}
+                <li>{{ edu.university }} - {{ edu.degree }} ({{ edu.start_date }} - {{ edu.end_date }})</li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% empty %}
+        <li>No applicants yet.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

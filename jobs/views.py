@@ -1,4 +1,3 @@
-# jobs/views.py
 import requests
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -25,10 +24,8 @@ import base64
 import numpy as np
 from django.views.generic import DetailView
 from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
-from .models import JobPost, JobApplication
-from users.models import UserProfile
-from django.core.exceptions import ObjectDoesNotExist
 from .utils import calculate_similarity
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -76,6 +73,7 @@ def apply_job(request, job_id):
 def redirect_to_jobs(request):
     return redirect('job_list')
 
+
 class JobDetailView(DetailView):
     model = JobPost
     template_name = 'jobs/job_detail.html'
@@ -86,13 +84,38 @@ class JobDetailView(DetailView):
         return get_object_or_404(JobPost, id=id_)
 
 
-
 @login_required
-def hr_applicants(request):
+def hr_dashboard(request):
     if request.user.user_type != 'HR':
         return HttpResponseForbidden("You are not authorized to view this page.")
 
-    applications = JobApplication.objects.filter(job__posted_by=request.user).order_by('-applied_at')
+    # Fetch jobs posted by the logged-in HR user
+    jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
+
+    # Check if jobs are being fetched
+    print(f"Jobs found: {jobs.count()}")  # Debugging: Check if jobs are found
+
+    # Pagination setup
+    jobs_page = request.GET.get('jobs_page', 1)
+    jobs_paginator = Paginator(jobs, 5)
+    try:
+        jobs = jobs_paginator.page(jobs_page)
+    except PageNotAnInteger:
+        jobs = jobs_paginator.page(1)
+    except EmptyPage:
+        jobs = jobs_paginator.page(jobs_paginator.num_pages)
+
+    return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
+
+
+@login_required
+def hr_applicants(request, job_id):
+    if request.user.user_type != 'HR':
+        return HttpResponseForbidden("You are not authorized to view this page.")
+
+    # Filter applications for the specific job
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+    applications = JobApplication.objects.filter(job=job).order_by('-applied_at')
 
     # Pagination setup (optional)
     applications_page = request.GET.get('applications_page', 1)
@@ -129,9 +152,9 @@ def hr_applicants(request):
             'applicant_profile': applicant_profile
         })
 
-    return render(request, 'jobs/hr_applicants.html', {'applications': application_data})
+    return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
 
-
+@login_required
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
@@ -179,6 +202,7 @@ def job_list(request):
 
     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
 
+
 @login_required
 def post_job(request):
     if request.method == 'POST':
@@ -196,19 +220,23 @@ def post_job(request):
 def congrats(request):
     return render(request, 'jobs/congrats.html')
 
+
 def about(request):
     return render(request, 'jobs/about.html')
+
 
 def company_description(request, company_id):
     company_jobs = JobPost.objects.filter(company_id=company_id, deleted=False)
     company_name = company_jobs.first().company if company_jobs.exists() else "Unknown Company"
     return render(request, 'jobs/company_description.html', {'company_name': company_name, 'company_jobs': company_jobs})
 
+
 @login_required
 def job_applicants(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
     applications = JobApplication.objects.filter(job=job)
     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
+
 
 @login_required
 def edit_job(request, job_id):
@@ -222,6 +250,7 @@ def edit_job(request, job_id):
         form = JobPostForm(instance=job)
     return render(request, 'jobs/edit_job.html', {'form': form, 'job': job})
 
+
 @login_required
 def delete_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
@@ -230,6 +259,7 @@ def delete_job(request, job_id):
         job.save()
         return redirect('job_list')
     return render(request, 'jobs/confirm_delete.html', {'job': job})
+
 
 @csrf_exempt
 def test_openai_api(request):
@@ -246,6 +276,7 @@ def test_openai_api(request):
         return JsonResponse({'response': response['choices'][0]['message']['content']})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 @login_required
 def job_search(request):
@@ -284,6 +315,7 @@ def job_search(request):
 
     return JsonResponse(unique_jobs, safe=False)
 
+
 def parse_pdf(file):
     pdf_reader = PyPDF2.PdfReader(file)
     num_pages = len(pdf_reader.pages)
@@ -293,10 +325,12 @@ def parse_pdf(file):
         full_text.append(page.extract_text())
     return '\n'.join(full_text)
 
+
 def calculate_similarity(cv_text, job_text):
     vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]
+
 
 def create_similarity_chart(score):
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -324,6 +358,7 @@ def create_similarity_chart(score):
     buf.close()
 
     return uri
+
 
 @login_required
 def search_jobs_for_cv(request):
@@ -353,6 +388,7 @@ def search_jobs_for_cv(request):
         unique_jobs = []
 
     return JsonResponse(unique_jobs, safe=False)
+
 
 @login_required
 def parse_cv_page(request):
@@ -420,6 +456,7 @@ def parse_cv_page(request):
         'resume_upload_form': resume_upload_form
     })
 
+
 def upload_to_cloud_storage(file, file_name):
     try:
         cos_client = ibm_boto3.client(
@@ -440,6 +477,7 @@ def upload_to_cloud_storage(file, file_name):
     except Exception as e:
         logger.error(f"Failed to upload {file_name} to cloud storage: {e}")
         raise
+
 
 def robots_txt(request):
     lines = [

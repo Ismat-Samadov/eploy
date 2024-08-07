@@ -1,54 +1,60 @@
-<!-- jobs/hr_applicants.html -->
-
 {% extends 'jobs/base.html' %}
-{% load static %}
-
-{% block title %}HR Applicants{% endblock %}
 
 {% block content %}
-<section class="container">
-    <h2>Job Applications</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Applicant</th>
-                <th>Job Title</th>
-                <th>Application Date</th>
-                <th>Similarity Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for data in applications %}
-            <tr>
-                <td>{{ data.application.applicant.username }}</td>
-                <td>{{ data.application.job.title }}</td>
-                <td>{{ data.application.applied_at|date:"d M Y H:i" }}</td>
-                <td>{{ data.similarity_score|floatformat:2 }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4">No applications found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<h2>Applicants for {{ job.title }}</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Applicant</th>
+            <th>Similarity Score</th>
+            <th>Profile</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for application in applications %}
+        <tr>
+            <td>{{ application.application.applicant.username }}</td>
+            <td>{{ application.similarity_score|floatformat:2 }}</td>
+            <td>
+                <strong>Work Experience:</strong>
+                <ul>
+                    {% for exp in application.applicant_profile.work_experiences.all %}
+                    <li>{{ exp.company }} - {{ exp.job_title }}</li>
+                    {% endfor %}
+                </ul>
+                <strong>Education:</strong>
+                <ul>
+                    {% for edu in application.applicant_profile.educations.all %}
+                    <li>{{ edu.university }} - {{ edu.degree }} in {{ edu.speciality }}</li>
+                    {% endfor %}
+                </ul>
+                <strong>Skills:</strong>
+                <ul>
+                    {% for skill in application.applicant_profile.skills.all %}
+                    <li>{{ skill.skill_name }} ({{ skill.skill_level }})</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-    <div class="pagination">
-        <span class="step-links">
-            {% if applications.has_previous %}
-                <a href="?applications_page=1">&laquo; first</a>
-                <a href="?applications_page={{ applications.previous_page_number }}">previous</a>
-            {% endif %}
+<div class="pagination">
+    <span class="step-links">
+        {% if applications.has_previous %}
+            <a href="?applications_page=1">&laquo; first</a>
+            <a href="?applications_page={{ applications.previous_page_number }}">previous</a>
+        {% endif %}
 
-            <span class="current">
-                Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
-            </span>
-
-            {% if applications.has_next %}
-                <a href="?applications_page={{ applications.next_page_number }}">next</a>
-                <a href="?applications_page={{ applications.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
+        <span class="current">
+            Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
         </span>
-    </div>
-</section>
+
+        {% if applications.has_next %}
+            <a href="?applications_page={{ applications.next_page_number }}">next</a>
+            <a href="?applications_page={{ applications.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
 {% endblock %}

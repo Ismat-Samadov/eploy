@@ -22,17 +22,6 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NPPBBBSH42"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-NPPBBBSH42');
-    </script>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3427635222854268"
-        crossorigin="anonymous"></script>
     <style>
         html, body {
             height: 100%;
@@ -73,10 +62,20 @@
                             <a class="nav-link" href="{% url 'post_job' %}">Post Job</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'user_dashboard' %}">Posted Jobs</a>
+                            <a class="nav-link" href="{% url 'hr_dashboard' %}">Posted Jobs</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'hr_applicants' %}">Applicants</a>
+                        <!-- Dropdown for HR to see each job and applicants -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Applicants
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                {% for job in user.job_posts.all %}
+                                    <a class="dropdown-item" href="{% url 'hr_applicants' job.id %}">{{ job.title }}</a>
+                                {% empty %}
+                                    <span class="dropdown-item">No jobs posted</span>
+                                {% endfor %}
+                            </div>
                         </li>
                     {% elif user.user_type == 'Candidate' %}
                         <li class="nav-item">

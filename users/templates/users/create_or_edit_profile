@@ -1,9 +1,0 @@
-<!-- users/create_or_edit_profile.html -->
-<h2>Edit Your Profile</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ profile_form.as_p }}
-    <button type="submit">Save Profile</button>
-</form>
-
-<!-- Optionally include forms for experience, education, etc. -->
