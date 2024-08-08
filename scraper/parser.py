@@ -12,13 +12,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 import psycopg2
 from psycopg2 import sql, extras
-import aiohttp  
-import asyncio  
+import aiohttp
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 class JobScraper:
     def __init__(self):
@@ -93,9 +94,9 @@ class JobScraper:
                         deadlines.append(deadline_text.strip() if deadline_text else None)
 
                 df = pd.DataFrame({
-                    'company': 'azercell', 
-                    "vacancy": job_titles, 
-                    "location": job_locations, 
+                    'company': 'azercell',
+                    "vacancy": job_titles,
+                    "location": job_locations,
                     "apply_link": job_links,
                     "function": functions,
                     "schedule": schedules,
@@ -103,7 +104,7 @@ class JobScraper:
                     "responsibilities": responsibilities,
                     "requirements": requirements
                 })
-                
+
                 logger.info("Scraping completed for Azercell")
                 return df
             else:
@@ -147,6 +148,18 @@ class JobScraper:
                     schedules.append(schedule_text.strip() if schedule_text else None)
                     deadlines.append(deadline_text.strip() if deadline_text else None)
 
+            # Ensure all lists are of the same length
+            max_len = max(len(vacancy_list), len(location_list), len(apply_link_list), len(responsibilities),
+                          len(requirements), len(functions), len(schedules), len(deadlines))
+            vacancy_list += [None] * (max_len - len(vacancy_list))
+            location_list += [None] * (max_len - len(location_list))
+            apply_link_list += [None] * (max_len - len(apply_link_list))
+            responsibilities += [None] * (max_len - len(responsibilities))
+            requirements += [None] * (max_len - len(requirements))
+            functions += [None] * (max_len - len(functions))
+            schedules += [None] * (max_len - len(schedules))
+            deadlines += [None] * (max_len - len(deadlines))
+
             # Create DataFrame with the extracted data
             df = pd.DataFrame({
                 'company': 'pashabank',
@@ -173,7 +186,7 @@ class JobScraper:
         logger.info("Started scraping Azerconnect")
         url = "https://www.azerconnect.az/vacancies"
         response_text = await self.fetch_url_async(url, session, verify_ssl=False)
-        
+
         if response_text:
             soup = BeautifulSoup(response_text, 'html.parser')
             job_listings = soup.find_all('div', class_='CollapsibleItem_item__CB3bC')
@@ -270,7 +283,6 @@ class JobScraper:
             self.data = pd.concat(results, ignore_index=True)
             self.data['scrape_date'] = datetime.now()
 
- 
     def save_to_db(self, df, batch_size=100):
         try:
             with psycopg2.connect(**self.db_params) as conn:
@@ -325,8 +337,7 @@ class JobScraper:
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
 
-        
-    
+
 def main():
     job_scraper = JobScraper()
     asyncio.run(job_scraper.get_data_async())
@@ -338,6 +349,7 @@ def main():
     logger.info(f"Data to be saved: {job_scraper.data}")
 
     job_scraper.save_to_db(job_scraper.data)
+
 
 if __name__ == "__main__":
     main()
