@@ -12,8 +12,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 import psycopg2
 from psycopg2 import sql, extras
-import aiohttp  # For asynchronous HTTP requests
-import asyncio  # For managing asynchronous tasks
+import aiohttp  
+import asyncio  
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -270,11 +270,11 @@ class JobScraper:
             self.data = pd.concat(results, ignore_index=True)
             self.data['scrape_date'] = datetime.now()
 
+ 
     def save_to_db(self, df, batch_size=100):
         try:
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
-                    # Fetch existing job posts updated in the last 30 days
                     cur.execute("""
                         SELECT company, title, apply_link
                         FROM jobs_jobpost
@@ -297,7 +297,7 @@ class JobScraper:
                             row['deadline'],  # Use the date object directly
                             row['responsibilities'] if row['responsibilities'] else None,
                             row['requirements'] if row['requirements'] else None,
-                            1,  # assuming posted_by_id is 1
+                            9,  # assuming posted_by_id is 1
                             True,  # is_scraped
                             False,  # is_premium
                             0,  # premium_days
@@ -314,7 +314,7 @@ class JobScraper:
                         insert_query = sql.SQL("""
                             INSERT INTO jobs_jobpost (title, description, company, location, function, schedule, deadline, responsibilities, requirements, posted_by_id, is_scraped, is_premium, premium_days, priority_level, posted_at, deleted, apply_link)
                             VALUES %s
-                            ON CONFLICT ON CONSTRAINT unique_jobpost DO NOTHING
+                            ON CONFLICT (company, title, apply_link) DO NOTHING
                         """)
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
@@ -325,8 +325,7 @@ class JobScraper:
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
 
-    
-    
+        
     
 def main():
     job_scraper = JobScraper()

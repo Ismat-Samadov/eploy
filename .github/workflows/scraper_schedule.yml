@@ -2,7 +2,7 @@ name: Scheduled Scraper Job
 
 on:
   schedule:
-    # - cron: '0 */5 * * *' # Runs every 5 hours
+    - cron: '0 */5 * * *'
     # - cron: '*/1 * * * *' # Runs every minute for testing purposes
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       shell: bash
       run: |
         source venv/bin/activate
-        pip install -r scraper/requirements.txt
+        pip install -r requirements.txt
 
     - name: Run parser and save to database
       env:
