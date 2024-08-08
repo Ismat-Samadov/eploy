@@ -28,7 +28,7 @@ jobs:
       shell: bash
       run: |
         source venv/bin/activate
-        pip install -r requirements.txt
+        pip install -r scraper/requirements.txt
 
     - name: Run parser and save to database
       env:
