@@ -11,14 +11,17 @@ class CustomUserCreationForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'password1', 'password2', 'user_type'] 
         
-        
-        
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
-            'birth_date', 'gender', 'nationality', 'address', 'phone_number', 
-            'social_network_profile', 'about'
+            'birth_date', 
+            'gender', 
+            'nationality', 
+            'address', 
+            'phone_number', 
+            'social_network_profile', 
+            'about'
         ]
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),

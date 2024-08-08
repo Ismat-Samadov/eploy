@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from .models import JobPost, JobApplication
-from .forms import JobPostForm, JobApplicationForm, JobSearchForm
+from .forms import JobPostForm, JobApplicationForm, JobSearchForm, ResumeUploadForm
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 import logging
@@ -22,7 +22,7 @@ import base64
 import numpy as np
 from django.views.generic import DetailView
 from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
-from .utils import calculate_similarity
+from .utils import calculate_similarity, get_openai_analysis
 import matplotlib
 matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
@@ -153,7 +153,6 @@ def hr_applicants(request, job_id):
 
     return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
 
-# @login_required
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
@@ -165,20 +164,24 @@ def job_list(request):
         query &= Q(company__icontains=company)
 
     now = timezone.now()
-    non_scraped_time_threshold = now - timedelta(days=10)
-    scraped_time_threshold = now - timedelta(hours=5)
+    time_threshold = now - timedelta(days=30)
 
     non_scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=False,
-        posted_at__gte=non_scraped_time_threshold
+        posted_at__gte=time_threshold
     ).order_by('-posted_at')
 
     scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=True,
-        posted_at__gte=scraped_time_threshold
+        posted_at__gte=time_threshold
     ).order_by('-posted_at')
+
+    for job in non_scraped_jobs:
+        print(f"Non-scraped job: {job.title}, posted at: {job.posted_at}")
+    for job in scraped_jobs:
+        print(f"Scraped job: {job.title}, posted at: {job.posted_at}")
 
     # Combine the querysets and ensure uniqueness
     jobs = list(non_scraped_jobs) + list(scraped_jobs)
@@ -453,30 +456,8 @@ def parse_cv_page(request):
     return render(request, 'jobs/parse_cv.html', {
         'job_search_form': job_search_form,
         'resume_upload_form': resume_upload_form
-    })
-
-
-def upload_to_cloud_storage(file, file_name):
-    try:
-        cos_client = ibm_boto3.client(
-            's3',
-            ibm_api_key_id=settings.IBM_COS_API_KEY,
-            ibm_service_instance_id=settings.IBM_COS_RESOURCE_INSTANCE_ID,
-            config=Config(signature_version='oauth'),
-            endpoint_url=f"https://{settings.IBM_COS_ENDPOINT_URL}"
-        )
-
-        cos_client.upload_fileobj(
-            file,
-            settings.IBM_COS_BUCKET_NAME,
-            file_name,
-            ExtraArgs={'ContentType': file.content_type}
-        )
-        logger.info(f"Successfully uploaded {file_name} to cloud storage.")
-    except Exception as e:
-        logger.error(f"Failed to upload {file_name} to cloud storage: {e}")
-        raise
-
+     })
+ 
 
 def robots_txt(request):
     lines = [

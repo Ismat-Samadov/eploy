@@ -3,7 +3,9 @@ import openai
 from django.conf import settings
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 openai.api_key = settings.OPENAI_API_KEY
 
@@ -36,3 +38,23 @@ def check_similarity(text1, text2):
         temperature=0.5
     )
     return response.choices[0].text.strip()
+
+
+def get_openai_analysis(prompt):
+    openai.api_key = settings.OPENAI_API_KEY
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=150,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        logger.error(f"Error calling OpenAI API: {e}")
+        raise

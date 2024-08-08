@@ -89,27 +89,6 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
-@login_required
-def create_profile(request):
-    try:
-        profile = request.user.userprofile
-    except UserProfile.DoesNotExist:
-        profile = UserProfile(user=request.user)
-
-    if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully.')
-            return redirect('user_dashboard')  # Or wherever you want to redirect after saving
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = UserProfileForm(instance=profile)
-
-    return render(request, 'users/create_profile.html', {'form': form})
-
-
 # Password reset view
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
@@ -129,25 +108,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'
 
-# User profile view
-@login_required
-def user_profile(request):
-    user = request.user
-    if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=user)
-        if form.is_valid():
-            try:
-                form.save()
-                messages.success(request, 'Profile updated successfully.')
-            except ValidationError as e:
-                form.add_error(None, e.message)
-                messages.error(request, e.message)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = UserProfileForm(instance=user)
 
-    return render(request, 'users/user_profile.html', {'form': form})
 
 
 @login_required
@@ -179,6 +140,25 @@ def user_dashboard(request):
     }
     return render(request, template, context)
 
+@login_required
+def create_profile(request):
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile(user=request.user)
+
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('user_dashboard')  # Or wherever you want to redirect after saving
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserProfileForm(instance=profile)
+
+    return render(request, 'users/create_profile.html', {'form': form})
 
 @login_required
 def user_profile(request):
@@ -222,6 +202,7 @@ def user_profile(request):
     }
 
     return render(request, 'users/user_profile.html', context)
+
 
 @login_required
 def add_work_experience(request):

@@ -1,5 +1,6 @@
 # users/utils.py
 
+
 def is_profile_complete(profile):
     # Define your criteria for a complete profile
     required_fields = ['birth_date', 'gender', 'nationality', 'address', 'phone_number']
@@ -12,3 +13,6 @@ def is_profile_complete(profile):
     if not profile.education_set.exists():
         return False
     return True
+
+
+

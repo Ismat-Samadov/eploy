@@ -24,3 +24,7 @@ class JobSearchForm(forms.Form):
         'placeholder': 'Search for jobs...',
         'class': 'form-control'
     }))
+    
+    
+class ResumeUploadForm(forms.Form):
+    resume = forms.FileField()
