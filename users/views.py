@@ -91,7 +91,7 @@ def register(request):
 
 # Password reset view
 class CustomPasswordResetView(PasswordResetView):
-    template_name = 'users/password_reset.html'
+    template_name = 'users/password_reset_form.html'
     email_template_name = 'users/password_reset_email.html'
     success_url = reverse_lazy('password_reset_done')
 
@@ -107,7 +107,6 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 # Password reset complete view
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'
-
 
 
 
