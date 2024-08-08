@@ -1,301 +1,49 @@
-<!-- {% extends 'jobs/base.html' %}
-{% load custom_tags %}
-
-{% block title %}Apply for {{ job.title }}{% endblock %}
-
-{% block content %}
-<section class="container">
-    <div class="apply-container">
-        <div class="circle circle-one"></div>
-        <div class="form-container">
-            <h1 class="opacity">Apply for {{ job.title }}</h1>
-            <h5 class="card-subtitle mb-2 text-muted">{{ job.company }}</h5>
-            <p class="card-text">{{ job.location }}</p>
-            <hr>
-            <div class="job-description">
-                <p id="jobDescription">{{ job.description|truncatewords:20 }}</p>
-                <a id="readMore" class="read-more" href="javascript:void(0)" onclick="showMore()">Read more</a>
-                <a id="readLess" class="read-less" href="javascript:void(0)" onclick="showLess()" style="display: none;">Read less</a>
-            </div>
-            <hr>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_resume">Resume:</label>
-                    {{ form.resume|add_class:"form-control-file" }}
-                </div>
-                <div class="form-group">
-                    <label for="id_cover_letter">Cover letter:</label>
-                    {{ form.cover_letter|add_class:"form-control" }}
-                </div>
-                <button class="opacity" type="submit">Apply</button>
-            </form>
-        </div>
-        <div class="circle circle-two"></div>
-    </div>
-    <div class="theme-btn-container"></div>
-</section>
-
-<style>
-    :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
-    }
-
-    * {
-        box-sizing: border-box;
-    }
-
-    html {
-        scroll-behavior: smooth;
-    }
-
-    body {
-        margin: 0;
-        box-sizing: border-box;
-        font-family: "poppins";
-        background: var(--background);
-        color: var(--color);
-        letter-spacing: 1px;
-        transition: background 0.2s ease;
-    }
-
-    a {
-        text-decoration: none;
-        color: var(--primary-color);
-        font-weight: bold;
-    }
-
-    h1 {
-        font-size: 2.5rem;
-    }
-
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding-top: 100px;
-    }
-
-    .apply-container {
-        position: relative;
-        width: 50rem;
-    }
-
-    .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-        backdrop-filter: blur(20px);
-        z-index: 99;
-        padding: 2rem;
-    }
-
-    .form-container input,
-    .form-container button,
-    .form-container textarea {
-        display: block;
-        padding: 14.5px;
-        width: 100%;
-        margin: 1rem 0;
-        color: var(--color);
-        outline: none;
-        background-color: #9191911f;
-        border: none;
-        border-radius: 5px;
-        font-weight: 500;
-        letter-spacing: 0.8px;
-        font-size: 15px;
-        backdrop-filter: blur(15px);
-    }
-
-    .form-container input[type="file"] {
-        padding: 3px;
-    }
-
-    .form-container input:focus,
-    .form-container button:focus,
-    .form-container textarea:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
-        animation: wobble 0.3s ease-in;
-    }
-
-    .form-container button {
-        background-color: var(--primary-color);
-        color: var(--color);
-        padding: 13px;
-        font-size: 18px;
-        letter-spacing: 1.5px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.1s ease-in-out;
-    }
-
-    .form-container button:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
-        transform: scale(1.02);
-    }
-
-    .circle {
-        width: 5rem;
-        height: 5rem;
-        background: var(--primary-color);
-        border-radius: 50%;
-        position: absolute;
-    }
-
-    .illustration {
-        position: absolute;
-        top: -14%;
-        right: -2px;
-        width: 40%;
-    }
-
-    .circle-one {
-        top: 0;
-        left: 0;
-        z-index: -1;
-        transform: translate(-45%, -45%);
-    }
-
-    .circle-two {
-        bottom: 0;
-        right: 0;
-        z-index: -1;
-        transform: translate(45%, 45%);
-    }
-
-    .opacity {
-        opacity: 0.6;
-    }
-
-    .theme-btn-container {
-        position: absolute;
-        left: 0;
-        bottom: 2rem;
-    }
-
-    .theme-btn {
-        cursor: pointer;
-        transition: all 0.3s ease-in;
-    }
-
-    .theme-btn:hover {
-        width: 40px !important;
-    }
-
-    .read-more,
-    .read-less {
-        color: var(--primary-color);
-        font-weight: bold;
-        cursor: pointer;
-        display: block;
-        margin-top: 1rem;
-    }
-</style>
-
-<script>
-    const themes = [
-        {
-            background: "#1A1A2E",
-            color: "#FFFFFF",
-            primaryColor: "#0F3460"
-        },
-        {
-            background: "#461220",
-            color: "#FFFFFF",
-            primaryColor: "#E94560"
-        },
-        {
-            background: "#192A51",
-            color: "#FFFFFF",
-            primaryColor: "#967AA1"
-        },
-        {
-            background: "#F7B267",
-            color: "#000000",
-            primaryColor: "#F4845F"
-        },
-        {
-            background: "#F25F5C",
-            color: "#000000",
-            primaryColor: "#642B36"
-        },
-        {
-            background: "#231F20",
-            color: "#FFF",
-            primaryColor: "#BB4430"
-        }
-    ];
-
-    const setTheme = (theme) => {
-        const root = document.querySelector(":root");
-        root.style.setProperty("--background", theme.background);
-        root.style.setProperty("--color", theme.color);
-        root.style.setProperty("--primary-color", theme.primaryColor);
-    };
-
-    const displayThemeButtons = () => {
-        const btnContainer = document.querySelector(".theme-btn-container");
-        themes.forEach((theme) => {
-            const div = document.createElement("div");
-            div.className = "theme-btn";
-            div.style.cssText = `background: ${theme.background}; width: 25px; height: 25px`;
-            btnContainer.appendChild(div);
-            div.addEventListener("click", () => setTheme(theme));
-        });
-    };
-
-    displayThemeButtons();
-
-    function showMore() {
-        document.getElementById("jobDescription").innerHTML = `{{ job.description|safe }}`;
-        document.getElementById("readMore").style.display = "none";
-        document.getElementById("readLess").style.display = "block";
-        window.scrollTo({
-            top: document.querySelector(".apply-container").offsetTop - 50,
-            behavior: 'smooth'
-        });
-    }
-
-    function showLess() {
-        document.getElementById("jobDescription").innerHTML = `{{ job.description|truncatewords:20|escape }}`;
-        document.getElementById("readMore").style.display = "block";
-        document.getElementById("readLess").style.display = "none";
-        window.scrollTo({
-            top: document.querySelector(".apply-container").offsetTop - 50,
-            behavior: 'smooth'
-        });
-    }
-</script>
-{% endblock %} -->
-
 <!-- jobs/apply_job.html -->
-<h2>Apply for {{ job.title }} at {{ job.company }}</h2>
+{% load static %}
 
-<!-- Display profile information -->
-<h4>Your Profile</h4>
-<p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
-<p><strong>Email:</strong> {{ request.user.email }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for {{ job.title }}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Apply for {{ job.title }} at {{ job.company }}</h2>
+        
+        <!-- Display profile information -->
+        <h4>Your Profile</h4>
+        <div class="mb-3">
+            <p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ request.user.email }}</p>
 
-<!-- Display other relevant profile fields -->
-{% if profile %}
-<p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
-<p><strong>Address:</strong> {{ profile.address }}</p>
-<!-- Add more fields as needed -->
-{% else %}
-<p>Please complete your profile.</p>
-{% endif %}
+            <!-- Display other relevant profile fields -->
+            {% if profile %}
+                <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
+                <p><strong>Address:</strong> {{ profile.address }}</p>
+                <!-- Add more fields as needed -->
+            {% else %}
+                <p class="text-warning">Please complete your profile.</p>
+            {% endif %}
+        </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div class="form-group">
-        <label for="{{ form.cover_letter.id_for_label }}">{{ form.cover_letter.label }}</label>
-        {{ form.cover_letter|add_class:"form-control" }}
-        {{ form.cover_letter.errors }}
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="form-group">
+                <label for="{{ form.cover_letter.id_for_label }}">{{ form.cover_letter.label }}</label>
+                <input type="text" name="{{ form.cover_letter.name }}" class="form-control" id="{{ form.cover_letter.id_for_label }}" value="{{ form.cover_letter.value }}">
+                {{ form.cover_letter.errors }}
+            </div>
+            <button type="submit" class="btn btn-primary">Apply Now</button>
+        </form>
     </div>
-    <button type="submit" class="btn btn-primary">Apply Now</button>
-</form>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

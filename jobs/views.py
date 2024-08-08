@@ -16,8 +16,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -25,7 +23,8 @@ import numpy as np
 from django.views.generic import DetailView
 from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
 from .utils import calculate_similarity
-
+import matplotlib
+matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -154,7 +153,7 @@ def hr_applicants(request, job_id):
 
     return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
 
-@login_required
+# @login_required
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
