@@ -59,21 +59,6 @@ class JobScraper:
             logger.error(f"Request to {url} failed: {e}")
             return None
 
-    async def get_data_async(self):
-        async with aiohttp.ClientSession() as session:
-            # Fetch all data (companies and jobs) from Glorri and Azercell concurrently
-            glorri_jobs = await self.glorri_az(session)
-            azercell_jobs = await self.parse_azercell(session)
-
-            all_jobs = glorri_jobs + azercell_jobs.to_dict('records')
-
-            if all_jobs:
-                self.data = pd.DataFrame(all_jobs)
-                self.data['scrape_date'] = datetime.now()
-
-                # Drop rows with NaN values in critical columns
-                self.data.dropna(subset=['Company Name', 'Job Title', 'Job Apply Link'], inplace=True)
-
     def save_to_db(self, df, batch_size=100):
         try:
             with psycopg2.connect(**self.db_params) as conn:
@@ -110,7 +95,7 @@ class JobScraper:
                                     None,  # Deadline left blank
                                     None,  # Responsibilities left blank
                                     None,  # Requirements left blank
-                                    9,  # Assuming posted_by_id is 9
+                                    9,  # posted_by_id is 9
                                     True,  # is_scraped
                                     False,  # is_premium
                                     0,  # premium_days
@@ -135,6 +120,81 @@ class JobScraper:
 
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
+
+
+    async def get_data_async(self):
+        async with aiohttp.ClientSession() as session:
+            # Fetch data concurrently
+            parse_glorri = await self.parse_glorri(session)
+            azercell_jobs = await self.parse_azercell(session)
+            parse_azerconnect = await self.parse_azerconnect(session)
+
+            # Initialize an empty list to hold all job records
+            all_jobs = []
+
+            # Append each set of jobs to the list if it's not empty
+            if parse_glorri:
+                all_jobs.extend(parse_glorri)
+            if not azercell_jobs.empty:
+                all_jobs.extend(azercell_jobs.to_dict('records'))
+            if not parse_azerconnect.empty:
+                all_jobs.extend(parse_azerconnect.to_dict('records'))
+
+            # If we have jobs, convert to a DataFrame
+            if all_jobs:
+                self.data = pd.DataFrame(all_jobs)
+                self.data['scrape_date'] = datetime.now()
+
+                # Drop rows with NaN values in critical columns
+                self.data.dropna(subset=['Company Name', 'Job Title'], inplace=True)
+
+    async def parse_glorri(self, session):
+        """Fetch all companies and their job data from Glorri."""
+        url_companies = "https://atsapp.glorri.az/company-service/v2/companies/public"
+        limit = 18
+        offset = 0
+        total_count = 67
+        all_jobs = []
+
+        while offset < total_count:
+            params = {'limit': limit, 'offset': offset}
+            companies_data = await self.fetch_url_async(url_companies, session, params=params)
+            if companies_data:
+                companies = companies_data.get('entities', [])
+                for company in companies:
+                    slug = company.get('slug')
+                    company_name = company.get('name')
+                    job_count = company.get('jobCount')
+
+                    if job_count > 0 and slug:
+                        base_url_jobs = f"https://atsapp.glorri.az/job-service/v2/company/{slug}/jobs"
+                        job_offset = 0
+
+                        while True:
+                            job_params = {'offset': job_offset, 'limit': limit}
+                            jobs_data = await self.fetch_url_async(base_url_jobs, session, params=job_params)
+                            if jobs_data:
+                                jobs = jobs_data.get('entities', [])
+                                if not jobs:
+                                    break
+                                for job in jobs:
+                                    all_jobs.append({
+                                        'Company Name': company_name,
+                                        'Company Slug': slug,
+                                        'Job Title': job['title'],
+                                        'Job Apply Link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
+                                    })
+                                job_offset += limit
+                            else:
+                                logger.error(f"Failed to retrieve jobs for {company_name}.")
+                                break
+
+                offset += limit
+            else:
+                logger.error(f"Failed to retrieve companies data.")
+                break
+
+        return all_jobs
 
     async def parse_azercell(self, session):
         logger.info("Started scraping Azercell")
@@ -188,53 +248,95 @@ class JobScraper:
                 logger.warning("Vacancies section not found on the Azercell page.")
         return pd.DataFrame(columns=['company', 'vacancy', 'location', 'apply_link', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements'])
 
-    async def glorri_az(self, session):
-        """Fetch all companies and their job data from Glorri."""
-        url_companies = "https://atsapp.glorri.az/company-service/v2/companies/public"
-        limit = 18
-        offset = 0
-        total_count = 67
-        all_jobs = []
+    async def parse_azerconnect(self, session):
+        logger.info("Started scraping Azerconnect")
+        url = "https://www.azerconnect.az/vacancies"
+        response_text = await self.fetch_url_async(url, session, verify_ssl=False)
 
-        while offset < total_count:
-            params = {'limit': limit, 'offset': offset}
-            companies_data = await self.fetch_url_async(url_companies, session, params=params)
-            if companies_data:
-                companies = companies_data.get('entities', [])
-                for company in companies:
-                    slug = company.get('slug')
-                    company_name = company.get('name')
-                    job_count = company.get('jobCount')
+        if response_text:
+            soup = BeautifulSoup(response_text, 'html.parser')
+            job_listings = soup.find_all('div', class_='CollapsibleItem_item__CB3bC')
 
-                    if job_count > 0 and slug:
-                        base_url_jobs = f"https://atsapp.glorri.az/job-service/v2/company/{slug}/jobs"
-                        job_offset = 0
+            jobs_data = []
 
-                        while True:
-                            job_params = {'offset': job_offset, 'limit': limit}
-                            jobs_data = await self.fetch_url_async(base_url_jobs, session, params=job_params)
-                            if jobs_data:
-                                jobs = jobs_data.get('entities', [])
-                                if not jobs:
-                                    break
-                                for job in jobs:
-                                    all_jobs.append({
-                                        'Company Name': company_name,
-                                        'Company Slug': slug,
-                                        'Job Title': job['title'],
-                                        'Job Apply Link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
-                                    })
-                                job_offset += limit
-                            else:
-                                logger.error(f"Failed to retrieve jobs for {company_name}.")
-                                break
+            for job in job_listings:
+                title_elem = job.find('div', class_='CollapsibleItem_toggle__XNu5y').find('span')
+                if title_elem:
+                    title = title_elem.text.strip()
+                else:
+                    title = "No Title"
 
-                offset += limit
-            else:
-                logger.error(f"Failed to retrieve companies data.")
-                break
+                # Extract the content block
+                content_block = job.find('div', class_='CollapsibleItem_contentInner__vVcvk')
 
-        return all_jobs
+                # Extract fields from the content block
+                function, schedule, deadline, responsibilities, requirements = "", "", "", "", ""
+
+                # Extract the specific sections
+                details = content_block.find_all('p')
+                for detail in details:
+                    text = detail.get_text(strip=True)
+                    if text.startswith("Funksiya:"):
+                        function = text.replace("Funksiya:", "").strip()
+                    elif text.startswith("İdarə:"):
+                        function = text.replace("İdarə:", "").strip()
+                    elif text.startswith("İş qrafiki:"):
+                        schedule = text.replace("İş qrafiki:", "").strip()
+                    elif text.startswith("Son müraciət tarixi:"):
+                        deadline = text.replace("Son müraciət tarixi:", "").strip()
+                    elif text.startswith("Vəzifənin tələbləri:"):
+                        requirements = text.replace("Vəzifənin tələbləri:", "").strip()
+                    elif text.startswith("Sizin vəzifə öhdəlikləriniz:") or text.startswith("Əlavə Dəyərli Xidmətlər əməliyyatları üzrə ekspert olaraq sizin vəzifə öhdəlikləriniz:"):
+                        responsibilities = text.replace("Sizin vəzifə öhdəlikləriniz:", "").strip()
+
+                # Extract unordered list (ul) sections
+                uls = content_block.find_all('ul')
+                if uls:
+                    for ul in uls:
+                        if "Vəzifənin tələbləri" in ul.previous_sibling.get_text(strip=True):
+                            requirements += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
+                        elif "Sizin əsas vəzifə öhdəlikləriniz" in ul.previous_sibling.get_text(strip=True):
+                            responsibilities += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
+
+                # Extract the apply link
+                apply_link_elem = job.find('a', class_='Button_button-blue__0wZ4l')
+                if apply_link_elem:
+                    apply_link = apply_link_elem['href']
+                else:
+                    apply_link = "No Apply Link"
+
+                # Parse the deadline into a valid date format
+                if deadline:
+                    try:
+                        # Handle different date formats
+                        if '.' in deadline:
+                            deadline_date = datetime.strptime(deadline, "%d.%m.%Y").date()
+                        else:
+                            deadline_date = datetime.strptime(deadline, "%d %B %Y").date()
+                    except ValueError:
+                        deadline_date = None
+                else:
+                    deadline_date = None
+
+                job_data = {
+                    'company': 'azerconnect',
+                    'vacancy': title,
+                    'location': 'Baku, Azerbaijan',
+                    'function': function,
+                    'schedule': schedule,
+                    'deadline': deadline_date,
+                    'responsibilities': responsibilities,
+                    'requirements': requirements,
+                    'apply_link': apply_link
+                }
+
+                jobs_data.append(job_data)
+
+            df = pd.DataFrame(jobs_data)
+            logger.info("Scraping of Azerconnect completed")
+            return df
+
+        return pd.DataFrame(columns=['company', 'vacancy', 'location', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements', 'apply_link'])
 
 
 def main():
