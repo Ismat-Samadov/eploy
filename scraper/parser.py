@@ -76,8 +76,8 @@ class JobScraper:
                     # Prepare the data to be inserted, filtering out existing jobs within 30 days
                     values = []
                     for _, row in df.iterrows():
-                        title = row.get('Job Title', '')
-                        company = row.get('Company Name', '')
+                        title = row.get('vacancy', '')
+                        company = row.get('company', '')
 
                         # Skip rows where necessary data is missing
                         if not title or not company:
@@ -102,7 +102,7 @@ class JobScraper:
                                     99,  # priority_level
                                     datetime.now(),  # current datetime as posted_at
                                     False,  # deleted
-                                    row.get('Job Apply Link', '')[:1000]
+                                    row.get('apply_link', '')[:1000]
                                 )
                             )
 
@@ -115,6 +115,7 @@ class JobScraper:
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
                         logger.info(f"{len(values)} new job posts inserted into the database.")
+                        logger.info(values)
                     else:
                         logger.info("No new job posts to insert.")
 
@@ -128,7 +129,7 @@ class JobScraper:
             parse_glorri = await self.parse_glorri(session)
             azercell_jobs = await self.parse_azercell(session)
             parse_azerconnect = await self.parse_azerconnect(session)
-
+            parse_djinni_co = await self.parse_djinni_co(session)
             # Initialize an empty list to hold all job records
             all_jobs = []
 
@@ -139,14 +140,16 @@ class JobScraper:
                 all_jobs.extend(azercell_jobs.to_dict('records'))
             if not parse_azerconnect.empty:
                 all_jobs.extend(parse_azerconnect.to_dict('records'))
-
+            if not parse_djinni_co.empty:
+                all_jobs.extend(parse_djinni_co.to_dict('records'))
+            
             # If we have jobs, convert to a DataFrame
             if all_jobs:
                 self.data = pd.DataFrame(all_jobs)
                 self.data['scrape_date'] = datetime.now()
 
                 # Drop rows with NaN values in critical columns
-                self.data.dropna(subset=['Company Name', 'Job Title'], inplace=True)
+                self.data.dropna(subset=['company', 'vacancy'], inplace=True)
 
     async def parse_glorri(self, session):
         """Fetch all companies and their job data from Glorri."""
@@ -179,10 +182,10 @@ class JobScraper:
                                     break
                                 for job in jobs:
                                     all_jobs.append({
-                                        'Company Name': company_name,
+                                        'company': company_name,
                                         'Company Slug': slug,
-                                        'Job Title': job['title'],
-                                        'Job Apply Link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
+                                        'vacancy': job['title'],
+                                        'apply_link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
                                     })
                                 job_offset += limit
                             else:
@@ -337,6 +340,62 @@ class JobScraper:
             return df
 
         return pd.DataFrame(columns=['company', 'vacancy', 'location', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements', 'apply_link'])
+
+
+    async def parse_djinni_co(self, session):
+        pages = 15
+        logger.info(f"Started scraping djinni.co for the first {pages} pages")
+
+        base_jobs_url = 'https://djinni.co/jobs/'
+
+        jobs = []
+
+        async def scrape_jobs_page(page_url):
+            async with session.get(page_url) as response:
+                page_response = await response.text()
+                soup = BeautifulSoup(page_response, 'html.parser')
+                job_items = soup.select('ul.list-unstyled.list-jobs > li')
+                for job_item in job_items:
+                    job = {}
+
+                    # Extracting company name
+                    company_tag = job_item.find('a', class_='text-body')
+                    if company_tag:
+                        job['company'] = company_tag.text.strip()
+
+                    # Extracting job title
+                    title_tag = job_item.find('a', class_='job-item__title-link')
+                    if title_tag:
+                        job['vacancy'] = title_tag.text.strip()
+
+                    # Extracting application link
+                    if title_tag:
+                        job['apply_link'] = 'https://djinni.co' + title_tag['href']
+
+                    logger.debug(f"Scraped job: {job}")
+                    jobs.append(job)
+
+        # Scrape each page asynchronously
+        tasks = []
+        for page in range(1, pages + 1):
+            logger.info(f"Scraping page {page} for djinni.co")
+            page_url = f"{base_jobs_url}?page={page}"
+            tasks.append(scrape_jobs_page(page_url))
+
+        await asyncio.gather(*tasks)
+
+        df = pd.DataFrame(jobs, columns=['company', 'vacancy', 'apply_link'])
+        logger.info("Scraping completed for djinni.co")
+
+        if df.empty:
+            logger.warning("No jobs found during scraping.")
+            return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+        for job in df.to_dict('records'):
+            logger.debug(f"Title: {job['vacancy']}, Company: {job['company']}, Apply Link: {job['apply_link']}")
+            logger.info("=" * 40)
+
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
 
 def main():
