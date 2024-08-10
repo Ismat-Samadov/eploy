@@ -5,7 +5,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils import timezone
 from .models import JobPost, JobApplication
 from .forms import JobPostForm, JobApplicationForm, JobSearchForm, ResumeUploadForm
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from django.contrib import messages
 import logging
 from datetime import timedelta
