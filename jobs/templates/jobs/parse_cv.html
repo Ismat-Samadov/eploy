@@ -6,7 +6,7 @@
 {% block content %}
 <section class="container mt-5">
     <div class="dashboard-container">
-        <div class="circle circle-one"></div>
+        <!-- <div class="circle circle-one"></ div> -->
         <div class="form-container">
             <h1 class="opacity">Parse Your CV</h1>
             <form id="job-search-form" class="mb-4">
@@ -24,16 +24,16 @@
                 <button type="submit" class="btn btn-primary">Upload and Parse CV</button>
             </form>
         </div>
-        <div class="circle circle-two"></div>
+        <!-- <div class="circle circle-two"></div> -->
     </div>
     <div class="theme-btn-container"></div>
 </section>
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #d55252;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -46,7 +46,7 @@
 
     body {
         margin: 0;
-        font-family: "poppins", sans-serif;
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         transition: background 0.2s ease;
@@ -76,12 +76,11 @@
     }
 
     .form-container {
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
         padding: 2rem;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #ffffff;
     }
 
     .form-container input,
@@ -90,22 +89,21 @@
         padding: 12px;
         margin-bottom: 1rem;
         color: var(--color);
-        background-color: rgba(145, 145, 145, 0.1);
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         font-size: 14px;
-        backdrop-filter: blur(15px);
     }
 
     .form-container input:focus,
     .form-container button:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
     }
 
     .form-container button {
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
@@ -114,7 +112,7 @@
     }
 
     .form-container button:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
     }
 
@@ -163,8 +161,8 @@
 
     .job-item {
         padding: 0.5rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         margin-bottom: 0.5rem;
         display: flex;
@@ -174,11 +172,11 @@
     }
 
     .job-item:hover {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: #e9ecef;
     }
 
     .selected-job {
-        background-color: rgba(255, 255, 255, 0.3);
+        background-color: #e9ecef;
     }
 </style>
 

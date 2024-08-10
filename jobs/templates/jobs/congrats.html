@@ -9,20 +9,19 @@
     <div class="congrats-container">
         <div class="circle circle-one"></div>
         <div class="form-container">
-            <h1 class="opacity">Congratulations!</h1>
+            <h1>Congratulations!</h1>
             <p>You have successfully applied for the job.</p>
             <a href="{% url 'job_list' %}" class="btn btn-primary">Back to Job Listings</a>
         </div>
         <div class="circle circle-two"></div>
     </div>
-    <div class="theme-btn-container"></div>
 </section>
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -36,7 +35,7 @@
     body {
         margin: 0;
         box-sizing: border-box;
-        font-family: "poppins";
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         letter-spacing: 1px;
@@ -57,13 +56,13 @@
     }
 
     .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
         z-index: 99;
         padding: 2rem;
         text-align: center;
+        background-color: #ffffff;
     }
 
     .form-container a {
@@ -91,10 +90,6 @@
         right: 0;
         z-index: -1;
         transform: translate(45%, 45%);
-    }
-
-    .opacity {
-        opacity: 0.6;
     }
 </style>
 {% endblock %}

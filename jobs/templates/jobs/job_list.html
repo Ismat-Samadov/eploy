@@ -16,7 +16,7 @@
                         <input type="search" class="form-control" placeholder="Search by company" aria-label="Search by company" name="company" value="{{ request.GET.company }}">
                     </div>
                     <div class="input-group-append mb-2">
-                        <button class="btn btn-outline-success btn-block" type="submit">Search</button>
+                        <button class="btn btn-outline-primary btn-block" type="submit">Search</button>
                     </div>
                 </form>
                 <ul class="list-group">
@@ -62,9 +62,9 @@
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #d55252;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -104,12 +104,11 @@
     }
 
     .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
         padding: 1.5rem;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #ffffff;
     }
 
     .form-container .input-group {
@@ -122,25 +121,23 @@
         padding: 10px;
         color: var(--color);
         outline: none;
-        background-color: #9191911f;
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         letter-spacing: 0.8px;
         font-size: 13px;
-        backdrop-filter: blur(15px);
     }
 
     .form-container input:focus,
     .form-container button:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
-        animation: wobble 0.3s ease-in;
+        box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
     }
 
     .form-container .btn {
         white-space: nowrap;
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         padding: 10px;
         font-size: 14px;
         letter-spacing: 1.5px;
@@ -150,7 +147,7 @@
     }
 
     .form-container .btn:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
     }
 
@@ -158,14 +155,15 @@
         display: block;
         padding: 15px;
         border-radius: 5px;
-        background-color: #0f3460;
-        color: white;
+        background-color: #ffffff;
+        border: 1px solid #ced4da;
+        color: var(--color);
         transition: background-color 0.2s ease, transform 0.2s ease;
         margin-bottom: 1rem;
     }
 
     .job-listing:hover {
-        background-color: #1f456e;
+        background-color: #e9ecef;
         text-decoration: none;
         transform: scale(1.02);
     }
@@ -181,22 +179,7 @@
     }
 
     .opacity {
-        opacity: 0.6;
-    }
-
-    @keyframes wobble {
-        0% {
-            transform: scale(1.025);
-        }
-        25% {
-            transform: scale(1);
-        }
-        75% {
-            transform: scale(1.025);
-        }
-        100% {
-            transform: scale(1);
-        }
+        opacity: 0.8;
     }
 
     @media (max-width: 768px) {

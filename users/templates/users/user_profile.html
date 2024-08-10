@@ -7,7 +7,7 @@
 <section class="container mt-5">
     <h1 class="text-center">User Profile</h1>
     
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post">
             {% csrf_token %}
             {{ profile_form.as_p }}
@@ -16,7 +16,7 @@
     </div>
 
     <h2 class="text-center">Work Experience</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_work_experience' %}">
             {% csrf_token %}
             {{ work_experience_form.as_p }}
@@ -25,7 +25,7 @@
     </div>
 
     {% for work_experience in work_experiences %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>Company:</strong> {{ work_experience.company }}</p>
         <p><strong>Job Title:</strong> {{ work_experience.job_title }}</p>
         <p><strong>Start Date:</strong> {{ work_experience.start_date }}</p>
@@ -35,7 +35,7 @@
     {% endfor %}
 
     <h2 class="text-center">Education</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_education' %}">
             {% csrf_token %}
             {{ education_form.as_p }}
@@ -44,7 +44,7 @@
     </div>
 
     {% for education in educations %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>University:</strong> {{ education.university }}</p>
         <p><strong>Degree:</strong> {{ education.degree }}</p>
         <p><strong>Speciality:</strong> {{ education.speciality }}</p>
@@ -55,7 +55,7 @@
     {% endfor %}
 
     <h2 class="text-center">Projects</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_project' %}">
             {% csrf_token %}
             {{ project_form.as_p }}
@@ -64,15 +64,15 @@
     </div>
 
     {% for project in projects %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>Project Name:</strong> {{ project.project_name }}</p>
-        <p><strong>Project Link:</strong> <a href="{{ project.project_link }}" class="text-light">{{ project.project_link }}</a></p>
+        <p><strong>Project Link:</strong> <a href="{{ project.project_link }}" class="text-primary">{{ project.project_link }}</a></p>
         <a class="btn btn-danger" href="{% url 'delete_project' project.pk %}">Delete</a>
     </div>
     {% endfor %}
 
     <h2 class="text-center">Skills</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_skill' %}">
             {% csrf_token %}
             {{ skill_form.as_p }}
@@ -81,7 +81,7 @@
     </div>
 
     {% for skill in skills %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>Skill Name:</strong> {{ skill.skill_name }}</p>
         <p><strong>Skill Level:</strong> {{ skill.skill_level }}</p>
         <a class="btn btn-danger" href="{% url 'delete_skill' skill.pk %}">Delete</a>
@@ -89,7 +89,7 @@
     {% endfor %}
 
     <h2 class="text-center">Languages</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_language' %}">
             {% csrf_token %}
             {{ language_form.as_p }}
@@ -98,7 +98,7 @@
     </div>
 
     {% for language in languages %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>Language:</strong> {{ language.language }}</p>
         <p><strong>Language Level:</strong> {{ language.language_level }}</p>
         <a class="btn btn-danger" href="{% url 'delete_language' language.pk %}">Delete</a>
@@ -106,7 +106,7 @@
     {% endfor %}
 
     <h2 class="text-center">Certifications</h2>
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <form method="post" action="{% url 'add_certification' %}">
             {% csrf_token %}
             {{ certification_form.as_p }}
@@ -115,10 +115,10 @@
     </div>
 
     {% for certification in certifications %}
-    <div class="profile-section bg-dark text-light p-4 rounded mb-4">
+    <div class="profile-section bg-light text-dark p-4 rounded mb-4">
         <p><strong>Certificate Name:</strong> {{ certification.certificate_name }}</p>
         <p><strong>Certification Date:</strong> {{ certification.certification_date }}</p>
-        <p><strong>Certificate Link:</strong> <a href="{{ certification.certificate_link }}" class="text-light">{{ certification.certificate_link }}</a></p>
+        <p><strong>Certificate Link:</strong> <a href="{{ certification.certificate_link }}" class="text-primary">{{ certification.certificate_link }}</a></p>
         <a class="btn btn-danger" href="{% url 'delete_certification' certification.pk %}">Delete</a>
     </div>
     {% endfor %}
@@ -126,12 +126,12 @@
 
 <style>
     :root {
-        --primary-color: #0a59b9;
-        --text-color: #e70f0f;
+        --primary-color: #007bff;
+        --text-color: #343a40;
     }
 
     body {
-        background-color: #1a1a2e;
+        background-color: #f8f9fa;
         color: var(--text-color);
     }
 
@@ -146,9 +146,9 @@
     }
 
     .btn-danger {
-        background-color: #f25f5c;
-        border-color: #f25f5c;
-        color: #0ff30b;
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #ffffff;
     }
 
     .btn-primary:hover, .btn-danger:hover {
@@ -156,7 +156,7 @@
     }
 
     .profile-section {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #ffffff;
     }
 </style>
 {% endblock %}

@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CareerHorizon{% endblock %}</title>
     <meta name="description" content="{% block description %}CareerHorizon is your go-to platform for job opportunities in Azerbaijan. Find jobs, work, careers, iş elanları, vakansiyalar, and employment across various sectors in Baku and beyond.{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}jobsearch, jobsearch az, job search, vakansiya 2024, iş elanları, jobs in Baku, career opportunities, employment in Azerbaijan, iş elanları 2024, vakansiyalar, socar,  boss az{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}jobsearch, jobsearch az, job search, vakansiya 2024, iş elanları, jobs in Baku, career opportunities, employment in Azerbaijan, iş elanları 2024, vakansiyalar, socar, boss az{% endblock %}">
     <link rel="canonical" href="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{% block og_title %}CareerHorizon - Find Jobs in Azerbaijan{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Explore job listings, career opportunities, and vakansiyalar in Azerbaijan. Start your job search today!{% endblock %}">
@@ -30,12 +30,19 @@
             flex-direction: column;
             font-family: "Poppins", sans-serif;
             background: #f8f9fa;
+            color: #343a40;
         }
         .content {
             flex: 1;
         }
         .navbar {
             margin-bottom: 20px;
+        }
+        .navbar-light .navbar-nav .nav-link {
+            color: #343a40;
+        }
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #007bff;
         }
     </style>
 </head>

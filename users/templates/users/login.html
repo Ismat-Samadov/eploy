@@ -6,10 +6,7 @@
 {% block content %}
 <section class="container">
     <div class="login-container">
-        <div class="circle circle-one"></div>
         <div class="form-container">
-            <!-- <img src="{% static 'images/illustration.png' %}" alt="illustration" class="illustration" /> -->
-
             <h1 class="opacity">LOGIN</h1>
             <form method="post">
                 {% csrf_token %}
@@ -31,16 +28,14 @@
                 </div>
             {% endif %}
         </div>
-        <div class="circle circle-two"></div>
     </div>
-    <div class="theme-btn-container"></div>
 </section>
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #d55252;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -53,7 +48,7 @@
 
     body {
         margin: 0;
-        font-family: "poppins", sans-serif;
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         transition: background 0.2s ease;
@@ -66,6 +61,8 @@
 
     h1 {
         font-size: 2rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
     }
 
     .container {
@@ -76,19 +73,17 @@
     }
 
     .login-container {
-        position: relative;
         max-width: 400px;
         width: 100%;
         padding: 1rem;
     }
 
     .form-container {
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
         padding: 2rem;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #ffffff;
     }
 
     .form-container input,
@@ -97,22 +92,21 @@
         padding: 12px;
         margin-bottom: 1rem;
         color: var(--color);
-        background-color: rgba(145, 145, 145, 0.1);
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         font-size: 14px;
-        backdrop-filter: blur(15px);
     }
 
     .form-container input:focus,
     .form-container button:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
     }
 
     .form-container button {
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
@@ -121,35 +115,8 @@
     }
 
     .form-container button:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
-    }
-
-    .circle {
-        width: 6rem;
-        height: 6rem;
-        background: var(--primary-color);
-        border-radius: 50%;
-        position: absolute;
-    }
-
-    .illustration {
-        position: absolute;
-        top: -10%;
-        right: 0;
-        width: 80%;
-    }
-
-    .circle-one {
-        top: 0;
-        left: 0;
-        transform: translate(-45%, -45%);
-    }
-
-    .circle-two {
-        bottom: 0;
-        right: 0;
-        transform: translate(45%, 45%);
     }
 
     .register-forget {
@@ -158,77 +125,7 @@
     }
 
     .opacity {
-        opacity: 0.6;
-    }
-
-    .theme-btn-container {
-        position: absolute;
-        left: 0;
-        bottom: 1rem;
-    }
-
-    .theme-btn {
-        cursor: pointer;
-        transition: transform 0.3s ease-in;
-    }
-
-    .theme-btn:hover {
-        transform: scale(1.2);
+        opacity: 0.8;
     }
 </style>
-
-<script>
-    const themes = [
-        {
-            background: "#1A1A2E",
-            color: "#FFFFFF",
-            primaryColor: "#0F3460"
-        },
-        {
-            background: "#461220",
-            color: "#FFFFFF",
-            primaryColor: "#E94560"
-        },
-        {
-            background: "#192A51",
-            color: "#FFFFFF",
-            primaryColor: "#967AA1"
-        },
-        {
-            background: "#F7B267",
-            color: "#000000",
-            primaryColor: "#F4845F"
-        },
-        {
-            background: "#F25F5C",
-            color: "#000000",
-            primaryColor: "#642B36"
-        },
-        {
-            background: "#231F20",
-            color: "#FFF",
-            primaryColor: "#BB4430"
-        }
-    ];
-
-    const setTheme = (theme) => {
-        const root = document.querySelector(":root");
-        root.style.setProperty("--background", theme.background);
-        root.style.setProperty("--color", theme.color);
-        root.style.setProperty("--primary-color", theme.primaryColor);
-    };
-
-    const displayThemeButtons = () => {
-        const btnContainer = document.querySelector(".theme-btn-container");
-        themes.forEach((theme) => {
-            const div = document.createElement("div");
-            div.className = "theme-btn";
-            div.style.cssText = `background: ${theme.background}; width: 25px; height: 25px`;
-            btnContainer.appendChild(div);
-            div.addEventListener("click", () => setTheme(theme));
-        });
-    };
-
-    displayThemeButtons();
-</script>
 {% endblock %}

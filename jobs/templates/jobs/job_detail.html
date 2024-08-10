@@ -1,13 +1,58 @@
-<!-- jobs/templates/jobs/job_detail.html -->
 {% extends 'jobs/base.html' %}
 
 {% block title %}{{ job.title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h1>{{ job.title }}</h1>
-    <p><strong>Company:</strong> {{ job.company }}</p>
-    <p><strong>Location:</strong> {{ job.location }}</p>
-    <p>{{ job.description }}</p>
+    <div class="job-detail">
+        <h1>{{ job.title }}</h1>
+        <p><strong>Company:</strong> {{ job.company }}</p>
+        {% if job.location %}
+            <p><strong>Location:</strong> {{ job.location }}</p>
+        {% endif %}
+        {% if job.posted_at %}
+            <p><strong>Date Posted:</strong> {{ job.posted_at|date:"F j, Y" }}</p>
+        {% endif %}
+        <p>{{ job.description }}</p>
+
+        {% if user.is_authenticated and not job.is_scraped %}
+            <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">Apply Now</a>
+        {% elif job.is_scraped %}
+            <a href="{{ job.apply_link }}" class="btn btn-primary" target="_blank">Apply on External Site</a>
+        {% else %}
+            <p><em>Log in to apply for this job.</em></p>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+    .job-detail {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .job-detail h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    .job-detail p {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 20px;
+        font-size: 1.1rem;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #004085;
+    }
+</style>
 {% endblock %}

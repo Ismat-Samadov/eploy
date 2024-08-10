@@ -1,5 +1,3 @@
-<!-- jobs/templates/jobs/confirm_delete.html -->
-
 {% extends 'jobs/base.html' %}
 
 {% block title %}Delete Job{% endblock %}
@@ -8,7 +6,7 @@
 <section class="container mt-5">
     <div class="confirm-delete-container">
         <div class="form-container">
-            <h1 class="opacity">Delete Job</h1>
+            <h1>Delete Job</h1>
             <p>Are you sure you want to delete the job "{{ job.title }}"?</p>
             <form method="post">
                 {% csrf_token %}
@@ -21,9 +19,9 @@
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -37,7 +35,7 @@
     body {
         margin: 0;
         box-sizing: border-box;
-        font-family: "poppins";
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         letter-spacing: 1px;
@@ -67,12 +65,11 @@
     }
 
     .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
         padding: 2rem;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #ffffff;
     }
 
     .form-container input,
@@ -84,25 +81,23 @@
         margin: 1rem 0;
         color: var(--color);
         outline: none;
-        background-color: #9191911f;
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         letter-spacing: 0.8px;
         font-size: 15px;
-        backdrop-filter: blur(15px);
     }
 
     .form-container input:focus,
     .form-container button:focus,
     .form-container textarea:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
-        animation: wobble 0.3s ease-in;
+        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.1);
     }
 
     .form-container button {
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         padding: 13px;
         font-size: 18px;
         letter-spacing: 1.5px;
@@ -116,19 +111,14 @@
         transform: scale(1.02);
     }
 
-    @keyframes wobble {
-        0% {
-            transform: scale(1.025);
-        }
-        25% {
-            transform: scale(1);
-        }
-        75% {
-            transform: scale(1.025);
-        }
-        100% {
-            transform: scale(1);
-        }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: scale(1.02);
     }
 </style>
 {% endblock %}

@@ -1,60 +1,123 @@
 {% extends 'jobs/base.html' %}
 
 {% block content %}
-<h2>Applicants for {{ job.title }}</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Applicant</th>
-            <th>Similarity Score</th>
-            <th>Profile</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for application in applications %}
-        <tr>
-            <td>{{ application.application.applicant.username }}</td>
-            <td>{{ application.similarity_score|floatformat:2 }}</td>
-            <td>
-                <strong>Work Experience:</strong>
-                <ul>
-                    {% for exp in application.applicant_profile.work_experiences.all %}
-                    <li>{{ exp.company }} - {{ exp.job_title }}</li>
-                    {% endfor %}
-                </ul>
-                <strong>Education:</strong>
-                <ul>
-                    {% for edu in application.applicant_profile.educations.all %}
-                    <li>{{ edu.university }} - {{ edu.degree }} in {{ edu.speciality }}</li>
-                    {% endfor %}
-                </ul>
-                <strong>Skills:</strong>
-                <ul>
-                    {% for skill in application.applicant_profile.skills.all %}
-                    <li>{{ skill.skill_name }} ({{ skill.skill_level }})</li>
-                    {% endfor %}
-                </ul>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<section class="container mt-5">
+    <h2>Applicants for {{ job.title }}</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>Applicant</th>
+                <th>Similarity Score</th>
+                <th>Profile</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for application in applications %}
+            <tr>
+                <td>{{ application.application.applicant.username }}</td>
+                <td>{{ application.similarity_score|floatformat:2 }}</td>
+                <td>
+                    <strong>Work Experience:</strong>
+                    <ul>
+                        {% for exp in application.applicant_profile.work_experiences.all %}
+                        <li>{{ exp.company }} - {{ exp.job_title }}</li>
+                        {% endfor %}
+                    </ul>
+                    <strong>Education:</strong>
+                    <ul>
+                        {% for edu in application.applicant_profile.educations.all %}
+                        <li>{{ edu.university }} - {{ edu.degree }} in {{ edu.speciality }}</li>
+                        {% endfor %}
+                    </ul>
+                    <strong>Skills:</strong>
+                    <ul>
+                        {% for skill in application.applicant_profile.skills.all %}
+                        <li>{{ skill.skill_name }} ({{ skill.skill_level }})</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-<div class="pagination">
-    <span class="step-links">
-        {% if applications.has_previous %}
-            <a href="?applications_page=1">&laquo; first</a>
-            <a href="?applications_page={{ applications.previous_page_number }}">previous</a>
-        {% endif %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if applications.has_previous %}
+                <a href="?applications_page=1">&laquo; first</a>
+                <a href="?applications_page={{ applications.previous_page_number }}">previous</a>
+            {% endif %}
 
-        <span class="current">
-            Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
+            <span class="current">
+                Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
+            </span>
+
+            {% if applications.has_next %}
+                <a href="?applications_page={{ applications.next_page_number }}">next</a>
+                <a href="?applications_page={{ applications.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
         </span>
+    </div>
+</section>
 
-        {% if applications.has_next %}
-            <a href="?applications_page={{ applications.next_page_number }}">next</a>
-            <a href="?applications_page={{ applications.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
-</div>
+<style>
+    body {
+        background-color: #f8f9fa;
+        color: #343a40;
+    }
+
+    h2 {
+        margin-bottom: 20px;
+        color: #007bff;
+    }
+
+    .table {
+        margin-top: 20px;
+        width: 100%;
+        border: 1px solid #dee2e6;
+        border-collapse: collapse;
+    }
+
+    .table th, .table td {
+        padding: 15px;
+        text-align: left;
+        vertical-align: top;
+        border: 1px solid #dee2e6;
+    }
+
+    .table th {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+
+    .pagination {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination .step-links a {
+        margin: 0 5px;
+        padding: 8px 12px;
+        color: #007bff;
+        text-decoration: none;
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        transition: background-color 0.2s;
+    }
+
+    .pagination .step-links a:hover {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+
+    .pagination .current {
+        margin: 0 5px;
+        padding: 8px 12px;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #ffffff;
+        font-weight: bold;
+    }
+</style>
 {% endblock %}

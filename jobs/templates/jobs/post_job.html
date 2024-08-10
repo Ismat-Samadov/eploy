@@ -28,19 +28,18 @@
                     <label for="id_location">Location:</label>
                     <input type="text" name="location" class="form-control" id="id_location" required>
                 </div>
-                <button type="submit" class="opacity">Post Job</button>
+                <button type="submit" class="btn btn-primary">Post Job</button>
             </form>
         </div>
         <div class="circle circle-two"></div>
     </div>
-    <div class="theme-btn-container"></div>
 </section>
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -54,7 +53,7 @@
     body {
         margin: 0;
         box-sizing: border-box;
-        font-family: "poppins";
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         letter-spacing: 1px;
@@ -80,16 +79,15 @@
 
     .post-job-container {
         position: relative;
-        width: 40rem; /* Adjusted width for better readability */
+        width: 40rem;
     }
 
     .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
-        z-index: 99;
         padding: 2rem;
+        background-color: #ffffff;
     }
 
     .form-container input,
@@ -101,41 +99,40 @@
         margin: 1rem 0;
         color: var(--color);
         outline: none;
-        background-color: #9191911f;
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         letter-spacing: 0.8px;
         font-size: 15px;
-        backdrop-filter: blur(15px);
     }
 
     .form-container input:focus,
     .form-container button:focus,
     .form-container textarea:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
-        animation: wobble 0.3s ease-in;
+        box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
     }
 
     .form-container button {
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         padding: 13px;
         font-size: 18px;
         letter-spacing: 1.5px;
         font-weight: bold;
         cursor: pointer;
         transition: all 0.1s ease-in-out;
+        border: none;
     }
 
     .form-container button:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
     }
 
     .circle {
-        width: 5rem; /* Adjusted size to prevent overlapping */
-        height: 5rem; /* Adjusted size to prevent overlapping */
+        width: 5rem;
+        height: 5rem;
         background: var(--primary-color);
         border-radius: 50%;
         position: absolute;
@@ -145,7 +142,7 @@
         position: absolute;
         top: -14%;
         right: -2px;
-        width: 40%; /* Adjusted width to prevent overlapping */
+        width: 40%;
     }
 
     .circle-one {
@@ -163,100 +160,7 @@
     }
 
     .opacity {
-        opacity: 0.6;
-    }
-
-    .theme-btn-container {
-        position: absolute;
-        left: 0;
-        bottom: 2rem;
-    }
-
-    .theme-btn {
-        cursor: pointer;
-        transition: all 0.3s ease-in;
-    }
-
-    .theme-btn:hover {
-        width: 40px !important;
-    }
-
-    @keyframes wobble {
-        0% {
-            transform: scale(1.025);
-        }
-        25% {
-            transform: scale(1);
-        75% {
-            transform: scale(1.025);
-        }
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .read-more,
-    .read-less {
-        color: var(--primary-color);
-        font-weight: bold;
-        cursor: pointer;
-        display: block;
-        margin-top: 1rem;
+        opacity: 0.8;
     }
 </style>
-
-<script>
-    const themes = [
-        {
-            background: "#1A1A2E",
-            color: "#FFFFFF",
-            primaryColor: "#0F3460"
-        },
-        {
-            background: "#461220",
-            color: "#FFFFFF",
-            primaryColor: "#E94560"
-        },
-        {
-            background: "#192A51",
-            color: "#FFFFFF",
-            primaryColor: "#967AA1"
-        },
-        {
-            background: "#F7B267",
-            color: "#000000",
-            primaryColor: "#F4845F"
-        },
-        {
-            background: "#F25F5C",
-            color: "#000000",
-            primaryColor: "#642B36"
-        },
-        {
-            background: "#231F20",
-            color: "#FFF",
-            primaryColor: "#BB4430"
-        }
-    ];
-
-    const setTheme = (theme) => {
-        const root = document.querySelector(":root");
-        root.style.setProperty("--background", theme.background);
-        root.style.setProperty("--color", theme.color);
-        root.style.setProperty("--primary-color", theme.primaryColor);
-    };
-
-    const displayThemeButtons = () => {
-        const btnContainer = document.querySelector(".theme-btn-container");
-        themes.forEach((theme) => {
-            const div = document.createElement("div");
-            div.className = "theme-btn";
-            div.style.cssText = `background: ${theme.background}; width: 25px; height: 25px`;
-            btnContainer.appendChild(div);
-            div.addEventListener("click", () => setTheme(theme));
-        });
-    };
-
-    displayThemeButtons();
-</script>
 {% endblock %}

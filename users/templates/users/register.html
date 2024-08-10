@@ -6,9 +6,8 @@
 {% block content %}
 <section class="container">
     <div class="login-container">
-        <div class="circle circle-one"></div>
+        <!-- <div class="circle circle-one"></div> -->
         <div class="form-container">
-            <!-- <img src="{% static 'images/illustration.png' %}" alt="illustration" class="illustration" /> -->
             <h1 class="opacity">REGISTER</h1>
             <form method="post">
                 {% csrf_token %}
@@ -80,16 +79,16 @@
                 </div>
             {% endif %}
         </div>
-        <div class="circle circle-two"></div>
+        <!-- <div class="circle circle-two"></div> -->
     </div>
     <div class="theme-btn-container"></div>
 </section>
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
@@ -132,12 +131,13 @@
     }
 
     .form-container {
-        border: 1px solid hsla(0, 0%, 65%, 0.158);
-        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.2);
+        border: 1px solid #ced4da;
+        box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
         backdrop-filter: blur(20px);
         z-index: 99;
         padding: 2rem;
+        background-color: #ffffff;
     }
 
     .login-container form input,
@@ -148,8 +148,8 @@
         margin: 2rem 0;
         color: var(--color);
         outline: none;
-        background-color: #9191911f;
-        border: none;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
         letter-spacing: 0.8px;
@@ -159,13 +159,13 @@
 
     .login-container form input:focus,
     .login-container form select:focus {
-        box-shadow: 0 0 16px 1px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
         animation: wobble 0.3s ease-in;
     }
 
     .login-container form button {
         background-color: var(--primary-color);
-        color: var(--color);
+        color: #ffffff;
         display: block;
         padding: 13px;
         border-radius: 5px;
@@ -181,7 +181,7 @@
     }
 
     .login-container form button:hover {
-        box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
     }
 
@@ -221,7 +221,7 @@
     }
 
     .opacity {
-        opacity: 0.6;
+        opacity: 0.8;
     }
 
     .theme-btn-container {
@@ -258,34 +258,34 @@
 <script>
     const themes = [
         {
-            background: "#1A1A2E",
-            color: "#FFFFFF",
-            primaryColor: "#0F3460"
+            background: "#f8f9fa",
+            color: "#343a40",
+            primaryColor: "#007bff"
         },
         {
-            background: "#461220",
-            color: "#FFFFFF",
-            primaryColor: "#E94560"
+            background: "#e9ecef",
+            color: "#495057",
+            primaryColor: "#17a2b8"
         },
         {
-            background: "#192A51",
-            color: "#FFFFFF",
-            primaryColor: "#967AA1"
+            background: "#ffffff",
+            color: "#343a40",
+            primaryColor: "#6c757d"
         },
         {
-            background: "#F7B267",
-            color: "#000000",
-            primaryColor: "#F4845F"
+            background: "#f0f0f0",
+            color: "#212529",
+            primaryColor: "#28a745"
         },
         {
-            background: "#F25F5C",
-            color: "#000000",
-            primaryColor: "#642B36"
+            background: "#dee2e6",
+            color: "#495057",
+            primaryColor: "#ffc107"
         },
         {
-            background: "#231F20",
-            color: "#FFF",
-            primaryColor: "#BB4430"
+            background: "#ffffff",
+            color: "#495057",
+            primaryColor: "#dc3545"
         }
     ];
 

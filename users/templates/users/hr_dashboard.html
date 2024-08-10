@@ -56,23 +56,19 @@
 
 <style>
     :root {
-        --background: #1a1a2e;
-        --color: #ffffff;
-        --primary-color: #0f3460;
+        --background: #f8f9fa;
+        --color: #343a40;
+        --primary-color: #007bff;
     }
 
     * {
         box-sizing: border-box;
     }
 
-    html {
-        scroll-behavior: smooth;
-    }
-
     body {
         margin: 0;
         box-sizing: border-box;
-        font-family: "poppins";
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
         letter-spacing: 1px;
@@ -92,7 +88,6 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100vh;
         padding: 20px;
     }
 
@@ -108,14 +103,16 @@
     .section-title {
         font-size: 1.5rem;
         margin-bottom: 20px;
+        color: var(--primary-color);
     }
 
     .list-group-item {
-        background: #0f3460;
+        background: #ffffff;
         margin-bottom: 10px;
         border-radius: 8px;
         padding: 20px;
         transition: transform 0.2s;
+        border: 1px solid #ced4da;
     }
 
     .list-group-item:hover {
@@ -129,7 +126,7 @@
     }
 
     .pagination .page-item .page-link {
-        color: var(--color);
+        color: #ffffff;
         background: var(--primary-color);
         border: none;
         border-radius: 5px;
@@ -144,7 +141,27 @@
     }
 
     .opacity {
-        opacity: 0.6;
+        opacity: 0.8;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        color: #ffffff;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: #ffffff;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        color: #ffffff;
     }
 </style>
 {% endblock %}
