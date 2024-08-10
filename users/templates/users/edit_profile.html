@@ -1,0 +1,23 @@
+{% extends 'jobs/base.html' %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <h2>Edit Profile</h2>
+    <!-- Profile Update Form -->
+    <form method="post" action="" id="update_profile_form">
+        {% csrf_token %}
+        {{ user_form.as_p }}
+        <button class="btn btn-primary" type="submit" name="update_profile">Update Email and Username</button>
+    </form>
+
+    <h2 class="mt-4">Change Password</h2>
+    <!-- Password Change Form -->
+    <form method="post" action="" id="change_password_form">
+        {% csrf_token %}
+        {{ password_form.as_p }}
+        <button class="btn btn-primary" type="submit" name="change_password">Change Password</button>
+    </form>
+</section>
+{% endblock %}

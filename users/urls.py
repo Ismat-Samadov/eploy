@@ -2,7 +2,7 @@
 
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import create_profile, user_dashboard, user_profile, add_work_experience, add_education, add_project, add_skill, add_language, add_certification, delete_work_experience, delete_education, delete_project, delete_skill, delete_language, delete_certification
+from .views import create_profile, edit_profile, user_dashboard, user_profile, add_work_experience, add_education, add_project, add_skill, add_language, add_certification, delete_work_experience, delete_education, delete_project, delete_skill, delete_language, delete_certification
 from . import views
 from django.contrib.auth.views import LoginView
 
@@ -11,6 +11,7 @@ from django.contrib.auth.views import LoginView
 urlpatterns = [
     path('dashboard/', user_dashboard, name='user_dashboard'),
     path('profile/', user_profile, name='user_profile'),
+    path('edit-profile/', edit_profile, name='edit_profile'),
     path('create-profile/', views.create_profile, name='create_profile'),  
     path('add-work-experience/', add_work_experience, name='add_work_experience'),
     path('add-education/', add_education, name='add_education'),

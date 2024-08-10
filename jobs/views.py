@@ -177,12 +177,6 @@ def job_list(request):
         is_scraped=True,
         posted_at__gte=time_threshold
     ).order_by('-posted_at')
-
-    for job in non_scraped_jobs:
-        print(f"Non-scraped job: {job.title}, posted at: {job.posted_at}")
-    for job in scraped_jobs:
-        print(f"Scraped job: {job.title}, posted at: {job.posted_at}")
-
     # Combine the querysets and ensure uniqueness
     jobs = list(non_scraped_jobs) + list(scraped_jobs)
     unique_jobs = []

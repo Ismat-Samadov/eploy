@@ -25,6 +25,8 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, HttpR
 from django.conf import settings
 import logging
 from django.contrib.auth import get_user_model
+from .forms import UserUpdateForm, CustomPasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -36,6 +38,34 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 User = get_user_model()
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        if 'update_profile' in request.POST:
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            if user_form.is_valid():
+                user_form.save()
+                messages.success(request, 'Your profile has been updated!')
+                return redirect('edit_profile')
+        elif 'change_password' in request.POST:
+            password_form = CustomPasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)  # Important!
+                messages.success(request, 'Your password has been updated!')
+                return redirect('edit_profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = CustomPasswordChangeForm(request.user)
+
+    context = {
+        'user_form': user_form,
+        'password_form': password_form
+    }
+
+    return render(request, 'users/edit_profile.html', context)
+
 
 def custom_login(request):
     if request.method == 'POST':

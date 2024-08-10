@@ -2,9 +2,22 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import PasswordChangeForm
 
-# Ensure you're using the correct user model
 User = get_user_model()
+
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField()
+
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    class Meta:
+        model = User
+        fields = ['old_password', 'new_password1', 'new_password2']
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
