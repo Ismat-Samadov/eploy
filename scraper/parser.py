@@ -95,7 +95,7 @@ class JobScraper:
                                     None,  # Deadline left blank
                                     None,  # Responsibilities left blank
                                     None,  # Requirements left blank
-                                    9,  # posted_by_id is 9
+                                    1,  # posted_by_id is 9
                                     True,  # is_scraped
                                     False,  # is_premium
                                     0,  # premium_days
