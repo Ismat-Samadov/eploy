@@ -1,49 +1,81 @@
-<!-- jobs/apply_job.html -->
+{% extends 'jobs/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply for {{ job.title }}</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5">
-        <h2 class="mb-4">Apply for {{ job.title }} at {{ job.company }}</h2>
-        
-        <!-- Display profile information -->
-        <h4>Your Profile</h4>
-        <div class="mb-3">
-            <p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
-            <p><strong>Email:</strong> {{ request.user.email }}</p>
+{% block title %}Apply for {{ job.title }}{% endblock %}
 
-            <!-- Display other relevant profile fields -->
-            {% if profile %}
-                <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
-                <p><strong>Address:</strong> {{ profile.address }}</p>
-                <!-- Add more fields as needed -->
-            {% else %}
-                <p class="text-warning">Please complete your profile.</p>
-            {% endif %}
-        </div>
-
-        <form method="post" class="mt-4">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <div class="form-group">
-                <label for="{{ form.cover_letter.id_for_label }}">{{ form.cover_letter.label }}</label>
-                <input type="text" name="{{ form.cover_letter.name }}" class="form-control" id="{{ form.cover_letter.id_for_label }}" value="{{ form.cover_letter.value }}">
-                {{ form.cover_letter.errors }}
-            </div>
-            <button type="submit" class="btn btn-primary">Apply Now</button>
-        </form>
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-primary">Apply for {{ job.title }} at {{ job.company }}</h2>
+    
+    <!-- Job Description -->
+    <div class="job-description mb-4 p-4 bg-light border rounded shadow-sm">
+        <h4 class="text-secondary">Job Description</h4>
+        <p>{{ job.description }}</p>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+    <!-- Display profile information -->
+    <div class="profile-info mb-4 p-4 bg-light border rounded shadow-sm">
+        <h4 class="text-secondary">Your Profile</h4>
+        <p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
+        <p><strong>Email:</strong> {{ request.user.email }}</p>
+
+        {% if profile %}
+            <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
+            <p><strong>Address:</strong> {{ profile.address }}</p>
+        {% else %}
+            <p class="text-warning">Please complete your profile.</p>
+        {% endif %}
+    </div>
+
+    <!-- Application Form -->
+    <form method="post" enctype="multipart/form-data" class="application-form p-4 bg-light border rounded shadow-sm">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-group">
+            <label for="{{ form.cover_letter.id_for_label }}" class="text-secondary">{{ form.cover_letter.label }}</label>
+            <textarea name="{{ form.cover_letter.name }}" class="form-control" id="{{ form.cover_letter.id_for_label }}" rows="5">{{ form.cover_letter.value }}</textarea>
+            {{ form.cover_letter.errors }}
+        </div>
+        <div class="form-group">
+            <label for="resume" class="text-secondary">Upload Your CV</label>
+            <input type="file" name="resume" class="form-control-file" id="resume" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">Apply Now</button>
+    </form>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        color: #343a40;
+    }
+
+    h2 {
+        color: #007bff;
+    }
+
+    .job-description, .profile-info, .application-form {
+        margin-bottom: 20px;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group label {
+        font-weight: bold;
+        color: #343a40;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+</style>
+{% endblock %}

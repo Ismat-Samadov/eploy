@@ -1,4 +1,3 @@
-# jobs/forms.py
 from django import forms
 from .models import JobPost, JobApplication
 
@@ -8,9 +7,11 @@ class JobPostForm(forms.ModelForm):
         fields = ['title', 'description', 'company', 'location']
 
 class JobApplicationForm(forms.ModelForm):
+    cv = forms.FileField(label='Upload your CV', required=True)
+
     class Meta:
         model = JobApplication
-        fields = ['cover_letter']
+        fields = ['cover_letter', 'cv']
         widgets = {
             'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }

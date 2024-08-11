@@ -3,6 +3,7 @@ import os
 from decouple import config
 import dj_database_url
 import logging
+import boto3
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'jobs',
     'users',
+    'storages',
     'whitenoise.runserver_nostatic',
 ]
 
@@ -61,7 +63,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,  
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -72,9 +74,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
-
 
 WSGI_APPLICATION = 'jobsite.wsgi.application'
 
@@ -104,9 +103,22 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
+# Media files (for local development)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# # S3 Bucket configuration for media files (for production)
+# AWS_ACCESS_KEY_ID = get_secret('AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = get_secret('AWS_SECRET_ACCESS_KEY')
+# AWS_STORAGE_BUCKET_NAME = get_secret('AWS_STORAGE_BUCKET_NAME')
+# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+# AWS_S3_OBJECT_PARAMETERS = {
+#     'CacheControl': 'max-age=86400',
+# }
+# AWS_DEFAULT_ACL = 'public-read'
+# AWS_LOCATION = 'media'
+# MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Email settings
 EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
@@ -130,7 +142,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # OpenAI API Key
 OPENAI_API_KEY = get_secret('OPENAI_API_KEY')
-ACCESS_TOKEN = get_secret('ACCESS_TOKEN')
 
 LOGGING = {
     'version': 1,

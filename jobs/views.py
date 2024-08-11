@@ -49,11 +49,12 @@ def apply_job(request, job_id):
         return redirect('create_user_profile')  # Redirect to profile creation page
 
     if request.method == 'POST':
-        form = JobApplicationForm(request.POST)
+        form = JobApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             application = form.save(commit=False)
             application.job = job
             application.applicant = request.user
+            application.cv = request.FILES['cv']  # Save the uploaded CV
             application.save()
             messages.success(request, "Application submitted successfully.")
             return redirect('congrats')  # Redirect to a success page
@@ -63,11 +64,11 @@ def apply_job(request, job_id):
     context = {
         'form': form,
         'job': job,
-        'profile': profile,  # Include profile data
+        'profile': profile,
     }
 
     return render(request, 'jobs/apply_job.html', context)
- 
+
 
 def redirect_to_jobs(request):
     return redirect('job_list')
@@ -107,16 +108,60 @@ def hr_dashboard(request):
     return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
 
 
+# @login_required
+# def hr_applicants(request, job_id):
+#     if request.user.user_type != 'HR':
+#         return HttpResponseForbidden("You are not authorized to view this page.")
+
+#     # Filter applications for the specific job
+#     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+#     applications = JobApplication.objects.filter(job=job).order_by('-applied_at')
+
+#     # Pagination setup (optional)
+#     applications_page = request.GET.get('applications_page', 1)
+#     applications_paginator = Paginator(applications, 5)
+#     try:
+#         applications = applications_paginator.page(applications_page)
+#     except PageNotAnInteger:
+#         applications = applications_paginator.page(1)
+#     except EmptyPage:
+#         applications = applications_paginator.page(applications_paginator.num_pages)
+
+#     # Calculate similarity scores and gather profile data
+#     application_data = []
+#     for application in applications:
+#         # Get applicant profile data
+#         applicant_profile = application.applicant.userprofile
+#         profile_text = " ".join(
+#             [
+#                 f"{exp.company} {exp.job_title}" for exp in applicant_profile.work_experiences.all()
+#             ] + [
+#                 f"{edu.degree} {edu.speciality} {edu.university}" for edu in applicant_profile.educations.all()
+#             ] + [
+#                 f"{skill.skill_name} {skill.skill_level}" for skill in applicant_profile.skills.all()
+#             ]
+#         )
+
+#         # Calculate similarity score using your custom utility
+#         job_text = application.job.description
+#         similarity_score = calculate_similarity(profile_text, job_text)
+
+#         application_data.append({
+#             'application': application,
+#             'similarity_score': similarity_score,
+#             'applicant_profile': applicant_profile
+#         })
+
+#     return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
+
 @login_required
 def hr_applicants(request, job_id):
     if request.user.user_type != 'HR':
         return HttpResponseForbidden("You are not authorized to view this page.")
 
-    # Filter applications for the specific job
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
     applications = JobApplication.objects.filter(job=job).order_by('-applied_at')
 
-    # Pagination setup (optional)
     applications_page = request.GET.get('applications_page', 1)
     applications_paginator = Paginator(applications, 5)
     try:
@@ -126,32 +171,17 @@ def hr_applicants(request, job_id):
     except EmptyPage:
         applications = applications_paginator.page(applications_paginator.num_pages)
 
-    # Calculate similarity scores and gather profile data
     application_data = []
     for application in applications:
-        # Get applicant profile data
-        applicant_profile = application.applicant.userprofile
-        profile_text = " ".join(
-            [
-                f"{exp.company} {exp.job_title}" for exp in applicant_profile.work_experiences.all()
-            ] + [
-                f"{edu.degree} {edu.speciality} {edu.university}" for edu in applicant_profile.educations.all()
-            ] + [
-                f"{skill.skill_name} {skill.skill_level}" for skill in applicant_profile.skills.all()
-            ]
-        )
-
-        # Calculate similarity score using your custom utility
-        job_text = application.job.description
-        similarity_score = calculate_similarity(profile_text, job_text)
-
         application_data.append({
             'application': application,
-            'similarity_score': similarity_score,
-            'applicant_profile': applicant_profile
+            'similarity_score': application.match_score,
+            'applicant_profile': application.applicant.userprofile,
         })
 
     return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
+
+
 
 def job_list(request):
     job_title = request.GET.get('job_title', '')
@@ -352,9 +382,7 @@ def create_similarity_chart(score):
     string = base64.b64encode(buf.read())
     uri = 'data:image/png;base64,' + string.decode('utf-8')
     buf.close()
-
     return uri
-
 
 @login_required
 def search_jobs_for_cv(request):
@@ -396,7 +424,11 @@ def parse_cv_page(request):
         logger.debug(f'Form data: {request.POST}')
         logger.debug(f'File data: {request.FILES}')
         if form.is_valid():
-            job_id = form.cleaned_data['job_id']
+            job_id = request.POST.get('job_id')
+            if not job_id:
+                logger.error('Job ID is missing from the form data.')
+                return JsonResponse({'error': 'Job ID is required.'}, status=400)
+
             resume_file = request.FILES['resume']
             logger.debug(f'Job ID: {job_id}')
             logger.debug(f'Resume file: {resume_file.name}')
@@ -450,7 +482,8 @@ def parse_cv_page(request):
     return render(request, 'jobs/parse_cv.html', {
         'job_search_form': job_search_form,
         'resume_upload_form': resume_upload_form
-     })
+    })
+
  
 
 def robots_txt(request):

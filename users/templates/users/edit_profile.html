@@ -4,20 +4,106 @@
 
 {% block content %}
 <section class="container mt-5">
-    <h2>Edit Profile</h2>
-    <!-- Profile Update Form -->
-    <form method="post" action="" id="update_profile_form">
-        {% csrf_token %}
-        {{ user_form.as_p }}
-        <button class="btn btn-primary" type="submit" name="update_profile">Update Email and Username</button>
-    </form>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-center">Edit Profile</h2>
+            <!-- Profile Update Form -->
+            <form method="post" action="" id="update_profile_form">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ user_form.username.label_tag }}
+                    {{ user_form.username }}
+                    {% if user_form.username.errors %}
+                        <div class="text-danger">{{ user_form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ user_form.email.label_tag }}
+                    {{ user_form.email }}
+                    {% if user_form.email.errors %}
+                        <div class="text-danger">{{ user_form.email.errors }}</div>
+                    {% endif %}
+                </div>
+                <button class="btn btn-primary btn-block" type="submit" name="update_profile">Update Email and Username</button>
+            </form>
+        </div>
+    </div>
 
-    <h2 class="mt-4">Change Password</h2>
-    <!-- Password Change Form -->
-    <form method="post" action="" id="change_password_form">
-        {% csrf_token %}
-        {{ password_form.as_p }}
-        <button class="btn btn-primary" type="submit" name="change_password">Change Password</button>
-    </form>
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <h2 class="card-title text-center">Change Password</h2>
+            <!-- Password Change Form -->
+            <form method="post" action="" id="change_password_form">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ password_form.old_password.label_tag }}
+                    {{ password_form.old_password }}
+                    {% if password_form.old_password.errors %}
+                        <div class="text-danger">{{ password_form.old_password.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ password_form.new_password1.label_tag }}
+                    {{ password_form.new_password1 }}
+                    {% if password_form.new_password1.errors %}
+                        <div class="text-danger">{{ password_form.new_password1.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ password_form.new_password2.label_tag }}
+                    {{ password_form.new_password2 }}
+                    {% if password_form.new_password2.errors %}
+                        <div class="text-danger">{{ password_form.new_password2.errors }}</div>
+                    {% endif %}
+                </div>
+                <button class="btn btn-primary btn-block" type="submit" name="change_password">Change Password</button>
+            </form>
+        </div>
+    </div>
 </section>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border-radius: 8px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        color: #007bff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        font-size: 1.1rem;
+        padding: 0.75rem;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        color: #343a40;
+    }
+
+    .form-control {
+        border-radius: 0.25rem;
+    }
+
+    .text-danger {
+        font-size: 0.875rem;
+    }
+</style>
 {% endblock %}
