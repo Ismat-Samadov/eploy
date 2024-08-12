@@ -1,51 +1,64 @@
 {% extends 'jobs/base.html' %}
 
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
 {% block content %}
-<section class="container mt-5">
-    <h2>Applicants for {{ job.title }}</h2>
-    <table class="table table-striped table-bordered">
-        <thead class="thead-dark">
+<section class="container">
+    <h1>Applicants for {{ job.title }}</h1>
+    <h3>Company: {{ job.company }}</h3>
+    <h3>Location: {{ job.location }}</h3>
+    <p>{{ job.description }}</p>
+    
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <th>Applicant</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Match Score</th>
                 <th>Resume</th>
-                <th>Cover Letter</th>
-                <th>Similarity Score</th>
+                <th>Apply Date</th>
             </tr>
         </thead>
         <tbody>
             {% for application in applications %}
             <tr>
-                <td>{{ application.applicant.username }}</td>
+                <td>{{ application.full_name }}</td>
+                <td>{{ application.email }}</td>
+                <td>{{ application.phone }}</td>
                 <td>
-                    {% if application.resume %}
-                        <a href="{{ application.resume.url }}" target="_blank">View Resume</a>
+                    {% if application.match_score is not None %}
+                        {{ application.match_score_percentage }}%
                     {% else %}
-                        No resume uploaded
+                        N/A
                     {% endif %}
                 </td>
-                <td>{{ application.cover_letter|default_if_none:"No cover letter" }}</td>
-                <td>{{ application.match_score|default_if_none:"Not available" }}</td>
+                <td>
+                    {% if application.resume %}
+                        <a href="{{ application.resume.url }}" target="_blank">Download Resume</a>
+                    {% else %}
+                        No Resume Uploaded
+                    {% endif %}
+                </td>
+                <td>{{ application.applied_at|date:"F j, Y, g:i a" }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    
 
-    <div class="pagination">
-        <span class="step-links">
+    <!-- Pagination controls -->
+    <nav aria-label="Applicants navigation">
+        <ul class="pagination">
             {% if applications.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ applications.previous_page_number }}">previous</a>
+            <li class="page-item"><a class="page-link" href="?applications_page={{ applications.previous_page_number }}">Previous</a></li>
             {% endif %}
-
-            <span class="current">
-                Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
-            </span>
-
+            <li class="page-item disabled"><span class="page-link">Page {{ applications.number }} of {{ applications.paginator.num_pages }}</span></li>
             {% if applications.has_next %}
-                <a href="?page={{ applications.next_page_number }}">next</a>
-                <a href="?page={{ applications.paginator.num_pages }}">last &raquo;</a>
+            <li class="page-item"><a class="page-link" href="?applications_page={{ applications.next_page_number }}">Next</a></li>
             {% endif %}
-        </span>
-    </div>
+        </ul>
+    </nav>
 </section>
 {% endblock %}

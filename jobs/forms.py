@@ -7,18 +7,18 @@ class JobPostForm(forms.ModelForm):
         fields = ['title', 'description', 'company', 'location']
 
 class JobApplicationForm(forms.ModelForm):
-    cv = forms.FileField(label='Upload your CV', required=True)
+    full_name = forms.CharField(max_length=255, label='Full Name', required=True)
+    email = forms.EmailField(label='Email', required=True)
+    phone = forms.CharField(max_length=15, label='Phone', required=True)
+    resume = forms.FileField(label='Upload your CV', required=True)
 
     class Meta:
         model = JobApplication
-        fields = ['cover_letter', 'cv']
+        fields = ['full_name', 'email', 'phone', 'cover_letter', 'resume']
         widgets = {
             'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(JobApplicationForm, self).__init__(*args, **kwargs)
-        self.fields['cover_letter'].required = False
+        
 
 class JobSearchForm(forms.Form):
     query = forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={

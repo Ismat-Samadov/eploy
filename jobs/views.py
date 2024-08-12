@@ -1,4 +1,5 @@
 import requests
+import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -24,6 +25,19 @@ from django.views.generic import DetailView
 from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
 from .utils import calculate_similarity, get_openai_analysis
 import matplotlib
+from botocore.exceptions import NoCredentialsError, ClientError
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
+
+# Initialize s3_client
+s3_client = boto3.client(
+    's3',
+    region_name='fra1',  # Replace with your region if different
+    endpoint_url='https://fra1.digitaloceanspaces.com',
+    aws_access_key_id=os.getenv('DO_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('DO_SECRET_ACCESS_KEY')
+)
+
 matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -38,22 +52,85 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
+def upload_file_to_do_spaces(file_name, bucket_name):
+    try:
+        # Check if the bucket exists
+        s3_client.head_bucket(Bucket=bucket_name)
+        logger.debug(f"Bucket '{bucket_name}' exists. Uploading file...")
 
+        # Upload the file with public-read ACL
+        s3_client.upload_file(file_name, bucket_name, file_name, ExtraArgs={'ACL': 'public-read'})
+        logger.debug(f"File '{file_name}' uploaded successfully.")
+        # Generate the file URL
+        file_url = f"https://{bucket_name}.{DO_REGION}.digitaloceanspaces.com/{file_name}"
+        logger.debug(f"File URL: {file_url}")
+        return file_url
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            logger.error(f"Bucket '{bucket_name}' does not exist.")
+        else:
+            logger.error(f"Failed to upload file: {e}")
+        return None
+    except FileNotFoundError:
+        logger.error("The file was not found.")
+        return None
+    except NoCredentialsError:
+        logger.error("Credentials not available.")
+        return None
 
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id)
-
+    
     if request.method == 'POST':
         form = JobApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             application = form.save(commit=False)
             application.job = job
-            application.applicant = request.user
+
+            # Upload the resume to DigitalOcean Spaces with public-read access
+            if 'resume' in request.FILES:
+                resume = request.FILES['resume']
+                file_name = f'resumes/{resume.name}'
+                bucket_name = 'careerhorizonresume'  # Ensure this matches your bucket name
+
+                # Read the resume file before uploading
+                try:
+                    file_ext = resume.name.split('.')[-1].lower()
+                    if file_ext == 'pdf':
+                        cv_text = parse_pdf(resume)  # Parse the resume before uploading
+                    else:
+                        logger.error(f"Unsupported file format: {file_ext}")
+                        messages.error(request, "Unsupported file format. Only PDF is supported.")
+                        return redirect('apply_job', job_id=job.id)
+
+                    job_description = job.description
+                    similarity_score = calculate_similarity(cv_text, job_description)
+                    application.match_score = similarity_score
+
+                    # Upload the file to DigitalOcean Spaces
+                    with resume.open('rb') as resume_file:
+                        s3_client.upload_fileobj(
+                            resume_file, 
+                            bucket_name, 
+                            file_name, 
+                            ExtraArgs={'ACL': 'public-read'}
+                        )
+                        application.resume = file_name
+
+                except ClientError as e:
+                    logger.error(f"Failed to upload resume: {e}")
+                    messages.error(request, "Failed to upload resume. Please try again.")
+                    return redirect('apply_job', job_id=job.id)
+                except Exception as e:
+                    logger.error(f"Error processing resume: {e}")
+                    messages.error(request, "Failed to process resume. Please try again.")
+                    return redirect('apply_job', job_id=job.id)
+
             application.save()
-            return redirect('congrats')  # Redirects to the 'congrats' page after a successful application
+            return redirect('congrats')
     else:
         form = JobApplicationForm()
-
+    
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
 
 
@@ -95,51 +172,7 @@ def hr_dashboard(request):
     return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
 
 
-# @login_required
-# def hr_applicants(request, job_id):
-#     if request.user.user_type != 'HR':
-#         return HttpResponseForbidden("You are not authorized to view this page.")
 
-#     # Filter applications for the specific job
-#     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
-#     applications = JobApplication.objects.filter(job=job).order_by('-applied_at')
-
-#     # Pagination setup (optional)
-#     applications_page = request.GET.get('applications_page', 1)
-#     applications_paginator = Paginator(applications, 5)
-#     try:
-#         applications = applications_paginator.page(applications_page)
-#     except PageNotAnInteger:
-#         applications = applications_paginator.page(1)
-#     except EmptyPage:
-#         applications = applications_paginator.page(applications_paginator.num_pages)
-
-#     # Calculate similarity scores and gather profile data
-#     application_data = []
-#     for application in applications:
-#         # Get applicant profile data
-#         applicant_profile = application.applicant.userprofile
-#         profile_text = " ".join(
-#             [
-#                 f"{exp.company} {exp.job_title}" for exp in applicant_profile.work_experiences.all()
-#             ] + [
-#                 f"{edu.degree} {edu.speciality} {edu.university}" for edu in applicant_profile.educations.all()
-#             ] + [
-#                 f"{skill.skill_name} {skill.skill_level}" for skill in applicant_profile.skills.all()
-#             ]
-#         )
-
-#         # Calculate similarity score using your custom utility
-#         job_text = application.job.description
-#         similarity_score = calculate_similarity(profile_text, job_text)
-
-#         application_data.append({
-#             'application': application,
-#             'similarity_score': similarity_score,
-#             'applicant_profile': applicant_profile
-#         })
-
-#     return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
 
 @login_required
 def hr_applicants(request, job_id):
@@ -147,10 +180,10 @@ def hr_applicants(request, job_id):
         return HttpResponseForbidden("You are not authorized to view this page.")
 
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
-    applications = JobApplication.objects.filter(job=job).order_by('-applied_at')
+    applications = JobApplication.objects.filter(job=job).exclude(full_name__isnull=True).order_by('-applied_at')
 
     applications_page = request.GET.get('applications_page', 1)
-    applications_paginator = Paginator(applications, 5)
+    applications_paginator = Paginator(applications, 30)
     try:
         applications = applications_paginator.page(applications_page)
     except PageNotAnInteger:
@@ -158,16 +191,7 @@ def hr_applicants(request, job_id):
     except EmptyPage:
         applications = applications_paginator.page(applications_paginator.num_pages)
 
-    application_data = []
-    for application in applications:
-        application_data.append({
-            'application': application,
-            'similarity_score': application.match_score,
-            'applicant_profile': application.applicant.userprofile,
-        })
-
-    return render(request, 'jobs/hr_applicants.html', {'applications': application_data, 'job': job})
-
+    return render(request, 'jobs/hr_applicants.html', {'applications': applications, 'job': job})
 
 
 def job_list(request):

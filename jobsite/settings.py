@@ -133,6 +133,7 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_LOCATION = 'media'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
+
 # Email settings
 EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
 EMAIL_HOST = get_secret('EMAIL_HOST')

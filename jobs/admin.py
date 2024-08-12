@@ -11,6 +11,10 @@ class JobPostAdmin(admin.ModelAdmin):
 
 @admin.register(JobApplication)
 class JobApplicationAdmin(admin.ModelAdmin):
-    list_display = ('job', 'applicant', 'applied_at')
+    list_display = ('job', 'get_applicant_name', 'applied_at')
     search_fields = ('job__title', 'applicant__username')
     list_filter = ('applied_at', 'job__title')
+
+    def get_applicant_name(self, obj):
+        return obj.applicant.get_full_name() if obj.applicant.get_full_name() else obj.applicant.username
+    get_applicant_name.short_description = 'Applicant'

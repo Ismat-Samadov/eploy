@@ -13,34 +13,41 @@
         <p>{{ job.description }}</p>
     </div>
 
-    <!-- Display profile information -->
-    <div class="profile-info mb-4 p-4 bg-light border rounded shadow-sm">
-        <h4 class="text-secondary">Your Profile</h4>
-        <p><strong>Name:</strong> {{ request.user.get_full_name }}</p>
-        <p><strong>Email:</strong> {{ request.user.email }}</p>
-
-        {% if profile %}
-            <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
-            <p><strong>Address:</strong> {{ profile.address }}</p>
-        {% else %}
-            <p class="text-warning">Please complete your profile.</p>
-        {% endif %}
-    </div>
-
     <!-- Application Form -->
     <form method="post" enctype="multipart/form-data" class="application-form p-4 bg-light border rounded shadow-sm">
         {% csrf_token %}
         {{ form.non_field_errors }}
+
+        <div class="form-group">
+            <label for="{{ form.full_name.id_for_label }}" class="text-secondary">{{ form.full_name.label }}</label>
+            {{ form.full_name }}
+            {{ form.full_name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}" class="text-secondary">{{ form.email.label }}</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.phone.id_for_label }}" class="text-secondary">{{ form.phone.label }}</label>
+            {{ form.phone }}
+            {{ form.phone.errors }}
+        </div>
+
         <div class="form-group">
             <label for="{{ form.cover_letter.id_for_label }}" class="text-secondary">{{ form.cover_letter.label }}</label>
             {{ form.cover_letter }}
             {{ form.cover_letter.errors }}
         </div>
+
         <div class="form-group">
-            <label for="{{ form.cv.id_for_label }}" class="text-secondary">{{ form.cv.label }}</label>
-            {{ form.cv }}
-            {{ form.cv.errors }}
+            <label for="{{ form.resume.id_for_label }}" class="text-secondary">{{ form.resume.label }}</label>
+            {{ form.resume }}
+            {{ form.resume.errors }}
         </div>
+
         <button type="submit" class="btn btn-primary btn-lg">Apply Now</button>
     </form>
 </div>
@@ -55,7 +62,7 @@
         color: #007bff;
     }
 
-    .job-description, .profile-info, .application-form {
+    .job-description, .application-form {
         margin-bottom: 20px;
         background-color: #ffffff;
         padding: 20px;

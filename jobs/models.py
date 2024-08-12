@@ -27,11 +27,19 @@ class JobPost(models.Model):
 
 class JobApplication(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE)
-    applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     cover_letter = models.TextField(blank=True, null=True)
     applied_at = models.DateTimeField(auto_now_add=True)
-    resume = models.FileField(upload_to='resumes/', null=True, blank=True)  # New field for CV upload
-    match_score = models.FloatField(null=True, blank=True)  # New field for storing match score
+    resume = models.FileField(upload_to='resumes/')
+    match_score = models.FloatField(null=True, blank=True)  # Ensure this is a float field
 
     def __str__(self):
-        return f'{self.applicant.username} - {self.job.title}'
+        return f'{self.full_name} - {self.job.title}'
+
+    def match_score_percentage(self):
+        """Convert match score to a percentage"""
+        if self.match_score is not None:
+            return round(self.match_score * 100, 2)
+        return None
