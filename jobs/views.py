@@ -38,15 +38,10 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-@login_required
-def apply_job(request, job_id):
-    job = get_object_or_404(JobPost, id=job_id, deleted=False)
 
-    try:
-        profile = request.user.userprofile
-    except ObjectDoesNotExist:
-        messages.error(request, "Please complete your profile before applying for a job.")
-        return redirect('create_user_profile')  # Redirect to profile creation page
+
+def apply_job(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id)
 
     if request.method == 'POST':
         form = JobApplicationForm(request.POST, request.FILES)
@@ -54,20 +49,12 @@ def apply_job(request, job_id):
             application = form.save(commit=False)
             application.job = job
             application.applicant = request.user
-            application.cv = request.FILES['cv']  # Save the uploaded CV
             application.save()
-            messages.success(request, "Application submitted successfully.")
-            return redirect('congrats')  # Redirect to a success page
+            return redirect('congrats')  # Redirects to the 'congrats' page after a successful application
     else:
         form = JobApplicationForm()
 
-    context = {
-        'form': form,
-        'job': job,
-        'profile': profile,
-    }
-
-    return render(request, 'jobs/apply_job.html', context)
+    return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
 
 
 def redirect_to_jobs(request):

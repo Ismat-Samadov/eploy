@@ -1,5 +1,4 @@
 {% extends 'jobs/base.html' %}
-{% load static %}
 
 {% block content %}
 <section class="container mt-5">
@@ -8,41 +7,24 @@
         <thead class="thead-dark">
             <tr>
                 <th>Applicant</th>
+                <th>Resume</th>
+                <th>Cover Letter</th>
                 <th>Similarity Score</th>
-                <th>Profile</th>
             </tr>
         </thead>
         <tbody>
             {% for application in applications %}
             <tr>
+                <td>{{ application.applicant.username }}</td>
                 <td>
-                    {% if application.application.cv %}
-                        <a href="{{ application.application.cv.url }}" target="_blank">{{ application.application.applicant.username }}</a>
+                    {% if application.resume %}
+                        <a href="{{ application.resume.url }}" target="_blank">View Resume</a>
                     {% else %}
-                        {{ application.application.applicant.username }}
+                        No resume uploaded
                     {% endif %}
                 </td>
-                <td>{{ application.similarity_score|floatformat:2 }}</td>
-                <td>
-                    <strong>Work Experience:</strong>
-                    <ul>
-                        {% for exp in application.applicant_profile.work_experiences.all %}
-                        <li>{{ exp.company }} - {{ exp.job_title }}</li>
-                        {% endfor %}
-                    </ul>
-                    <strong>Education:</strong>
-                    <ul>
-                        {% for edu in application.applicant_profile.educations.all %}
-                        <li>{{ edu.university }} - {{ edu.degree }} in {{ edu.speciality }}</li>
-                        {% endfor %}
-                    </ul>
-                    <strong>Skills:</strong>
-                    <ul>
-                        {% for skill in application.applicant_profile.skills.all %}
-                        <li>{{ skill.skill_name }} ({{ skill.skill_level }})</li>
-                        {% endfor %}
-                    </ul>
-                </td>
+                <td>{{ application.cover_letter|default_if_none:"No cover letter" }}</td>
+                <td>{{ application.match_score|default_if_none:"Not available" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -51,8 +33,8 @@
     <div class="pagination">
         <span class="step-links">
             {% if applications.has_previous %}
-                <a href="?applications_page=1">&laquo; first</a>
-                <a href="?applications_page={{ applications.previous_page_number }}">previous</a>
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ applications.previous_page_number }}">previous</a>
             {% endif %}
 
             <span class="current">
@@ -60,8 +42,8 @@
             </span>
 
             {% if applications.has_next %}
-                <a href="?applications_page={{ applications.next_page_number }}">next</a>
-                <a href="?applications_page={{ applications.paginator.num_pages }}">last &raquo;</a>
+                <a href="?page={{ applications.next_page_number }}">next</a>
+                <a href="?page={{ applications.paginator.num_pages }}">last &raquo;</a>
             {% endif %}
         </span>
     </div>
