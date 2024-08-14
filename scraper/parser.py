@@ -12,6 +12,7 @@ import psycopg2
 from psycopg2 import sql, extras
 import aiohttp
 import asyncio
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +57,16 @@ class JobScraper:
                 else:
                     return await response.text()
         except aiohttp.ClientError as e:
+            logger.error(f"Request to {url} failed: {e}")
+            return None
+
+    def fetch_url(self, url, params=None):
+        """ Synchronously fetch the content of a URL. """
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
             logger.error(f"Request to {url} failed: {e}")
             return None
 
@@ -115,13 +126,11 @@ class JobScraper:
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
                         logger.info(f"{len(values)} new job posts inserted into the database.")
-                        logger.info(values)
                     else:
                         logger.info("No new job posts to insert.")
 
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
-
 
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
@@ -130,6 +139,9 @@ class JobScraper:
             azercell_jobs = await self.parse_azercell(session)
             parse_azerconnect = await self.parse_azerconnect(session)
             parse_djinni_co = await self.parse_djinni_co(session)
+            parse_abb = await self.parse_abb(session)
+            parse_busy_az = await self.parse_busy_az(session)
+
             # Initialize an empty list to hold all job records
             all_jobs = []
 
@@ -142,7 +154,11 @@ class JobScraper:
                 all_jobs.extend(parse_azerconnect.to_dict('records'))
             if not parse_djinni_co.empty:
                 all_jobs.extend(parse_djinni_co.to_dict('records'))
-            
+            if not parse_abb.empty:
+                all_jobs.extend(parse_abb.to_dict('records'))
+            if not parse_busy_az.empty:
+                all_jobs.extend(parse_busy_az.to_dict('records'))
+
             # If we have jobs, convert to a DataFrame
             if all_jobs:
                 self.data = pd.DataFrame(all_jobs)
@@ -341,7 +357,6 @@ class JobScraper:
 
         return pd.DataFrame(columns=['company', 'vacancy', 'location', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements', 'apply_link'])
 
-
     async def parse_djinni_co(self, session):
         pages = 15
         logger.info(f"Started scraping djinni.co for the first {pages} pages")
@@ -377,7 +392,7 @@ class JobScraper:
 
         # Scrape each page asynchronously
         tasks = []
-        for page in range(1, pages + 1):
+        for page in range(1, pages + 15):
             logger.info(f"Scraping page {page} for djinni.co")
             page_url = f"{base_jobs_url}?page={page}"
             tasks.append(scrape_jobs_page(page_url))
@@ -396,9 +411,8 @@ class JobScraper:
             logger.info("=" * 40)
 
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
-
-
-    def parse_abb(self):
+    
+    async def parse_abb(self, session):
         logger.info("Scraping starting for ABB")
         base_url = "https://careers.abb-bank.az/api/vacancy/v2/get"
         job_vacancies = []
@@ -406,10 +420,15 @@ class JobScraper:
 
         while True:
             params = {"page": page}
-            response = self.fetch_url(base_url, params=params)
+            response = await self.fetch_url_async(base_url, session, params=params)
 
             if response:
-                data = response.json().get("data", [])
+                try:
+                    # Attempt to parse the response as JSON
+                    data = response.get("data", [])
+                except AttributeError:
+                    logger.error("Failed to parse the response as JSON.")
+                    break
 
                 if not data:
                     break
@@ -425,6 +444,32 @@ class JobScraper:
 
         df = pd.DataFrame(job_vacancies)
         logger.info("ABB scraping completed")
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_busy_az(self, session):
+        logger.info("Scraping started for busy.az")
+        job_vacancies = []
+        for page_num in range(1, 5):
+            logger.info(f"Scraping page {page_num}")
+            url = f'https://busy.az/vacancies?page={page_num}'
+            response = await self.fetch_url_async(url, session)
+
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_listings = soup.find_all('a', class_='job-listing')
+
+                for job in job_listings:
+                    job_details = job.find('div', class_='job-listing-details')
+                    job_title = job_details.find('h3', class_='job-listing-title').text.strip()
+                    company_element = job_details.find('i', class_='icon-material-outline-business')
+                    company_name = company_element.find_parent('li').text.strip() if company_element else 'N/A'
+                    apply_link = job.get('href')
+                    job_vacancies.append({"company": company_name, "vacancy": job_title, "apply_link": apply_link})
+            else:
+                logger.error(f"Failed to retrieve page {page_num}.")
+        df = pd.DataFrame(job_vacancies)
+        logger.info(df)
+        logger.info("Scraping completed for busy.az")
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
 def main():
