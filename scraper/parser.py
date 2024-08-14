@@ -126,6 +126,7 @@ class JobScraper:
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
                         logger.info(f"{len(values)} new job posts inserted into the database.")
+                        logger.info(values)
                     else:
                         logger.info("No new job posts to insert.")
 
@@ -140,7 +141,7 @@ class JobScraper:
             parse_azerconnect = await self.parse_azerconnect(session)
             parse_djinni_co = await self.parse_djinni_co(session)
             parse_abb = await self.parse_abb(session)
-            parse_busy_az = await self.parse_busy_az(session)
+            parse_hellojob_az = await self.parse_hellojob_az(session)  # New
 
             # Initialize an empty list to hold all job records
             all_jobs = []
@@ -156,8 +157,8 @@ class JobScraper:
                 all_jobs.extend(parse_djinni_co.to_dict('records'))
             if not parse_abb.empty:
                 all_jobs.extend(parse_abb.to_dict('records'))
-            if not parse_busy_az.empty:
-                all_jobs.extend(parse_busy_az.to_dict('records'))
+            if not parse_hellojob_az.empty:
+                all_jobs.extend(parse_hellojob_az.to_dict('records'))
 
             # If we have jobs, convert to a DataFrame
             if all_jobs:
@@ -167,6 +168,7 @@ class JobScraper:
                 # Drop rows with NaN values in critical columns
                 self.data.dropna(subset=['company', 'vacancy'], inplace=True)
 
+    
     async def parse_glorri(self, session):
         """Fetch all companies and their job data from Glorri."""
         url_companies = "https://atsapp.glorri.az/company-service/v2/companies/public"
@@ -471,6 +473,32 @@ class JobScraper:
         logger.info(df)
         logger.info("Scraping completed for busy.az")
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_hellojob_az(self, session):
+        logger.info("Started scraping of hellojob.az")
+        job_vacancies = []
+        base_url = "https://www.hellojob.az"
+
+        for page_number in range(1, 11):
+            url = f"{base_url}/vakansiyalar?page={page_number}"
+            response = await self.fetch_url_async(url, session)
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_listings = soup.find_all('a', class_='vacancies__item')
+                if not job_listings:
+                    logger.info(f"No job listings found on page {page_number}.")
+                    continue
+                for job in job_listings:
+                    company_name = job.find('p', class_='vacancy_item_company').text.strip()
+                    vacancy_title = job.find('h3').text.strip()
+                    apply_link = job['href'] if job['href'].startswith('http') else base_url + job['href']
+
+                    job_vacancies.append({"company": company_name, "vacancy": vacancy_title, "apply_link": apply_link})
+            else:
+                logger.warning(f"Failed to retrieve page {page_number}")
+        logger.info("Scraping completed for hellojob.az")
+        return pd.DataFrame(job_vacancies) if job_vacancies else pd.DataFrame(
+            columns=['company', 'vacancy', 'apply_link'])
 
 def main():
     job_scraper = JobScraper()
