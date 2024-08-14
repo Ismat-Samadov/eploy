@@ -398,6 +398,35 @@ class JobScraper:
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
 
+    def parse_abb(self):
+        logger.info("Scraping starting for ABB")
+        base_url = "https://careers.abb-bank.az/api/vacancy/v2/get"
+        job_vacancies = []
+        page = 0
+
+        while True:
+            params = {"page": page}
+            response = self.fetch_url(base_url, params=params)
+
+            if response:
+                data = response.json().get("data", [])
+
+                if not data:
+                    break
+
+                for item in data:
+                    title = item.get("title")
+                    url = item.get("url")
+                    job_vacancies.append({"company": "ABB", "vacancy": title, "apply_link": url})
+                page += 1
+            else:
+                logger.error(f"Failed to retrieve data for page {page}.")
+                break
+
+        df = pd.DataFrame(job_vacancies)
+        logger.info("ABB scraping completed")
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
 def main():
     job_scraper = JobScraper()
     asyncio.run(job_scraper.get_data_async())

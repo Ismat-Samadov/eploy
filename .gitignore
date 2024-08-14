@@ -1,8 +1,9 @@
 .venv
+venv
+scraper_venv
 .vscode
 .env
 .export
-venv
 *.json
 .DS_Store
 *.json

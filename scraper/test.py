@@ -11,7 +11,7 @@ import psycopg2
 from psycopg2 import sql, extras
 import aiohttp
 import asyncio
-
+import requests
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -59,6 +59,16 @@ class JobScraper:
             logger.error(f"Request to {url} failed: {e}")
             return None
 
+    def fetch_url(self, url, params=None):
+        """ Synchronously fetch the content of a URL. """
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
+            logger.error(f"Request to {url} failed: {e}")
+            return None
+
     def save_to_db(self, df, batch_size=100):
         try:
             with psycopg2.connect(**self.db_params) as conn:
@@ -101,7 +111,7 @@ class JobScraper:
                                     None,  # Deadline left blank
                                     None,  # Responsibilities left blank
                                     None,  # Requirements left blank
-                                    9,  # posted_by_id is 9
+                                    1,  # posted_by_id is 9
                                     True,  # is_scraped
                                     False,  # is_premium
                                     0,  # premium_days
@@ -132,15 +142,18 @@ class JobScraper:
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
             parse_djinni_co = await self.parse_djinni_co(session)
+            parse_abb = self.parse_abb()
 
-            if not parse_djinni_co.empty:
-                self.data = parse_djinni_co
+            combined_data = pd.concat([parse_djinni_co, parse_abb], ignore_index=True)
+
+            if not combined_data.empty:
+                self.data = combined_data
                 self.data['scrape_date'] = datetime.now()
 
                 # Drop rows with NaN values in critical columns
                 self.data.dropna(subset=['company', 'vacancy'], inplace=True)
             else:
-                logger.warning("No jobs scraped from djinni.co")
+                logger.warning("No jobs scraped from the sources")
 
     async def parse_djinni_co(self, session):
         pages = 15
@@ -195,6 +208,35 @@ class JobScraper:
             logger.debug(f"Title: {job['vacancy']}, Company: {job['company']}, Apply Link: {job['apply_link']}")
             logger.info("=" * 40)
 
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    def parse_abb(self):
+        logger.info("Scraping starting for ABB")
+        base_url = "https://careers.abb-bank.az/api/vacancy/v2/get"
+        job_vacancies = []
+        page = 0
+
+        while True:
+            params = {"page": page}
+            response = self.fetch_url(base_url, params=params)
+
+            if response:
+                data = response.json().get("data", [])
+
+                if not data:
+                    break
+
+                for item in data:
+                    title = item.get("title")
+                    url = item.get("url")
+                    job_vacancies.append({"company": "ABB", "vacancy": title, "apply_link": url})
+                page += 1
+            else:
+                logger.error(f"Failed to retrieve data for page {page}.")
+                break
+
+        df = pd.DataFrame(job_vacancies)
+        logger.info("ABB scraping completed")
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
 def main():
