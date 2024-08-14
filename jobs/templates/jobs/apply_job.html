@@ -18,37 +18,37 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="{{ form.full_name.id_for_label }}" class="text-secondary">{{ form.full_name.label }}</label>
-            {{ form.full_name }}
+            <input type="text" name="{{ form.full_name.name }}" id="{{ form.full_name.id_for_label }}" value="{{ form.full_name.value }}" class="form-control">
             {{ form.full_name.errors }}
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="{{ form.email.id_for_label }}" class="text-secondary">{{ form.email.label }}</label>
-            {{ form.email }}
+            <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" value="{{ form.email.value }}" class="form-control">
             {{ form.email.errors }}
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="{{ form.phone.id_for_label }}" class="text-secondary">{{ form.phone.label }}</label>
-            {{ form.phone }}
+            <input type="text" name="{{ form.phone.name }}" id="{{ form.phone.id_for_label }}" value="{{ form.phone.value }}" class="form-control">
             {{ form.phone.errors }}
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label for="{{ form.cover_letter.id_for_label }}" class="text-secondary">{{ form.cover_letter.label }}</label>
-            {{ form.cover_letter }}
+            <textarea name="{{ form.cover_letter.name }}" id="{{ form.cover_letter.id_for_label }}" class="form-control" rows="4">{{ form.cover_letter.value }}</textarea>
             {{ form.cover_letter.errors }}
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-4">
             <label for="{{ form.resume.id_for_label }}" class="text-secondary">{{ form.resume.label }}</label>
-            {{ form.resume }}
+            <input type="file" name="{{ form.resume.name }}" id="{{ form.resume.id_for_label }}" class="form-control">
             {{ form.resume.errors }}
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg">Apply Now</button>
+        <button type="submit" class="btn btn-primary btn-lg w-100">Apply Now</button>
     </form>
 </div>
 
@@ -63,22 +63,18 @@
     }
 
     .job-description, .application-form {
-        margin-bottom: 20px;
         background-color: #ffffff;
-        padding: 20px;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .form-group label {
         font-weight: bold;
-        color: #343a40;
     }
 
     .btn-primary {
         background-color: #007bff;
         border-color: #007bff;
-        color: #ffffff;
     }
 
     .btn-primary:hover {

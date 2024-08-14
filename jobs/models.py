@@ -33,7 +33,7 @@ class JobApplication(models.Model):
     cover_letter = models.TextField(blank=True, null=True)
     applied_at = models.DateTimeField(auto_now_add=True)
     resume = models.FileField(upload_to='resumes/')
-    match_score = models.FloatField(null=True, blank=True)  # Ensure this is a float field
+    match_score = models.FloatField(null=True, blank=True) 
 
     def __str__(self):
         return f'{self.full_name} - {self.job.title}'
