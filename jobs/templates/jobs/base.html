@@ -71,19 +71,6 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'hr_dashboard' %}">Posted Jobs</a>
                         </li>
-                        <!-- Dropdown for HR to see each job and applicants -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Applicants
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                {% for job in user.job_posts.all %}
-                                    <a class="dropdown-item" href="{% url 'hr_applicants' job.id %}">{{ job.title }}</a>
-                                {% empty %}
-                                    <span class="dropdown-item">No jobs posted</span>
-                                {% endfor %}
-                            </div>
-                        </li>
                     {% elif user.user_type == 'Candidate' %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'user_dashboard' %}">Applied Jobs</a>
@@ -92,9 +79,6 @@
                             <a class="nav-link" href="{% url 'parse_cv_page' %}">Parse CV</a>
                         </li>
                     {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'user_profile' %}">Profile</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'edit_profile' %}">Edit Profile</a>
                     </li>

@@ -4,6 +4,12 @@
 <section class="container mt-5">
     <h2 class="mb-4">My Posted Jobs</h2>
 
+    <!-- Search Form -->
+    <form method="get" action="{% url 'hr_dashboard' %}" class="form-inline mb-4">
+        <input type="text" name="q" class="form-control mr-2" placeholder="Search by job title" value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-info">{{ message }}</div>
@@ -39,8 +45,8 @@
         <div class="pagination mt-4">
             <span class="step-links">
                 {% if jobs.has_previous %}
-                    <a href="?jobs_page=1" class="btn btn-outline-primary">&laquo; first</a>
-                    <a href="?jobs_page={{ jobs.previous_page_number }}" class="btn btn-outline-primary">previous</a>
+                    <a href="?jobs_page=1&q={{ search_query }}" class="btn btn-outline-primary">&laquo; first</a>
+                    <a href="?jobs_page={{ jobs.previous_page_number }}&q={{ search_query }}" class="btn btn-outline-primary">previous</a>
                 {% endif %}
 
                 <span class="current">
@@ -48,8 +54,8 @@
                 </span>
 
                 {% if jobs.has_next %}
-                    <a href="?jobs_page={{ jobs.next_page_number }}" class="btn btn-outline-primary">next</a>
-                    <a href="?jobs_page={{ jobs.paginator.num_pages }}" class="btn btn-outline-primary">last &raquo;</a>
+                    <a href="?jobs_page={{ jobs.next_page_number }}&q={{ search_query }}" class="btn btn-outline-primary">next</a>
+                    <a href="?jobs_page={{ jobs.paginator.num_pages }}&q={{ search_query }}" class="btn btn-outline-primary">last &raquo;</a>
                 {% endif %}
             </span>
         </div>

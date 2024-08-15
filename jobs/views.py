@@ -153,11 +153,12 @@ def hr_dashboard(request):
     if request.user.user_type != 'HR':
         return HttpResponseForbidden("You are not authorized to view this page.")
 
-    # Fetch jobs posted by the logged-in HR user
+    # Search functionality
+    search_query = request.GET.get('q', '')
     jobs = JobPost.objects.filter(posted_by=request.user, deleted=False)
-
-    # Check if jobs are being fetched
-    print(f"Jobs found: {jobs.count()}")  # Debugging: Check if jobs are found
+    
+    if search_query:
+        jobs = jobs.filter(title__icontains=search_query)
 
     # Pagination setup
     jobs_page = request.GET.get('jobs_page', 1)
@@ -169,8 +170,7 @@ def hr_dashboard(request):
     except EmptyPage:
         jobs = jobs_paginator.page(jobs_paginator.num_pages)
 
-    return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs})
-
+    return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'search_query': search_query})
 
 
 
