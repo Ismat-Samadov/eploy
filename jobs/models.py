@@ -28,7 +28,7 @@ class JobPost(models.Model):
 class JobApplication(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, blank=True)
-    email = models.EmailField(blank=True, null=True)
+    email = models.EmailField(blank=True)
     phone = models.CharField(max_length=15, blank=True)
     cover_letter = models.TextField(blank=True, null=True)
     applied_at = models.DateTimeField(auto_now_add=True)
