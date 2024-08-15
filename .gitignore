@@ -4,6 +4,7 @@ scraper_venv
 .vscode
 .env
 .export
+.idea
 *.json
 .DS_Store
 *.json

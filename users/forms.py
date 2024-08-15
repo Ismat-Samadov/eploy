@@ -1,9 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth import get_user_model
-from .models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordChangeForm
 
 User = get_user_model()
 
@@ -12,72 +9,17 @@ class UserUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ['email']
 
 class CustomPasswordChangeForm(PasswordChangeForm):
-    class Meta:
-        model = User
-        fields = ['old_password', 'new_password1', 'new_password2']
+    pass  # No need for Meta class here
 
 class CustomUserCreationForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=True, help_text='First Name')
+    last_name = forms.CharField(max_length=30, required=True, help_text='Last Name')
+    phone_number = forms.CharField(max_length=15, required=True, help_text='Phone Number')
+    email = forms.EmailField(required=True, help_text='Email')
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'user_type'] 
-        
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = [
-            'birth_date', 
-            'gender', 
-            'nationality', 
-            'address', 
-            'phone_number', 
-            'social_network_profile', 
-            'about'
-        ]
-        widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
-            'about': forms.Textarea(attrs={'rows': 4}),
-        }
-
-class WorkExperienceForm(forms.ModelForm):
-    class Meta:
-        model = WorkExperience
-        fields = ['company', 'job_title', 'start_date', 'end_date']
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-        }
-
-class EducationForm(forms.ModelForm):
-    class Meta:
-        model = Education
-        fields = ['university', 'degree', 'speciality', 'start_date', 'end_date']
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-        }
-
-class ProjectForm(forms.ModelForm):
-    class Meta:
-        model = Project
-        fields = ['project_name', 'project_link']
-
-class SkillForm(forms.ModelForm):
-    class Meta:
-        model = Skill
-        fields = ['skill_name', 'skill_level']
-
-class LanguageForm(forms.ModelForm):
-    class Meta:
-        model = Language
-        fields = ['language', 'language_level']
-
-class CertificationForm(forms.ModelForm):
-    class Meta:
-        model = Certification
-        fields = ['certificate_name', 'certification_date', 'certificate_link']
-        widgets = {
-            'certification_date': forms.DateInput(attrs={'type': 'date'}),
-        }
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'password1', 'password2']

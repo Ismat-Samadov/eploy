@@ -22,7 +22,7 @@ import io
 import base64
 import numpy as np
 from django.views.generic import DetailView
-from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
+# from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
 from .utils import calculate_similarity, get_openai_analysis
 import matplotlib
 from botocore.exceptions import NoCredentialsError, ClientError
