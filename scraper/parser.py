@@ -141,7 +141,8 @@ class JobScraper:
             parse_azerconnect = await self.parse_azerconnect(session)
             parse_djinni_co = await self.parse_djinni_co(session)
             parse_abb = await self.parse_abb(session)
-            parse_hellojob_az = await self.parse_hellojob_az(session)  # New
+            parse_hellojob_az = await self.parse_hellojob_az(session)
+            parse_boss_az = await self.parse_boss_az(session)
 
             # Initialize an empty list to hold all job records
             all_jobs = []
@@ -159,6 +160,8 @@ class JobScraper:
                 all_jobs.extend(parse_abb.to_dict('records'))
             if not parse_hellojob_az.empty:
                 all_jobs.extend(parse_hellojob_az.to_dict('records'))
+            if not parse_boss_az.empty:
+                 all_jobs.extend(parse_boss_az.to_dict('records'))
 
             # If we have jobs, convert to a DataFrame
             if all_jobs:
@@ -499,6 +502,31 @@ class JobScraper:
         logger.info("Scraping completed for hellojob.az")
         return pd.DataFrame(job_vacancies) if job_vacancies else pd.DataFrame(
             columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_boss_az(self, session):
+        logger.info("Starting to scrape Boss.az...")
+        job_vacancies = []
+        base_url = "https://boss.az"
+        
+        for page_num in range(1, 21):  # Scrape from page 1 to 20
+            url = f"{base_url}/vacancies?page={page_num}"
+            response = await self.fetch_url_async(url, session)
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_listings = soup.find_all('div', class_='results-i')
+                for job in job_listings:
+                    title = job.find('h3', class_='results-i-title').get_text(strip=True)
+                    company = job.find('a', class_='results-i-company').get_text(strip=True)
+                    link = f"{base_url}{job.find('a', class_='results-i-link')['href']}"
+                    job_vacancies.append({"company": company, "vacancy": title, "apply_link": link})
+                logger.info(f"Scraped {len(job_listings)} jobs from page {page_num}")
+            else:
+                logger.warning(f"Failed to retrieve page {page_num}.")
+        
+        logger.info("Scraping completed for Boss.az")
+        return pd.DataFrame(job_vacancies) if job_vacancies else pd.DataFrame(
+            columns=['company', 'vacancy', 'apply_link'])
+
 
 def main():
     job_scraper = JobScraper()
