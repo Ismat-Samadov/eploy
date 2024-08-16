@@ -12,7 +12,6 @@ import psycopg2
 from psycopg2 import sql, extras
 import aiohttp
 import asyncio
-import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -47,30 +46,30 @@ class JobScraper:
         db_url = f"postgresql+psycopg2://{self.db_params['user']}:{self.db_params['password']}@{self.db_params['host']}:{self.db_params['port']}/{self.db_params['dbname']}"
         return create_engine(db_url)
 
-    async def fetch_url_async(self, url, session, params=None, verify_ssl=True):
-        """ Asynchronously fetch the content of a URL. """
+    async def fetch_url_async(self, url, session, params=None, headers=None, verify_ssl=True):
+        """ Asynchronously fetch the content of a URL with optional headers. """
         try:
-            async with session.get(url, params=params, ssl=verify_ssl) as response:
+            async with session.get(url, params=params, headers=headers, ssl=verify_ssl) as response:
                 response.raise_for_status()
-                if response.headers.get('Content-Type') == 'application/json':
+                content_type = response.headers.get('Content-Type', '').lower()
+
+                if 'application/json' in content_type:
                     return await response.json()
+                elif 'text' in content_type or 'html' in content_type:
+                    try:
+                        return await response.text(encoding='utf-8')
+                    except UnicodeDecodeError:
+                        return await response.text(encoding='latin-1')
                 else:
-                    return await response.text()
+                    logger.error(f"Unexpected content type: {content_type}")
+                    return None
+
         except aiohttp.ClientError as e:
             logger.error(f"Request to {url} failed: {e}")
             return None
 
-    def fetch_url(self, url, params=None):
-        """ Synchronously fetch the content of a URL. """
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            return response
-        except requests.RequestException as e:
-            logger.error(f"Request to {url} failed: {e}")
-            return None
-
     def save_to_db(self, df, batch_size=100):
+        """ Save the scraped data into the database in batches. """
         try:
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
@@ -79,43 +78,31 @@ class JobScraper:
                         FROM jobs_jobpost
                         WHERE posted_at >= NOW() - INTERVAL '30 days'
                     """)
-                    existing_jobs = cur.fetchall()
+                    existing_jobs_set = set(cur.fetchall())
 
-                    # Create a set of tuples for existing jobs to check against
-                    existing_jobs_set = {(row[0], row[1]) for row in existing_jobs}
-
-                    # Prepare the data to be inserted, filtering out existing jobs within 30 days
-                    values = []
-                    for _, row in df.iterrows():
-                        title = row.get('vacancy', '')
-                        company = row.get('company', '')
-
-                        # Skip rows where necessary data is missing
-                        if not title or not company:
-                            continue
-
-                        if (company, title) not in existing_jobs_set:
-                            values.append(
-                                (
-                                    title[:500],
-                                    '',  # Description left blank for now
-                                    company[:500],
-                                    '',  # Location left blank
-                                    None,  # Function left blank
-                                    None,  # Schedule left blank
-                                    None,  # Deadline left blank
-                                    None,  # Responsibilities left blank
-                                    None,  # Requirements left blank
-                                    1,  # posted_by_id is 9
-                                    True,  # is_scraped
-                                    False,  # is_premium
-                                    0,  # premium_days
-                                    99,  # priority_level
-                                    datetime.now(),  # current datetime as posted_at
-                                    False,  # deleted
-                                    row.get('apply_link', '')[:1000]
-                                )
-                            )
+                    values = [
+                        (
+                            row.get('vacancy', '')[:500],
+                            '',  # Description left blank for now
+                            row.get('company', '')[:500],
+                            '',  # Location left blank
+                            None,  # Function left blank
+                            None,  # Schedule left blank
+                            None,  # Deadline left blank
+                            None,  # Responsibilities left blank
+                            None,  # Requirements left blank
+                            1,  # posted_by_id is 9
+                            True,  # is_scraped
+                            False,  # is_premium
+                            0,  # premium_days
+                            99,  # priority_level
+                            datetime.now(),  # current datetime as posted_at
+                            False,  # deleted
+                            row.get('apply_link', '')[:1000]
+                        )
+                        for _, row in df.iterrows()
+                        if (row.get('company', ''), row.get('vacancy', '')) not in existing_jobs_set
+                    ]
 
                     if values:
                         insert_query = sql.SQL("""
@@ -126,244 +113,195 @@ class JobScraper:
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
                         logger.info(f"{len(values)} new job posts inserted into the database.")
-                        logger.info(values)
                     else:
                         logger.info("No new job posts to insert.")
 
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
 
+
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
             # Fetch data concurrently
-            parse_glorri = await self.parse_glorri(session)
-            azercell_jobs = await self.parse_azercell(session)
-            parse_azerconnect = await self.parse_azerconnect(session)
-            parse_djinni_co = await self.parse_djinni_co(session)
-            parse_abb = await self.parse_abb(session)
-            parse_hellojob_az = await self.parse_hellojob_az(session)
-            parse_boss_az = await self.parse_boss_az(session)
+            parsers = [
+                self.parse_glorri(session),
+                self.parse_azercell(session),
+                self.parse_azerconnect(session),
+                self.parse_djinni_co(session),
+                self.parse_abb(session),
+                self.parse_hellojob_az(session),
+                self.parse_boss_az(session),
+                self.parse_ejob_az(session),
+                self.parse_vakansiya_az(session),
+                self.parse_ishelanlari_az(session),
+                self.parse_banker_az(session),
+                self.parse_smartjob_az(session),
+                self.parse_offer_az(session),
+                self.parse_isveren_az(session)
+            ]
 
-            # Initialize an empty list to hold all job records
-            all_jobs = []
+            all_jobs = await asyncio.gather(*parsers)
 
-            # Append each set of jobs to the list if it's not empty
-            if parse_glorri:
-                all_jobs.extend(parse_glorri)
-            if not azercell_jobs.empty:
-                all_jobs.extend(azercell_jobs.to_dict('records'))
-            if not parse_azerconnect.empty:
-                all_jobs.extend(parse_azerconnect.to_dict('records'))
-            if not parse_djinni_co.empty:
-                all_jobs.extend(parse_djinni_co.to_dict('records'))
-            if not parse_abb.empty:
-                all_jobs.extend(parse_abb.to_dict('records'))
-            if not parse_hellojob_az.empty:
-                all_jobs.extend(parse_hellojob_az.to_dict('records'))
-            if not parse_boss_az.empty:
-                 all_jobs.extend(parse_boss_az.to_dict('records'))
+            # Flatten and filter results
+            all_jobs = [job for job_list in all_jobs if isinstance(job_list, pd.DataFrame) and not job_list.empty for job in job_list.to_dict('records')]
 
-            # If we have jobs, convert to a DataFrame
             if all_jobs:
                 self.data = pd.DataFrame(all_jobs)
                 self.data['scrape_date'] = datetime.now()
-
-                # Drop rows with NaN values in critical columns
                 self.data.dropna(subset=['company', 'vacancy'], inplace=True)
 
-    
+
     async def parse_glorri(self, session):
         """Fetch all companies and their job data from Glorri."""
+        logger.info("Started scraping Glorri")
         url_companies = "https://atsapp.glorri.az/company-service/v2/companies/public"
         limit = 18
-        offset = 0
-        total_count = 67
         all_jobs = []
+        offset = 0
 
-        while offset < total_count:
+        while True:
             params = {'limit': limit, 'offset': offset}
             companies_data = await self.fetch_url_async(url_companies, session, params=params)
-            if companies_data:
-                companies = companies_data.get('entities', [])
-                for company in companies:
-                    slug = company.get('slug')
-                    company_name = company.get('name')
-                    job_count = company.get('jobCount')
-
-                    if job_count > 0 and slug:
-                        base_url_jobs = f"https://atsapp.glorri.az/job-service/v2/company/{slug}/jobs"
-                        job_offset = 0
-
-                        while True:
-                            job_params = {'offset': job_offset, 'limit': limit}
-                            jobs_data = await self.fetch_url_async(base_url_jobs, session, params=job_params)
-                            if jobs_data:
-                                jobs = jobs_data.get('entities', [])
-                                if not jobs:
-                                    break
-                                for job in jobs:
-                                    all_jobs.append({
-                                        'company': company_name,
-                                        'Company Slug': slug,
-                                        'vacancy': job['title'],
-                                        'apply_link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
-                                    })
-                                job_offset += limit
-                            else:
-                                logger.error(f"Failed to retrieve jobs for {company_name}.")
-                                break
-
-                offset += limit
-            else:
-                logger.error(f"Failed to retrieve companies data.")
+            if not companies_data:
+                logger.error("Failed to retrieve companies data.")
                 break
 
+            companies = companies_data.get('entities', [])
+            if not companies:
+                break
+
+            for company in companies:
+                slug = company.get('slug')
+                company_name = company.get('name')
+                job_count = company.get('jobCount')
+
+                if job_count > 0 and slug:
+                    base_url_jobs = f"https://atsapp.glorri.az/job-service/v2/company/{slug}/jobs"
+                    job_offset = 0
+
+                    while True:
+                        job_params = {'offset': job_offset, 'limit': limit}
+                        jobs_data = await self.fetch_url_async(base_url_jobs, session, params=job_params)
+                        if not jobs_data or not jobs_data.get('entities', []):
+                            break
+
+                        for job in jobs_data['entities']:
+                            all_jobs.append({
+                                'company': company_name,
+                                'Company Slug': slug,
+                                'vacancy': job['title'],
+                                'apply_link': f"https://jobs.glorri.az/vacancies/{slug}/{job['slug']}/apply"
+                            })
+                        job_offset += limit
+            offset += limit
+
+        logger.info("Completed scraping Glorri")
         return all_jobs
 
     async def parse_azercell(self, session):
         logger.info("Started scraping Azercell")
         url = "https://www.azercell.com/az/about-us/career.html"
         response_text = await self.fetch_url_async(url, session)
-        if response_text:
-            soup = BeautifulSoup(response_text, "html.parser")
-            vacancies_section = soup.find("section", class_="section_vacancies")
-            if vacancies_section:
-                job_listings = vacancies_section.find_all("a", class_="vacancies__link")
-                job_titles = [job.find("h4", class_="vacancies__name").text for job in job_listings]
-                job_locations = [job.find("span", class_="vacancies__location").text.strip() for job in job_listings]
-                job_links = [job["href"] for job in job_listings]
+        if not response_text:
+            logger.warning("Failed to retrieve Azercell page.")
+            return pd.DataFrame()
 
-                # Asynchronously fetch additional details from individual job pages
-                tasks = [self.fetch_url_async(urljoin(url, link), session) for link in job_links]
-                job_pages = await asyncio.gather(*tasks)
+        soup = BeautifulSoup(response_text, "html.parser")
+        vacancies_section = soup.find("section", class_="section_vacancies")
+        if not vacancies_section:
+            logger.warning("Vacancies section not found on Azercell page.")
+            return pd.DataFrame()
 
-                responsibilities, requirements, functions, schedules, deadlines = [], [], [], [], []
+        job_listings = vacancies_section.find_all("a", class_="vacancies__link")
+        tasks = [self.fetch_url_async(urljoin(url, link["href"]), session) for link in job_listings]
+        job_pages = await asyncio.gather(*tasks)
 
-                for job_page in job_pages:
-                    if job_page:
-                        job_soup = BeautifulSoup(job_page, "html.parser")
-                        responsibilities_text = job_soup.find("div", class_="responsibilities").text if job_soup.find("div", class_="responsibilities") else None
-                        requirements_text = job_soup.find("div", class_="requirements").text if job_soup.find("div", class_="requirements") else None
-                        function_text = job_soup.find("span", class_="function").text if job_soup.find("span", class_="function") else None
-                        schedule_text = job_soup.find("span", class_="schedule").text if job_soup.find("span", class_="schedule") else None
-                        deadline_text = job_soup.find("span", class_="deadline").text if job_soup.find("span", class_="deadline") else None
-
-                        responsibilities.append(responsibilities_text.strip() if responsibilities_text else None)
-                        requirements.append(requirements_text.strip() if requirements_text else None)
-                        functions.append(function_text.strip() if function_text else None)
-                        schedules.append(schedule_text.strip() if schedule_text else None)
-                        deadlines.append(deadline_text.strip() if deadline_text else None)
-
-                df = pd.DataFrame({
+        jobs_data = []
+        for i, job_page in enumerate(job_pages):
+            if job_page:
+                job_soup = BeautifulSoup(job_page, "html.parser")
+                jobs_data.append({
                     'company': 'azercell',
-                    "vacancy": job_titles,
-                    "location": job_locations,
-                    "apply_link": job_links,
-                    "function": functions,
-                    "schedule": schedules,
-                    "deadline": deadlines,
-                    "responsibilities": responsibilities,
-                    "requirements": requirements
+                    "vacancy": job_listings[i].find("h4", class_="vacancies__name").text,
+                    "location": job_listings[i].find("span", class_="vacancies__location").text.strip(),
+                    "apply_link": job_listings[i]["href"],
+                    "function": job_soup.find("span", class_="function").text if job_soup.find("span", class_="function") else None,
+                    "schedule": job_soup.find("span", class_="schedule").text if job_soup.find("span", class_="schedule") else None,
+                    "deadline": job_soup.find("span", class_="deadline").text if job_soup.find("span", class_="deadline") else None,
+                    "responsibilities": job_soup.find("div", class_="responsibilities").text.strip() if job_soup.find("div", class_="responsibilities") else None,
+                    "requirements": job_soup.find("div", class_="requirements").text.strip() if job_soup.find("div", class_="requirements") else None
                 })
 
-                logger.info("Scraping completed for Azercell")
-                return df
-            else:
-                logger.warning("Vacancies section not found on the Azercell page.")
-        return pd.DataFrame(columns=['company', 'vacancy', 'location', 'apply_link', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements'])
+        logger.info("Completed scraping Azercell")
+        return pd.DataFrame(jobs_data)
 
     async def parse_azerconnect(self, session):
         logger.info("Started scraping Azerconnect")
         url = "https://www.azerconnect.az/vacancies"
         response_text = await self.fetch_url_async(url, session, verify_ssl=False)
+        if not response_text:
+            logger.warning("Failed to retrieve Azerconnect page.")
+            return pd.DataFrame()
 
-        if response_text:
-            soup = BeautifulSoup(response_text, 'html.parser')
-            job_listings = soup.find_all('div', class_='CollapsibleItem_item__CB3bC')
+        soup = BeautifulSoup(response_text, 'html.parser')
+        job_listings = soup.find_all('div', class_='CollapsibleItem_item__CB3bC')
 
-            jobs_data = []
+        jobs_data = []
+        for job in job_listings:
+            content_block = job.find('div', class_='CollapsibleItem_contentInner__vVcvk')
+            title = job.find('div', class_='CollapsibleItem_toggle__XNu5y').find('span').text.strip() if job.find('div', class_='CollapsibleItem_toggle__XNu5y').find('span') else "No Title"
+            apply_link_elem = job.find('a', class_='Button_button-blue__0wZ4l')
+            apply_link = apply_link_elem['href'] if apply_link_elem else "No Apply Link"
 
-            for job in job_listings:
-                title_elem = job.find('div', class_='CollapsibleItem_toggle__XNu5y').find('span')
-                if title_elem:
-                    title = title_elem.text.strip()
-                else:
-                    title = "No Title"
+            details = content_block.find_all('p')
+            function = schedule = deadline = responsibilities = requirements = ""
 
-                # Extract the content block
-                content_block = job.find('div', class_='CollapsibleItem_contentInner__vVcvk')
+            for detail in details:
+                text = detail.get_text(strip=True)
+                if text.startswith("Funksiya:") or text.startswith("İdarə:"):
+                    function = text.replace("Funksiya:", "").replace("İdarə:", "").strip()
+                elif text.startswith("İş qrafiki:"):
+                    schedule = text.replace("İş qrafiki:", "").strip()
+                elif text.startswith("Son müraciət tarixi:"):
+                    deadline = text.replace("Son müraciət tarixi:", "").strip()
+                elif text.startswith("Vəzifənin tələbləri:"):
+                    requirements = text.replace("Vəzifənin tələbləri:", "").strip()
+                elif text.startswith("Sizin vəzifə öhdəlikləriniz:") or text.startswith("Əlavə Dəyərli Xidmətlər əməliyyatları üzrə ekspert olaraq sizin vəzifə öhdəlikləriniz:"):
+                    responsibilities = text.replace("Sizin vəzifə öhdəlikləriniz:", "").strip()
 
-                # Extract fields from the content block
-                function, schedule, deadline, responsibilities, requirements = "", "", "", "", ""
+            uls = content_block.find_all('ul')
+            if uls:
+                for ul in uls:
+                    if "Vəzifənin tələbləri" in ul.previous_sibling.get_text(strip=True):
+                        requirements += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
+                    elif "Sizin əsas vəzifə öhdəlikləriniz" in ul.previous_sibling.get_text(strip=True):
+                        responsibilities += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
 
-                # Extract the specific sections
-                details = content_block.find_all('p')
-                for detail in details:
-                    text = detail.get_text(strip=True)
-                    if text.startswith("Funksiya:"):
-                        function = text.replace("Funksiya:", "").strip()
-                    elif text.startswith("İdarə:"):
-                        function = text.replace("İdarə:", "").strip()
-                    elif text.startswith("İş qrafiki:"):
-                        schedule = text.replace("İş qrafiki:", "").strip()
-                    elif text.startswith("Son müraciət tarixi:"):
-                        deadline = text.replace("Son müraciət tarixi:", "").strip()
-                    elif text.startswith("Vəzifənin tələbləri:"):
-                        requirements = text.replace("Vəzifənin tələbləri:", "").strip()
-                    elif text.startswith("Sizin vəzifə öhdəlikləriniz:") or text.startswith("Əlavə Dəyərli Xidmətlər əməliyyatları üzrə ekspert olaraq sizin vəzifə öhdəlikləriniz:"):
-                        responsibilities = text.replace("Sizin vəzifə öhdəlikləriniz:", "").strip()
-
-                # Extract unordered list (ul) sections
-                uls = content_block.find_all('ul')
-                if uls:
-                    for ul in uls:
-                        if "Vəzifənin tələbləri" in ul.previous_sibling.get_text(strip=True):
-                            requirements += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
-                        elif "Sizin əsas vəzifə öhdəlikləriniz" in ul.previous_sibling.get_text(strip=True):
-                            responsibilities += '\n' + '\n'.join([li.get_text(strip=True) for li in ul.find_all('li')])
-
-                # Extract the apply link
-                apply_link_elem = job.find('a', class_='Button_button-blue__0wZ4l')
-                if apply_link_elem:
-                    apply_link = apply_link_elem['href']
-                else:
-                    apply_link = "No Apply Link"
-
-                # Parse the deadline into a valid date format
-                if deadline:
-                    try:
-                        # Handle different date formats
-                        if '.' in deadline:
-                            deadline_date = datetime.strptime(deadline, "%d.%m.%Y").date()
-                        else:
-                            deadline_date = datetime.strptime(deadline, "%d %B %Y").date()
-                    except ValueError:
-                        deadline_date = None
-                else:
+            if deadline:
+                try:
+                    deadline_date = datetime.strptime(deadline, "%d.%m.%Y").date() if '.' in deadline else datetime.strptime(deadline, "%d %B %Y").date()
+                except ValueError:
                     deadline_date = None
+            else:
+                deadline_date = None
 
-                job_data = {
-                    'company': 'azerconnect',
-                    'vacancy': title,
-                    'location': 'Baku, Azerbaijan',
-                    'function': function,
-                    'schedule': schedule,
-                    'deadline': deadline_date,
-                    'responsibilities': responsibilities,
-                    'requirements': requirements,
-                    'apply_link': apply_link
-                }
+            jobs_data.append({
+                'company': 'azerconnect',
+                'vacancy': title,
+                'location': 'Baku, Azerbaijan',
+                'function': function,
+                'schedule': schedule,
+                'deadline': deadline_date,
+                'responsibilities': responsibilities,
+                'requirements': requirements,
+                'apply_link': apply_link
+            })
 
-                jobs_data.append(job_data)
-
-            df = pd.DataFrame(jobs_data)
-            logger.info("Scraping of Azerconnect completed")
-            return df
-
-        return pd.DataFrame(columns=['company', 'vacancy', 'location', 'function', 'schedule', 'deadline', 'responsibilities', 'requirements', 'apply_link'])
+        logger.info("Completed scraping Azerconnect")
+        return pd.DataFrame(jobs_data)
 
     async def parse_djinni_co(self, session):
-        pages = 15
+        pages = 17
         logger.info(f"Started scraping djinni.co for the first {pages} pages")
 
         base_jobs_url = 'https://djinni.co/jobs/'
@@ -416,7 +354,7 @@ class JobScraper:
             logger.info("=" * 40)
 
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
-    
+
     async def parse_abb(self, session):
         logger.info("Scraping starting for ABB")
         base_url = "https://careers.abb-bank.az/api/vacancy/v2/get"
@@ -454,7 +392,7 @@ class JobScraper:
     async def parse_busy_az(self, session):
         logger.info("Scraping started for busy.az")
         job_vacancies = []
-        for page_num in range(1, 5):
+        for page_num in range(1, 7):
             logger.info(f"Scraping page {page_num}")
             url = f'https://busy.az/vacancies?page={page_num}'
             response = await self.fetch_url_async(url, session)
@@ -473,7 +411,6 @@ class JobScraper:
             else:
                 logger.error(f"Failed to retrieve page {page_num}.")
         df = pd.DataFrame(job_vacancies)
-        logger.info(df)
         logger.info("Scraping completed for busy.az")
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
@@ -482,7 +419,7 @@ class JobScraper:
         job_vacancies = []
         base_url = "https://www.hellojob.az"
 
-        for page_number in range(1, 11):
+        for page_number in range(1, 13):
             url = f"{base_url}/vakansiyalar?page={page_number}"
             response = await self.fetch_url_async(url, session)
             if response:
@@ -508,7 +445,7 @@ class JobScraper:
         job_vacancies = []
         base_url = "https://boss.az"
         
-        for page_num in range(1, 21):  # Scrape from page 1 to 20
+        for page_num in range(1, 23):  # Scrape from page 1 to 20
             url = f"{base_url}/vacancies?page={page_num}"
             response = await self.fetch_url_async(url, session)
             if response:
@@ -527,6 +464,256 @@ class JobScraper:
         return pd.DataFrame(job_vacancies) if job_vacancies else pd.DataFrame(
             columns=['company', 'vacancy', 'apply_link'])
 
+    async def parse_ejob_az(self, session):
+        start_page = 1
+        end_page = 20
+        logger.info("Scraping started for ejob.az")
+        base_url = "https://ejob.az/is-elanlari"
+        all_jobs = []
+        
+        for page in range(start_page, end_page + 1):
+            url = f"{base_url}/page-{page}/"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
+            response = await self.fetch_url_async(url, session, params=None, verify_ssl=True)
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_tables = soup.find_all('table', class_='background')
+                for job in job_tables:
+                    title_link = job.find('a', href=True)
+                    company = job.find('div', class_='company').text if job.find('div', class_='company') else 'No company listed'
+                    all_jobs.append({
+                        'company': company,
+                        'vacancy': title_link.text.strip(),
+                        'apply_link': f"https://ejob.az{title_link['href']}"
+                    })
+            else:
+                logger.warning(f"Failed to retrieve page {page}.")
+
+        logger.info("Scraping completed for ejob.az")
+        return pd.DataFrame(all_jobs) if all_jobs else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_vakansiya_az(self, session):
+        logger.info("Scraping started for vakansiya.az")
+        url = 'https://www.vakansiya.az/az/'
+        response = await self.fetch_url_async(url, session)
+        
+        if response:
+            soup = BeautifulSoup(response, 'html.parser')
+            jobs = []
+            job_divs = soup.find_all('div', id='js-jobs-wrapper')
+
+            for job_div in job_divs:
+                company = job_div.find_all('div', class_='js-fields')[1].find('a')
+                title = job_div.find('a', class_='jobtitle')
+                apply_link = title['href'] if title else None
+
+                jobs.append({
+                    'company': company.get_text(strip=True) if company else 'N/A',
+                    'vacancy': title.get_text(strip=True) if title else 'N/A',
+                    'apply_link': f'https://www.vakansiya.az{apply_link}' if apply_link else 'N/A'
+                })
+
+            logger.info("Scraping completed for vakansiya.az")
+            return pd.DataFrame(jobs) if jobs else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+        else:
+            logger.error("Failed to retrieve the page.")
+            return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_ishelanlari_az(self, session):
+        logger.info("Scraping started for ishelanlari.az")
+        url = "https://ishelanlari.az/az/vacancies//0/360/"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+        response = await self.fetch_url_async(url, session, params=None, verify_ssl=True)
+
+        if response:
+            soup = BeautifulSoup(response, 'html.parser')
+            vacancies = []
+            for job in soup.find_all("div", class_="card-body"):
+                title_element = job.find("h2", class_="font-weight-bold")
+                company_element = job.find("a", class_="text-muted")
+                details_link_element = job.find("a", class_="position-absolute")
+
+                title = title_element.text.strip() if title_element else "No title provided"
+                company = company_element.text.strip() if company_element else "No company provided"
+                link = details_link_element["href"] if details_link_element else "No link provided"
+
+                vacancies.append({
+                    "company": company,
+                    "vacancy": title,
+                    "apply_link": "https://ishelanlari.az" + link
+                })
+
+            logger.info("Scraping completed for ishelanlari.az")
+            return pd.DataFrame(vacancies) if vacancies else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+        else:
+            logger.error("Failed to retrieve data for ishelanlari.az.")
+            return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_banker_az(self, session):
+        logger.info("Started scraping Banker.az")
+        base_url = 'https://banker.az/vakansiyalar'
+        num_pages = 5
+
+        all_job_titles = []
+        all_company_names = []
+        all_apply_links = []
+
+        for page in range(1, num_pages + 1):
+            url = f"{base_url}/page/{page}/"
+            response = await self.fetch_url_async(url, session)
+
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_listings = soup.find_all('div', class_='list-data')
+
+                for job in job_listings:
+                    job_info = job.find('div', class_='job-info')
+                    title_tag = job_info.find('a') if job_info else None
+                    title = title_tag.text.strip() if title_tag else None
+                    link = title_tag['href'] if title_tag else None
+
+                    company_logo = job.find('div', class_='company-logo')
+                    company_img = company_logo.find('img') if company_logo else None
+                    company = company_img.get('alt') if company_img else None
+
+                    if title and '-' in title:
+                        title_parts = title.split(' – ')
+                        title = title_parts[0].strip()
+                        if len(title_parts) > 1:
+                            company = title_parts[1].strip()
+
+                    if title and company and link:
+                        all_job_titles.append(title)
+                        all_company_names.append(company)
+                        all_apply_links.append(link)
+            else:
+                logger.warning(f"Failed to retrieve page {page}.")
+
+        df = pd.DataFrame({'company': all_company_names, 'vacancy': all_job_titles, 'apply_link': all_apply_links})
+        logger.info("Scraping completed for Banker.az")
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_smartjob_az(self, session):
+        logger.info("Started scraping SmartJob.az")
+        jobs = []
+
+        for page in range(1, 11):
+            url = f"https://smartjob.az/vacancies?page={page}"
+            response = await self.fetch_url_async(url, session)
+
+            if response:
+                soup = BeautifulSoup(response, "html.parser")
+                job_listings = soup.find_all('div', class_='item-click')
+
+                if not job_listings:
+                    continue
+
+                for listing in job_listings:
+                    title = listing.find('div', class_='brows-job-position').h3.a.text.strip()
+                    company = listing.find('span', class_='company-title').a.text.strip()
+                    jobs.append({
+                        'company': company,
+                        'vacancy': title,
+                        'apply_link': listing.find('div', class_='brows-job-position').h3.a['href']
+                    })
+            else:
+                logger.warning(f"Failed to retrieve page {page}.")
+
+        logger.info("Scraping completed for SmartJob.az")
+        return pd.DataFrame(jobs) if jobs else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_offer_az(self, session):
+        logger.info("Started scraping offer.az")
+        base_url = "https://www.offer.az/is-elanlari/page/"
+        all_jobs = []
+
+        for page_number in range(1, 8):
+            url = f"{base_url}{page_number}/"
+            response = await self.fetch_url_async(url, session)
+
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_cards = soup.find_all('div', class_='job-card')
+
+                for job_card in job_cards:
+                    title_tag = job_card.find('a', class_='job-card__title')
+                    title = title_tag.text.strip() if title_tag else "N/A"
+                    link = title_tag['href'] if title_tag else "N/A"
+                    company_tag = job_card.find('p', class_='job-card__meta')
+                    company = company_tag.text.strip() if company_tag else "N/A"
+
+                    all_jobs.append({
+                        'vacancy': title,
+                        'company': company,
+                        'location': 'N/A',  # Placeholder, as location is not extracted
+                        'apply_link': link,
+                        'description': job_card.find('p', class_='job-card__excerpt').text.strip() if job_card.find('p', class_='job-card__excerpt') else "N/A"
+                    })
+            else:
+                logger.warning(f"Failed to retrieve page {page_number}.")
+
+        logger.info("Scraping completed for offer.az")
+        return pd.DataFrame(all_jobs) if all_jobs else pd.DataFrame(columns=['vacancy', 'company', 'location', 'apply_link', 'description'])
+
+    async def parse_isveren_az(self, session):
+        start_page = 1
+        end_page = 15
+        max_retries = 3
+        backoff_factor = 1
+        jobs = []
+
+        for page_num in range(start_page, end_page + 1):
+            retries = 0
+            while retries < max_retries:
+                try:
+                    logger.info(f"Scraping started for isveren.az page {page_num}")
+                    url = f"https://isveren.az/?page={page_num}"
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
+                    }
+
+                    response = await self.fetch_url_async(url, session, headers=headers)
+
+                    if response:
+                        soup = BeautifulSoup(response, 'html.parser')
+                        job_cards = soup.find_all('div', class_='job-card')
+
+                        for job_card in job_cards:
+                            title_element = job_card.find('h5', class_='job-title')
+                            company_element = job_card.find('p', class_='job-list')
+                            link_element = job_card.find('a', href=True)
+
+                            title = title_element.text.strip() if title_element else "No title provided"
+                            company = company_element.text.strip() if company_element else "No company provided"
+                            link = link_element['href'] if link_element else "No link provided"
+
+                            jobs.append({
+                                'company': company,
+                                'vacancy': title,
+                                'apply_link': link
+                            })
+
+                        break  # Exit the retry loop if the request was successful
+                    else:
+                        logger.error(f"Failed to retrieve page {page_num}.")
+                        break
+
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    retries += 1
+                    logger.warning(f"Attempt {retries} for page {page_num} failed: {e}")
+                    if retries < max_retries:
+                        sleep_time = backoff_factor * (2 ** (retries - 1))
+                        logger.info(f"Retrying page {page_num} in {sleep_time} seconds...")
+                        await asyncio.sleep(sleep_time)
+                    else:
+                        logger.error(f"Max retries exceeded for page {page_num}")
+
+        df = pd.DataFrame(jobs)
+        logger.info("Scraping completed for isveren.az")
+        return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
 def main():
     job_scraper = JobScraper()
