@@ -137,7 +137,9 @@ class JobScraper:
                 self.parse_banker_az(session),
                 self.parse_smartjob_az(session),
                 self.parse_offer_az(session),
-                self.parse_isveren_az(session)
+                self.parse_isveren_az(session),
+                self.parse_isqur(session),
+                self.parse_kapitalbank(session),
             ]
 
             all_jobs = await asyncio.gather(*parsers)
@@ -714,6 +716,57 @@ class JobScraper:
         df = pd.DataFrame(jobs)
         logger.info("Scraping completed for isveren.az")
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_isqur(self, session):
+        start_page = 1
+        end_page = 5
+        logger.info("Started scraping isqur.com")
+        job_vacancies = []
+        base_url = "https://isqur.com/is-elanlari/sehife-"
+
+        for page_num in range(start_page, end_page + 1):
+            logger.info(f"Scraping page {page_num} for isqur.com")
+            url = f"{base_url}{page_num}"
+            response = await self.fetch_url_async(url, session)
+            if response:
+                soup = BeautifulSoup(response, 'html.parser')
+                job_cards = soup.find_all('div', class_='kart')
+                for job in job_cards:
+                    title = job.find('div', class_='basliq').text.strip()
+                    company = "Unknown"  # The provided HTML does not include a company name
+                    link = "https://isqur.com/" + job.find('a')['href']
+                    job_vacancies.append({'company': company, 'vacancy': title, 'apply_link': link})
+            else:
+                logger.error(f"Failed to retrieve page {page_num} for isqur.com")
+
+        logger.info("Scraping completed for isqur.com")
+        return pd.DataFrame(job_vacancies) if job_vacancies else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+    async def parse_kapitalbank(self, session):
+        logger.info("Fetching jobs from Kapital Bank API")
+        url = "https://apihr.kapitalbank.az/api/Vacancy/vacancies?Skip=0&Take=150&SortField=id&OrderBy=true"
+        response = await self.fetch_url_async(url, session)
+
+        if response:
+            data = response.get('data', [])
+            if not data:
+                logger.warning("No job data found in the API response.")
+                return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
+            jobs_data = []
+            for job in data:
+                jobs_data.append({
+                    'company': 'Kapital Bank',
+                    'vacancy': job['header'],
+                    'apply_link': f"https://hr.kapitalbank.az/vacancy/{job['id']}"
+                })
+
+            logger.info("Job data fetched and parsed successfully from Kapital Bank API")
+            return pd.DataFrame(jobs_data)
+        else:
+            logger.error("Failed to fetch data from Kapital Bank API.")
+            return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+
 
 def main():
     job_scraper = JobScraper()
