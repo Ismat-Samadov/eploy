@@ -13,6 +13,8 @@ from psycopg2 import sql, extras
 import aiohttp
 import asyncio
 import re
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -119,7 +121,6 @@ class JobScraper:
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
 
-
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
             # Fetch data concurrently
@@ -186,7 +187,6 @@ class JobScraper:
                 self.data = pd.DataFrame(all_jobs)
                 self.data['scrape_date'] = datetime.now()
                 self.data.dropna(subset=['company', 'vacancy'], inplace=True)
-
 
     async def parse_glorri(self, session):
         """Fetch all companies and their job data from Glorri."""
@@ -712,7 +712,7 @@ class JobScraper:
                         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
                     }
 
-                    response = await self.fetch_url_async(url, session, headers=headers)
+                    response = await self.fetch_url_async(url, session, headers=headers, verify_ssl=False)
 
                     if response:
                         soup = BeautifulSoup(response, 'html.parser')
@@ -1011,7 +1011,7 @@ class JobScraper:
 
         while True:
             try:
-                response = await self.fetch_url_async(base_url, session, params=params)
+                response = await self.fetch_url_async(base_url, session, params=params, verify_ssl=False)
                 if not response:
                     logger.error(f"Failed to fetch data from Talhunt.az with params {params}")
                     break
@@ -1043,6 +1043,7 @@ class JobScraper:
 
         df = pd.DataFrame(job_vacancies)
         logger.info("Scraping completed for Talhunt.az")
+        logger.info(df)
 
         return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
@@ -1404,12 +1405,15 @@ class JobScraper:
 
                 df = pd.DataFrame(jobs)
                 logger.info("Scraping completed for ADA University")
+                logger.info(df)
                 return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
             else:
                 logger.warning("No job listings found on the ADA University page.")
                 return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
         else:
             logger.error("Failed to fetch the page.")
+            df = pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
+            logger.info(df)
             return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
 
     async def parse_jobfinder(self, session):
@@ -1896,24 +1900,35 @@ class JobScraper:
                 content = await response.text()
                 soup = BeautifulSoup(content, 'html.parser')
                 job_listings = []
-                
+
+                # Find all job article elements
                 job_cards = soup.find_all('article', class_='node--view-mode-teaser')
-                
+
                 for job in job_cards:
-                    title_tag = job.find('a', data_once='submenu-reveal')
-                    title = title_tag.get_text(strip=True) if title_tag else 'N/A'
+                    # Extract the title and link
+                    title_tag = job.find('a', attrs={'data-once': 'submenu-reveal'})
+                    title = title_tag.get_text(strip=True) if title_tag else 'N/A'  # Fall back to get_text() if title attribute is missing
                     href = title_tag['href'] if title_tag else ''
-                    apply_link = base_url + href if href else 'N/A'
                     
+                    # Ensure the full apply link is constructed correctly
+                    if href.startswith('http'):
+                        apply_link = href
+                    else:
+                        apply_link = urljoin(base_url, href)
+
+                    # Extract the organization name
+                    organization_tag = job.find('div', class_='text-un-gray-dark text-lg')
+                    organization = organization_tag.get_text(strip=True) if organization_tag else 'N/A'
+
                     job_listings.append({
-                        'company': 'United Nations Azerbaijan',
+                        'company': organization,
                         'vacancy': title,
                         'apply_link': apply_link
                     })
-                
+
                 df = pd.DataFrame(job_listings)
                 logger.info("Scraping completed for UN")
-                logger.info(df)
+                logger.info(f"\n{df}")
                 return df
             else:
                 logger.error(f"Failed to retrieve the webpage. Status code: {response.status}")
@@ -2236,7 +2251,6 @@ class JobScraper:
                         })
             
             return pd.DataFrame(jobs)
-
 
 def main():
     job_scraper = JobScraper()
