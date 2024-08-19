@@ -10,73 +10,43 @@
             <h1 class="opacity">REGISTER</h1>
             <form method="post">
                 {% csrf_token %}
-                
-                <!-- Display non-field errors -->
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ form.non_field_errors }}
-                    </div>
+
+                <input type="text" name="first_name" placeholder="FIRST NAME" required id="id_first_name" />
+                {% if form.first_name.errors %}
+                    <div class="errorlist">{{ form.first_name.errors }}</div>
                 {% endif %}
-                
-                <!-- First Name Field -->
-                <div class="form-group">
-                    {{ form.first_name.label_tag }}
-                    {{ form.first_name }}
-                    {% if form.first_name.errors %}
-                        <div class="errorlist">{{ form.first_name.errors }}</div>
-                    {% endif %}
-                </div>
 
-                <!-- Last Name Field -->
-                <div class="form-group">
-                    {{ form.last_name.label_tag }}
-                    {{ form.last_name }}
-                    {% if form.last_name.errors %}
-                        <div class="errorlist">{{ form.last_name.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <!-- Email Field -->
-                <div class="form-group">
-                    {{ form.email.label_tag }}
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <div class="errorlist">{{ form.email.errors }}</div>
-                    {% endif %}
-                </div>
+                <input type="text" name="last_name" placeholder="LAST NAME" required id="id_last_name" />
+                {% if form.last_name.errors %}
+                    <div class="errorlist">{{ form.last_name.errors }}</div>
+                {% endif %}
 
-                <!-- Phone Number Field -->
-                <div class="form-group">
-                    {{ form.phone_number.label_tag }}
-                    {{ form.phone_number }}
-                    {% if form.phone_number.errors %}
-                        <div class="errorlist">{{ form.phone_number.errors }}</div>
-                    {% endif %}
-                </div>
+                <input type="email" name="email" placeholder="EMAIL" required id="id_email" />
+                {% if form.email.errors %}
+                    <div class="errorlist">{{ form.email.errors }}</div>
+                {% endif %}
 
-                <!-- Password1 Field -->
-                <div class="form-group">
-                    {{ form.password1.label_tag }}
-                    {{ form.password1 }}
-                    {% if form.password1.errors %}
-                        <div class="errorlist">{{ form.password1.errors }}</div>
-                    {% endif %}
-                </div>
+                <input type="text" name="phone_number" placeholder="PHONE NUMBER" required id="id_phone_number" />
+                {% if form.phone_number.errors %}
+                    <div class="errorlist">{{ form.phone_number.errors }}</div>
+                {% endif %}
 
-                <!-- Password2 Field -->
-                <div class="form-group">
-                    {{ form.password2.label_tag }}
-                    {{ form.password2 }}
-                    {% if form.password2.errors %}
-                        <div class="errorlist">{{ form.password2.errors }}</div>
-                    {% endif %}
-                </div>
+                <input type="password" name="password1" placeholder="PASSWORD" required id="id_password1" />
+                {% if form.password1.errors %}
+                    <div class="errorlist">{{ form.password1.errors }}</div>
+                {% endif %}
+
+                <input type="password" name="password2" placeholder="CONFIRM PASSWORD" required id="id_password2" />
+                {% if form.password2.errors %}
+                    <div class="errorlist">{{ form.password2.errors }}</div>
+                {% endif %}
 
                 <button class="opacity" type="submit">REGISTER</button>
             </form>
             <div class="register-forget opacity">
                 <a href="{% url 'login' %}">LOGIN</a>
             </div>
+
             {% if messages %}
                 <div class="mt-3">
                     <ul class="list-group">
@@ -89,8 +59,6 @@
         </div>
     </div>
 </section>
-
-{% endblock %}
 
 <style>
     :root {
@@ -109,11 +77,9 @@
 
     body {
         margin: 0;
-        box-sizing: border-box;
-        font-family: "poppins";
+        font-family: "Poppins", sans-serif;
         background: var(--background);
         color: var(--color);
-        letter-spacing: 1px;
         transition: background 0.2s ease;
     }
 
@@ -123,7 +89,9 @@
     }
 
     h1 {
-        font-size: 2.5rem;
+        font-size: 2rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
     }
 
     .container {
@@ -134,67 +102,53 @@
     }
 
     .login-container {
-        position: relative;
-        width: 22.2rem;
+        max-width: 400px;
+        width: 100%;
+        padding: 1rem;
     }
 
     .form-container {
         border: 1px solid #ced4da;
         box-shadow: 0 0 36px 1px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
-        backdrop-filter: blur(20px);
-        z-index: 99;
         padding: 2rem;
         background-color: #ffffff;
     }
 
-    .login-container form input,
-    .login-container form select {
-        display: block;
-        padding: 14.5px;
+    .form-container input,
+    .form-container button {
         width: 100%;
-        margin: 2rem 0;
+        padding: 12px;
+        margin-bottom: 1rem;
         color: var(--color);
-        outline: none;
         background-color: #f8f9fa;
         border: 1px solid #ced4da;
         border-radius: 5px;
         font-weight: 500;
-        letter-spacing: 0.8px;
-        font-size: 15px;
-        backdrop-filter: blur(15px);
+        font-size: 14px;
     }
 
-    .login-container form input:focus,
-    .login-container form select:focus {
+    .form-container input:focus,
+    .form-container button:focus {
         box-shadow: 0 0 16px 1px rgba(0, 123, 255, 0.25);
-        animation: wobble 0.3s ease-in;
     }
 
-    .login-container form button {
+    .form-container button {
         background-color: var(--primary-color);
         color: #ffffff;
-        display: block;
-        padding: 13px;
-        border-radius: 5px;
-        outline: none;
-        font-size: 18px;
-        letter-spacing: 1.5px;
+        font-size: 16px;
         font-weight: bold;
-        width: 100%;
         cursor: pointer;
-        margin-bottom: 2rem;
-        transition: all 0.1s ease-in-out;
+        transition: transform 0.1s ease-in-out;
         border: none;
     }
 
-    .login-container form button:hover {
+    .form-container button:hover {
         box-shadow: 0 0 10px 1px rgba(0, 123, 255, 0.25);
         transform: scale(1.02);
     }
 
     .register-forget {
-        margin: 1rem 0;
         display: flex;
         justify-content: space-between;
     }
@@ -202,4 +156,11 @@
     .opacity {
         opacity: 0.8;
     }
+
+    .errorlist {
+        color: red;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
 </style>
+{% endblock %}
