@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import (
     hr_applicants,
     job_list,
@@ -30,6 +31,7 @@ urlpatterns = [
     path('edit-job/<int:job_id>/', edit_job, name='edit_job'),
     path('delete-job/<int:job_id>/', delete_job, name='delete_job'),
     path('hr-dashboard/', hr_dashboard, name='hr_dashboard'),
+    path('download_applicants/<int:job_id>/', views.download_applicants_xlsx, name='download_applicants_xlsx'),
     path('hr-applicants/<int:job_id>/', hr_applicants, name='hr_applicants'),
     path('test-openai-api/', test_openai_api, name='test_openai_api'),
     path('job-search/', job_search, name='job_search'),

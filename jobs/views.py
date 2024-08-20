@@ -28,7 +28,8 @@ import matplotlib
 from botocore.exceptions import NoCredentialsError, ClientError
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
-
+import openpyxl
+from openpyxl.utils import get_column_letter
 # Initialize s3_client
 s3_client = boto3.client(
     's3',
@@ -192,6 +193,46 @@ def hr_applicants(request, job_id):
         applications = applications_paginator.page(applications_paginator.num_pages)
 
     return render(request, 'jobs/hr_applicants.html', {'applications': applications, 'job': job})
+
+
+@login_required
+def download_applicants_xlsx(request, job_id):
+    if request.user.user_type != 'HR':
+        return HttpResponseForbidden("You are not authorized to view this page.")
+
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+    applications = JobApplication.objects.filter(job=job).exclude(full_name__isnull=True).order_by('-applied_at')
+
+    # Create an Excel workbook and sheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Applicants for {job.title}"
+
+    # Define the headers
+    headers = ['Full Name', 'Email', 'Phone Number', 'Applied At', 'Match Score', 'CV Download Link']
+    ws.append(headers)
+
+    # Write data to the sheet
+    for application in applications:
+        ws.append([
+            application.full_name,
+            application.email,
+            application.phone,
+            application.applied_at.strftime('%Y-%m-%d %H:%M'),
+            application.match_score,
+            f"{application.resume.url}" if application.resume else 'No CV Uploaded'
+        ])
+
+    # Set the width of the columns
+    for col_num, column_title in enumerate(headers, 1):
+        column_letter = get_column_letter(col_num)
+        ws.column_dimensions[column_letter].width = 20
+
+    # Prepare the response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=applicants_{job_id}.xlsx'
+    wb.save(response)
+    return response
 
 
 def job_list(request):
