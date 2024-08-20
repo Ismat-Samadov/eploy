@@ -8,6 +8,7 @@ CareerHorizon is a Django-based job posting website where employees can apply fo
 - Employees can view and apply for jobs
 - Admin interface to manage job postings and applications
 - Secure and scalable database using PostgreSQL
+- All jobs of Azerbaijan websites and companies in one place
 
 ## Installation
 
