@@ -181,7 +181,7 @@ def hr_applicants(request, job_id):
         return HttpResponseForbidden("You are not authorized to view this page.")
 
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
-    applications = JobApplication.objects.filter(job=job).exclude(full_name__isnull=True).order_by('-applied_at')
+    applications = JobApplication.objects.filter(job=job).exclude(full_name__isnull=True).order_by('-match_score', '-applied_at')
 
     applications_page = request.GET.get('applications_page', 1)
     applications_paginator = Paginator(applications, 30)
