@@ -30,14 +30,17 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 import openpyxl
 from openpyxl.utils import get_column_letter
-# Initialize s3_client
+from langdetect import detect
+from googletrans import Translator
+
+# Initialize s3_client with Wasabi configuration
 s3_client = boto3.client(
     's3',
-    region_name='fra1',  # Replace with your region if different
-    endpoint_url='https://fra1.digitaloceanspaces.com',
-    aws_access_key_id=os.getenv('DO_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('DO_SECRET_ACCESS_KEY')
+    endpoint_url='https://s3.eu-central-2.wasabisys.com', 
+    aws_access_key_id=os.getenv('R_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('R_SECRET_ACCESS_KEY')
 )
+
 
 matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
@@ -53,7 +56,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-def upload_file_to_do_spaces(file_name, bucket_name):
+def upload_file_to_wasabi(file_name, bucket_name):
     try:
         # Check if the bucket exists
         s3_client.head_bucket(Bucket=bucket_name)
@@ -63,7 +66,7 @@ def upload_file_to_do_spaces(file_name, bucket_name):
         s3_client.upload_file(file_name, bucket_name, file_name, ExtraArgs={'ACL': 'public-read'})
         logger.debug(f"File '{file_name}' uploaded successfully.")
         # Generate the file URL
-        file_url = f"https://{bucket_name}.{DO_REGION}.digitaloceanspaces.com/{file_name}"
+        file_url = f"https://.s3.eu-central-2.wasabisys.com/{bucket_name}/resumes/{file_name}"
         logger.debug(f"File URL: {file_url}")
         return file_url
     except ClientError as e:
@@ -88,11 +91,11 @@ def apply_job(request, job_id):
             application = form.save(commit=False)
             application.job = job
 
-            # Upload the resume to DigitalOcean Spaces with public-read access
+            # Upload the resume to Wasabi with public-read access
             if 'resume' in request.FILES:
                 resume = request.FILES['resume']
                 file_name = f'resumes/{resume.name}'
-                bucket_name = 'careerhorizonresume'  # Ensure this matches your bucket name
+                bucket_name = os.getenv('R_SPACES_NAME')  
 
                 # Read the resume file before uploading
                 try:
@@ -108,7 +111,7 @@ def apply_job(request, job_id):
                     similarity_score = calculate_similarity(cv_text, job_description)
                     application.match_score = similarity_score
 
-                    # Upload the file to DigitalOcean Spaces
+                    # Upload the file to Wasabi
                     with resume.open('rb') as resume_file:
                         s3_client.upload_fileobj(
                             resume_file, 
@@ -404,7 +407,24 @@ def parse_pdf(file):
     return '\n'.join(full_text)
 
 
+
+def translate_text(text, target_lang='en'):
+    translator = Translator()
+    translation = translator.translate(text, dest=target_lang)
+    return translation.text
+
 def calculate_similarity(cv_text, job_text):
+    # Detect languages of the CV and job description
+    cv_lang = detect(cv_text)
+    job_lang = detect(job_text)
+    
+    # If the CV or job description is not in English, translate them to English
+    if cv_lang != 'en':
+        cv_text = translate_text(cv_text, target_lang='en')
+    if job_lang != 'en':
+        job_text = translate_text(job_text, target_lang='en')
+    
+    # Use the translated text for similarity calculation
     vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]

@@ -119,20 +119,18 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# DigitalOcean Spaces configuration for media storage
-AWS_ACCESS_KEY_ID = get_secret('DO_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = get_secret('DO_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = get_secret('DO_SPACES_NAME')
-AWS_S3_ENDPOINT_URL = 'https://fra1.digitaloceanspaces.com'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.fra1.digitaloceanspaces.com'
+# Wasabi configuration for media storage
+AWS_ACCESS_KEY_ID = get_secret('R_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = get_secret('R_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = get_secret('R_SPACES_NAME')
+AWS_S3_ENDPOINT_URL = 'https://s3.eu-central-2.wasabisys.com'
+AWS_S3_CUSTOM_DOMAIN = f's3.eu-central-2.wasabisys.com/{AWS_STORAGE_BUCKET_NAME}'
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
-AWS_LOCATION = 'media'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
-
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/resumes/'
 
 # Email settings
 EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
