@@ -82,6 +82,7 @@ def upload_file_to_wasabi(file_name, bucket_name):
         logger.error("Credentials not available.")
         return None
 
+
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id)
     
@@ -91,13 +92,11 @@ def apply_job(request, job_id):
             application = form.save(commit=False)
             application.job = job
 
-            # Upload the resume to Wasabi with public-read access
             if 'resume' in request.FILES:
                 resume = request.FILES['resume']
                 file_name = f'resumes/{resume.name}'
-                bucket_name = os.getenv('R_SPACES_NAME')  
+                bucket_name = os.getenv('R_SPACES_NAME')
 
-                # Read the resume file before uploading
                 try:
                     file_ext = resume.name.split('.')[-1].lower()
                     if file_ext == 'pdf':
@@ -109,9 +108,8 @@ def apply_job(request, job_id):
 
                     job_description = job.description
                     similarity_score = calculate_similarity(cv_text, job_description)
-                    application.match_score = similarity_score
+                    application.match_score = similarity_score if similarity_score is not None else 0.0
 
-                    # Upload the file to Wasabi
                     with resume.open('rb') as resume_file:
                         s3_client.upload_fileobj(
                             resume_file, 
@@ -136,6 +134,7 @@ def apply_job(request, job_id):
         form = JobApplicationForm()
     
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
+
 
 
 def redirect_to_jobs(request):
@@ -398,20 +397,34 @@ def job_search(request):
 
 
 def parse_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(file)
-    num_pages = len(pdf_reader.pages)
-    full_text = []
-    for page_num in range(num_pages):
-        page = pdf_reader.pages[page_num]
-        full_text.append(page.extract_text())
-    return '\n'.join(full_text)
-
+    try:
+        pdf_reader = PyPDF2.PdfReader(file)
+        num_pages = len(pdf_reader.pages)
+        full_text = []
+        for page_num in range(num_pages):
+            page = pdf_reader.pages[page_num]
+            text = page.extract_text()
+            if text:
+                full_text.append(text)
+            else:
+                raise ValueError(f"Unable to extract text from page {page_num + 1}")
+        return '\n'.join(full_text)
+    except PyPDF2.errors.PdfReadError as e:
+        logger.error(f"Error reading PDF file: {e}")
+        raise ValueError("The PDF file is unreadable or corrupted.")
+    except Exception as e:
+        logger.error(f"Unexpected error while parsing PDF: {e}")
+        raise ValueError("An unexpected error occurred while processing the PDF.")
 
 
 def translate_text(text, target_lang='en'):
     translator = Translator()
-    translation = translator.translate(text, dest=target_lang)
-    return translation.text
+    try:
+        translation = translator.translate(text, dest=target_lang)
+        return translation.text
+    except Exception as e:
+        logger.error(f"Translation error: {e}")
+        return None
 
 def calculate_similarity(cv_text, job_text):
     # Detect languages of the CV and job description
@@ -421,13 +434,18 @@ def calculate_similarity(cv_text, job_text):
     # If the CV or job description is not in English, translate them to English
     if cv_lang != 'en':
         cv_text = translate_text(cv_text, target_lang='en')
+        if cv_text is None:
+            return None  # Handle the case where translation fails
     if job_lang != 'en':
         job_text = translate_text(job_text, target_lang='en')
+        if job_text is None:
+            return None  # Handle the case where translation fails
     
     # Use the translated text for similarity calculation
     vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]
+
 
 
 def create_similarity_chart(score):
