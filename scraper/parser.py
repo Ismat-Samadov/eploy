@@ -481,7 +481,7 @@ class JobScraper:
         job_vacancies = []
         base_url = "https://boss.az"
         
-        for page_num in range(1, 23):  # Scrape from page 1 to 20
+        for page_num in range(1, 10):
             url = f"{base_url}/vacancies?page={page_num}"
             response = await self.fetch_url_async(url, session)
             if response:
