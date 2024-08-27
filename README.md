@@ -1,4 +1,4 @@
-# CareerHorizon
+# Eploy
 
 **CareerHorizon** is a Django-based job posting platform where HR professionals can post jobs, and candidates can view and apply for these opportunities. The platform aggregates job listings across various companies and websites in Azerbaijan, offering a centralized location for job seekers.
 
@@ -23,7 +23,7 @@
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/Ismat-Samadov/CareerHorizon.git
+    git clone https://github.com/Ismat-Samadov/eploy.git
     cd CareerHorizon
     ```
 
