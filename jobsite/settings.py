@@ -25,12 +25,12 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '*.onrender.com',
-    'careerhorizon.llc',
-    'www.careerhorizon.llc',
+    'eploy.io',
+    'www.eploy.io',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://www.careerhorizon.llc',
+    'https://www.eploy.io',
 ]
 
 # Application definition
