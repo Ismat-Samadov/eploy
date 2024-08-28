@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import CustomUserCreationForm, UserUpdateForm, CustomPasswordChangeForm
+from .forms import CustomUserCreationForm, UserUpdateForm, CustomPasswordChangeForm, UserProfileForm
 from jobs.models import JobApplication
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import update_session_auth_hash
 import logging
+
 # Initialize logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -33,30 +34,35 @@ def user_profile(request):
 
 @login_required
 def edit_profile(request):
+    user = request.user
+    profile_form = UserProfileForm(instance=user)
+    password_form = CustomPasswordChangeForm(user)
+
     if request.method == 'POST':
-        if 'update_profile' in request.POST:
-            user_form = UserUpdateForm(request.POST, instance=request.user)
-            if user_form.is_valid():
-                user_form.save()
+        if 'update_profile' in request.POST:  # Check which form was submitted
+            profile_form = UserProfileForm(request.POST, instance=user)
+            if profile_form.is_valid():
+                profile_form.save()
                 messages.success(request, 'Your profile has been updated!')
                 return redirect('edit_profile')
+            else:
+                messages.error(request, 'Please correct the errors below.')
+
         elif 'change_password' in request.POST:
-            password_form = CustomPasswordChangeForm(request.user, request.POST)
+            password_form = CustomPasswordChangeForm(user, request.POST)
             if password_form.is_valid():
                 user = password_form.save()
-                update_session_auth_hash(request, user)  # Important!
-                messages.success(request, 'Your password has been updated!')
+                update_session_auth_hash(request, user)  # Important for not logging the user out
+                messages.success(request, 'Your password has been successfully updated!')
                 return redirect('edit_profile')
-    else:
-        user_form = UserUpdateForm(instance=request.user)
-        password_form = CustomPasswordChangeForm(request.user)
+            else:
+                messages.error(request, 'Please correct the errors below.')
 
-    context = {
-        'user_form': user_form,
-        'password_form': password_form
-    }
+    return render(request, 'users/edit_profile.html', {
+        'profile_form': profile_form,
+        'password_form': password_form,
+    })
 
-    return render(request, 'users/edit_profile.html', context)
 
 
 def custom_login(request):
