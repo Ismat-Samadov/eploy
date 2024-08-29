@@ -75,8 +75,9 @@ class JobScraper:
         try:
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
+                    # Fetch existing jobs (if necessary for other logic)
                     cur.execute("""
-                        SELECT company, title
+                        SELECT company, title, apply_link
                         FROM jobs_jobpost
                         WHERE posted_at >= NOW() - INTERVAL '30 days'
                     """)
@@ -103,14 +104,13 @@ class JobScraper:
                             row.get('apply_link', '')[:1000]
                         )
                         for _, row in df.iterrows()
-                        if (row.get('company', ''), row.get('vacancy', '')) not in existing_jobs_set
+                        if (row.get('company', ''), row.get('vacancy', ''), row.get('apply_link', '')) not in existing_jobs_set
                     ]
 
                     if values:
                         insert_query = sql.SQL("""
                             INSERT INTO jobs_jobpost (title, description, company, location, function, schedule, deadline, responsibilities, requirements, posted_by_id, is_scraped, is_premium, premium_days, priority_level, posted_at, deleted, apply_link)
                             VALUES %s
-                            ON CONFLICT (company, title) DO NOTHING
                         """)
                         extras.execute_values(cur, insert_query, values, page_size=batch_size)
                         conn.commit()
