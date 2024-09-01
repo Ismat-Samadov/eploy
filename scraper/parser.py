@@ -2258,6 +2258,17 @@ class JobScraper:
  
     async def parse_jobsearch_az(self, session):
         """Fetch job data from Jobsearch.az and return a DataFrame."""
+        # Initial request to obtain cookies
+        initial_url = "https://www.jobsearch.az"
+        
+        # Perform an initial request to the homepage to set up cookies in the session
+        async with session.get(initial_url) as initial_response:
+            if initial_response.status != 200:
+                logger.error(f"Failed to obtain initial cookies: {initial_response.status}")
+                return pd.DataFrame(columns=['vacancy', 'company', 'apply_link'])
+            
+            # Session cookies are now set and can be used in subsequent requests
+
         # Base URL for the API request
         base_url = "https://www.jobsearch.az/api-az/vacancies-az"
         params = {
@@ -2280,7 +2291,6 @@ class JobScraper:
             'accept': 'application/json, text/plain, */*',
             'accept-encoding': 'gzip, deflate, br, zstd',
             'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,ru;q=0.7,az;q=0.6',
-            'cookie': 'user=%7B%22error%22%3Afalse%2C%22favorites_count%22%3A0%7D; _gcl_au=1.1.1404763121.1725185599; _ga=GA1.2.1933170633.1725185600; _gid=GA1.2.480292949.1725185600; dark_mode=true; _ga_87BPSWHSPN=GS1.2.1725185600.1.1.1725185628.0.0.0; JOB_SEARCH=eyJpdiI6ImhkeElObGhhVDJFR0dWSFNFQVZVakE9PSIsInZhbHVlIjoiTkFsOWlYc0o0SUQwQVlmMHdEUkcvT3BDNTVGQmpmaW9kZFBTS0NVMmF2dms3U2xma3NVS1V6YW1ldWdUVmIyVy8vWGdqVXBzZGZObjZJVVJxbVNrK0Y1L2NaVHo0enNRaktXNmNCZzFKaHozM2d5WDQ3dnN2cHh0MmQ1NHJuMnIiLCJtYWMiOiI4ZTZjMDNkNGE5MGIyZDI5OGY2YWYxNTBhZjVhMzg4OWRjZmY5NGYxYTFiNzllMzM0MmE1NDlhZjJiNTcxYjE5IiwidGFnIjoiIn0%3D',
             'dnt': '1',
             'priority': 'u=1, i',
             'referer': 'https://www.jobsearch.az/vacancies',
