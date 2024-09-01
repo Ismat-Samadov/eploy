@@ -175,6 +175,7 @@ class JobScraper:
                 self.scrape_airswift(session),
                 self.scrape_orion(session),
                 self.scrape_hrcbaku(session),
+                self.parse_jobsearch_az(session),
             ]
 
             all_jobs = await asyncio.gather(*parsers)
@@ -2254,6 +2255,81 @@ class JobScraper:
                         })
             
             return pd.DataFrame(jobs)
+ 
+    async def parse_jobsearch_az(self, session):
+        """Fetch job data from Jobsearch.az and return a DataFrame."""
+        # Base URL for the API request
+        base_url = "https://www.jobsearch.az/api-az/vacancies-az"
+        params = {
+            'hl': 'az',
+            'q': '',
+            'posted_date': '',
+            'seniority': '',
+            'categories': '',
+            'industries': '',
+            'ads': '',
+            'location': '',
+            'job_type': '',
+            'salary': '',
+            'order_by': ''
+        }
+
+        # Headers for the request
+        headers = {
+            'authority': 'www.jobsearch.az',
+            'accept': 'application/json, text/plain, */*',
+            'accept-encoding': 'gzip, deflate, br, zstd',
+            'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,ru;q=0.7,az;q=0.6',
+            'cookie': 'user=%7B%22error%22%3Afalse%2C%22favorites_count%22%3A0%7D; _gcl_au=1.1.1404763121.1725185599; _ga=GA1.2.1933170633.1725185600; _gid=GA1.2.480292949.1725185600; dark_mode=true; _ga_87BPSWHSPN=GS1.2.1725185600.1.1.1725185628.0.0.0; JOB_SEARCH=eyJpdiI6ImhkeElObGhhVDJFR0dWSFNFQVZVakE9PSIsInZhbHVlIjoiTkFsOWlYc0o0SUQwQVlmMHdEUkcvT3BDNTVGQmpmaW9kZFBTS0NVMmF2dms3U2xma3NVS1V6YW1ldWdUVmIyVy8vWGdqVXBzZGZObjZJVVJxbVNrK0Y1L2NaVHo0enNRaktXNmNCZzFKaHozM2d5WDQ3dnN2cHh0MmQ1NHJuMnIiLCJtYWMiOiI4ZTZjMDNkNGE5MGIyZDI5OGY2YWYxNTBhZjVhMzg4OWRjZmY5NGYxYTFiNzllMzM0MmE1NDlhZjJiNTcxYjE5IiwidGFnIjoiIn0%3D',
+            'dnt': '1',
+            'priority': 'u=1, i',
+            'referer': 'https://www.jobsearch.az/vacancies',
+            'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest'
+        }
+
+        # List to hold job data
+        job_listings = []
+
+        # Initialize page counter
+        page_count = 0
+
+        # Loop to fetch and process up to 5 pages
+        while page_count < 5:
+            async with session.get(base_url, params=params, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+
+                    # Process each job in the current page
+                    for job in data.get('items', []):
+                        job_listings.append({
+                            "vacancy": job['title'],
+                            "company": job['company']['title'],
+                            "apply_link": f"https://www.jobsearch.az/vacancies/{job['slug']}"
+                        })
+
+                    # Check if there is a next page URL
+                    if 'next' in data:
+                        next_page_url = data['next']
+                        base_url = next_page_url
+                        params = {}  # Reset params since the next page URL includes all parameters
+                        page_count += 1  # Increment page counter
+                    else:
+                        break  # No more pages, exit the loop
+                else:
+                    logger.error(f"Failed to retrieve data: {response.status}")
+                    break
+
+        # Convert the list of jobs to a DataFrame
+        df = pd.DataFrame(job_listings, columns=['vacancy', 'company', 'apply_link'])
+        return df
+
 
 def main():
     job_scraper = JobScraper()
