@@ -2,8 +2,8 @@ name: Scheduled Scraper Job
 
 on:
   schedule:
-    - cron: '0 */5 * * *'
-    # - cron: '*/1 * * * *' # Runs every minute for testing purposes
+    # - cron: '0 */5 * * *'
+    - cron: '*/1 * * * *' # Runs every minute for testing purposes
 
 jobs:
   scrape:
