@@ -18,6 +18,7 @@ beautifulsoup4
 bleach
 blinker
 bs4
+Brotli
 cachetools
 certifi
 cffi
