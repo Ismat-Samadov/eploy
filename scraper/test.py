@@ -14,6 +14,7 @@ import aiohttp
 import asyncio
 import re
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,40 +48,30 @@ class JobScraper:
         db_url = f"postgresql+psycopg2://{self.db_params['user']}:{self.db_params['password']}@{self.db_params['host']}:{self.db_params['port']}/{self.db_params['dbname']}"
         return create_engine(db_url)
 
-    async def fetch_url_async(self, url, session, params=None, headers=None, verify_ssl=True, retries=3):
-        """ Asynchronously fetch the content of a URL with optional headers. Includes retry logic. """
-        for attempt in range(retries):
-            try:
-                async with session.get(url, params=params, headers=headers, ssl=verify_ssl) as response:
-                    response.raise_for_status()
-                    content_type = response.headers.get('Content-Type', '').lower()
+    async def fetch_url_async(self, url, session, params=None, headers=None, verify_ssl=True):
+        """ Asynchronously fetch the content of a URL with optional headers. """
+        try:
+            async with session.get(url, params=params, headers=headers, ssl=verify_ssl) as response:
+                response.raise_for_status()
+                content_type = response.headers.get('Content-Type', '').lower()
 
-                    if 'application/json' in content_type:
-                        return await response.json()
-                    elif 'text' in content_type or 'html' in content_type:
-                        try:
-                            return await response.text(encoding='utf-8')
-                        except UnicodeDecodeError:
-                            return await response.text(encoding='latin-1')
-                    else:
-                        logger.error(f"Unexpected content type: {content_type}")
-                        return None
-
-            except aiohttp.ClientError as e:
-                logger.error(f"Request to {url} failed: {e}")
-                if attempt < retries - 1:
-                    logger.info(f"Retrying... ({attempt + 1}/{retries})")
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                if 'application/json' in content_type:
+                    return await response.json()
+                elif 'text' in content_type or 'html' in content_type:
+                    try:
+                        return await response.text(encoding='utf-8')
+                    except UnicodeDecodeError:
+                        return await response.text(encoding='latin-1')
                 else:
-                    logger.error(f"Failed to fetch {url} after {retries} attempts.")
+                    logger.error(f"Unexpected content type: {content_type}")
                     return None
+
+        except aiohttp.ClientError as e:
+            logger.error(f"Request to {url} failed: {e}")
+            return None
 
     def save_to_db(self, df, batch_size=100):
         """ Save the scraped data into the database in batches. """
-        if df.empty:
-            logger.warning("No data to save to the database.")
-            return
-
         try:
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
@@ -129,7 +120,6 @@ class JobScraper:
 
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
-
 
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
