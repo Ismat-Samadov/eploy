@@ -88,7 +88,7 @@ class JobScraper:
                     cur.execute("""
                         SELECT company, title, apply_link
                         FROM jobs_jobpost
-                        WHERE posted_at >= NOW() - INTERVAL '30 days'
+                        WHERE posted_at >= NOW() - INTERVAL '15 days'
                     """)
                     existing_jobs_set = set(cur.fetchall())
 
