@@ -136,7 +136,6 @@ def apply_job(request, job_id):
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
 
 
-
 def redirect_to_jobs(request):
     return redirect('job_list')
 
@@ -174,7 +173,6 @@ def hr_dashboard(request):
         jobs = jobs_paginator.page(jobs_paginator.num_pages)
 
     return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'search_query': search_query})
-
 
 
 @login_required
@@ -364,7 +362,7 @@ def job_search(request):
 
     if query:
         now = timezone.now()
-        non_scraped_time_threshold = now - timedelta(days=10)
+        non_scraped_time_threshold = now - timedelta(days=5)
         scraped_time_threshold = now - timedelta(hours=5)
 
         non_scraped_jobs = JobPost.objects.filter(
