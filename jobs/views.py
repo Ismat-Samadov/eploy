@@ -365,6 +365,7 @@ def job_search(request):
         non_scraped_time_threshold = now - timedelta(days=5)
         scraped_time_threshold = now - timedelta(hours=5)
 
+        # Filter non-scraped jobs
         non_scraped_jobs = JobPost.objects.filter(
             title__icontains=query,
             deleted=False,
@@ -372,6 +373,7 @@ def job_search(request):
             posted_at__gte=non_scraped_time_threshold
         ).order_by('-posted_at')
 
+        # Filter scraped jobs
         scraped_jobs = JobPost.objects.filter(
             title__icontains=query,
             deleted=False,
@@ -379,19 +381,17 @@ def job_search(request):
             posted_at__gte=scraped_time_threshold
         ).order_by('-posted_at')
 
+        # Combine the querysets and include all jobs (no uniqueness check)
         jobs = list(non_scraped_jobs) + list(scraped_jobs)
-        unique_jobs = []
-        seen_titles = set()
-        for job in jobs:
-            if (job.title, job.company) not in seen_titles:
-                unique_jobs.append({'id': job.id, 'title': job.title, 'company': job.company})
-                seen_titles.add((job.title, job.company))
+        job_results = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
 
-        unique_jobs = unique_jobs[:20]
+        # Limit the result to 20 jobs
+        job_results = job_results[:20]
     else:
-        unique_jobs = []
+        job_results = []
 
-    return JsonResponse(unique_jobs, safe=False)
+    return JsonResponse(job_results, safe=False)
+
 
 
 def parse_pdf(file):

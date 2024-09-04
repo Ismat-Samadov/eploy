@@ -88,9 +88,12 @@ class JobScraper:
                     cur.execute("""
                         SELECT company, title, apply_link
                         FROM jobs_jobpost
-                        WHERE posted_at >= NOW() - INTERVAL '5 days'
+                        WHERE posted_at >= NOW() - INTERVAL '3 days'
                     """)
                     existing_jobs_set = set(cur.fetchall())
+
+                    # Add better logging for the data being inserted
+                    logger.info(f"Existing jobs in DB (3 days): {len(existing_jobs_set)}")
 
                     values = [
                         (
@@ -116,6 +119,9 @@ class JobScraper:
                         if (row.get('company', ''), row.get('vacancy', ''), row.get('apply_link', '')) not in existing_jobs_set
                     ]
 
+                    # Log information about which jobs are going to be inserted
+                    logger.info(f"New jobs to insert: {len(values)}")
+
                     if values:
                         insert_query = sql.SQL("""
                             INSERT INTO jobs_jobpost (title, description, company, location, function, schedule, deadline, responsibilities, requirements, posted_by_id, is_scraped, is_premium, premium_days, priority_level, posted_at, deleted, apply_link)
@@ -129,7 +135,6 @@ class JobScraper:
 
         except (Exception, psycopg2.DatabaseError) as error:
             logger.error(f"Error saving data to the database: {error}")
-
 
     async def get_data_async(self):
         async with aiohttp.ClientSession() as session:
