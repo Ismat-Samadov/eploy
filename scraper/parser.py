@@ -84,17 +84,7 @@ class JobScraper:
         try:
             with psycopg2.connect(**self.db_params) as conn:
                 with conn.cursor() as cur:
-                    # Fetch existing jobs (if necessary for other logic)
-                    cur.execute("""
-                        SELECT company, title, apply_link
-                        FROM jobs_jobpost
-                        WHERE posted_at >= NOW() - INTERVAL '3 days'
-                    """)
-                    existing_jobs_set = set(cur.fetchall())
-
-                    # Add better logging for the data being inserted
-                    logger.info(f"Existing jobs in DB (3 days): {len(existing_jobs_set)}")
-
+                    # No more checking for existing jobs, insert all scraped jobs
                     values = [
                         (
                             row.get('vacancy', '')[:500],
@@ -116,7 +106,6 @@ class JobScraper:
                             row.get('apply_link', '')[:1000]
                         )
                         for _, row in df.iterrows()
-                        if (row.get('company', ''), row.get('vacancy', ''), row.get('apply_link', '')) not in existing_jobs_set
                     ]
 
                     # Log information about which jobs are going to be inserted
