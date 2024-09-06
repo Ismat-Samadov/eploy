@@ -180,6 +180,7 @@ class JobScraper:
                 self.scrape_orion(session),
                 self.scrape_hrcbaku(session),
                 self.parse_jobsearch_az(session),
+                self.scrape_canscreen(session),
             ]
 
             all_jobs = await asyncio.gather(*parsers)
@@ -2344,7 +2345,50 @@ class JobScraper:
         df = pd.DataFrame(job_listings, columns=['vacancy', 'company', 'apply_link'])
         return df
 
+    async def scrape_canscreen(self, session):
+        """
+        Scrape vacancies from the CanScreen API and return the data as a DataFrame
+        with columns 'company', 'vacancy', and 'apply_link'.
+        
+        Args:
+            session (aiohttp.ClientSession): The aiohttp session object for making HTTP requests.
+        
+        Returns:
+            pd.DataFrame: A DataFrame containing the scraped vacancy data with specific columns.
+        """
+        api_url = "https://canscreen.io/_next/data/FyeSs_9TwxxZfkqJJM12V/en/vacancies.json"
+        
+        try:
+            async with session.get(api_url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    vacancies = data['pageProps']['vacancies']
 
+                    jobs = []
+
+                    for vacancy in vacancies:
+                        title = vacancy['title']
+                        company = vacancy['company']
+                        apply_link = f"https://canscreen.io/vacancies/{vacancy['id']}/"
+
+                        jobs.append({
+                            'company': company,
+                            'vacancy': title,
+                            'apply_link': apply_link
+                        })
+
+                    df = pd.DataFrame(jobs)
+                    return df
+                else:
+                    logger.error(f"Failed to fetch data from the API. Status code: {response.status}")
+                    return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])  # Return empty DataFrame on failure
+
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+            return pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])  # Return empty DataFrame on exception
+
+
+    
 def main():
     job_scraper = JobScraper()
     asyncio.run(job_scraper.get_data_async())
