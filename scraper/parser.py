@@ -1403,7 +1403,7 @@ class JobScraper:
             df = pd.DataFrame({
                 'company': 'CBAR',
                 'vacancy': all_job_titles,
-                'apply_link': all_job_links
+                'apply_link': 'https://www.cbar.az/hr/f?p=100:106'
             })
             logger.info("Scraping completed for CBAR")
             return df if not df.empty else pd.DataFrame(columns=['company', 'vacancy', 'apply_link'])
