@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Helper function for loading environment variables
 def get_secret(secret_name):
-    return os.environ.get(secret_name) or config(secret_name)
+    return os.getenv(secret_name)
 
 # Payment settings (using environment variables)
 PUBLIC_KEY = get_secret('PUBLIC_KEY')  # Epoint public key from .env
