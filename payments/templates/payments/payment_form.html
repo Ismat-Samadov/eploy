@@ -1,0 +1,11 @@
+<!-- payments/templates/payments/payment_form.html -->
+<form method="POST" action="/create-payment/">
+  {% csrf_token %}
+  <label for="amount">Select Package:</label>
+  <select name="amount" id="amount" required>
+    <option value="20.50">Basic Package - 20.50 AZN</option>
+    <option value="50.00">Standard Package - 50.00 AZN</option>
+    <option value="100.00">Premium Package - 100.00 AZN</option>
+  </select>
+  <button type="submit">Proceed to Payment</button>
+</form>

@@ -13,6 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 def get_secret(secret_name):
     return os.environ.get(secret_name) or config(secret_name)
 
+# Payment settings (using environment variables)
+PUBLIC_KEY = get_secret('PUBLIC_KEY')  # Epoint public key from .env
+PRIVATE_KEY = get_secret('PRIVATE_KEY')  # Epoint private key from .env
+
 # Security settings
 SECRET_KEY = get_secret('SECRET_KEY')
 DEBUG = get_secret('DEBUG') == 'True'
@@ -44,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'jobs',
     'users',
+    'payments',
     'storages',
     'whitenoise.runserver_nostatic',
 ]

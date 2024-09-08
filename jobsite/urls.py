@@ -20,6 +20,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('jobs/', include('jobs.urls')),
     path('users/', include('users.urls')),
+    path('payments/', include('payments.urls')),
     path('privacy-policy/', TemplateView.as_view(template_name='jobs/privacy_policy.html'), name='privacy_policy'),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
