@@ -234,6 +234,51 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
+# def job_list(request):
+#     job_title = request.GET.get('job_title', '')
+#     company = request.GET.get('company', '')
+#     query = Q(deleted=False)
+
+#     if job_title:
+#         query &= Q(title__icontains=job_title)
+#     if company:
+#         query &= Q(company__icontains=company)
+
+#     now = timezone.now()
+#     time_threshold = now - timedelta(days=30)
+
+#     non_scraped_jobs = JobPost.objects.filter(
+#         query,
+#         is_scraped=False,
+#         posted_at__gte=time_threshold
+#     ).order_by('-posted_at')
+
+#     scraped_jobs = JobPost.objects.filter(
+#         query,
+#         is_scraped=True,
+#         posted_at__gte=time_threshold
+#     ).order_by('-posted_at')
+#     # Combine the querysets and ensure uniqueness
+#     jobs = list(non_scraped_jobs) + list(scraped_jobs)
+#     unique_jobs = []
+#     seen_titles = set()
+#     for job in jobs:
+#         if job.title not in seen_titles:
+#             unique_jobs.append(job)
+#             seen_titles.add(job.title)
+
+#     paginator = Paginator(unique_jobs, 10)
+#     page = request.GET.get('page', 1)
+
+#     try:
+#         jobs_page = paginator.page(page)
+#     except PageNotAnInteger:
+#         jobs_page = paginator.page(1)
+#     except EmptyPage:
+#         jobs_page = paginator.page(paginator.num_pages)
+
+#     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
+
 
 def job_list(request):
     job_title = request.GET.get('job_title', '')
@@ -248,27 +293,25 @@ def job_list(request):
     now = timezone.now()
     time_threshold = now - timedelta(days=30)
 
+    # Fetch non-scraped jobs and use .distinct() while ensuring the correct order
     non_scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=False,
         posted_at__gte=time_threshold
-    ).order_by('-posted_at')
+    ).distinct('title').order_by('title', '-posted_at')
 
+    # Fetch scraped jobs and use .distinct() while ensuring the correct order
     scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=True,
         posted_at__gte=time_threshold
-    ).order_by('-posted_at')
-    # Combine the querysets and ensure uniqueness
-    jobs = list(non_scraped_jobs) + list(scraped_jobs)
-    unique_jobs = []
-    seen_titles = set()
-    for job in jobs:
-        if job.title not in seen_titles:
-            unique_jobs.append(job)
-            seen_titles.add(job.title)
+    ).distinct('title').order_by('title', '-posted_at')
 
-    paginator = Paginator(unique_jobs, 50)
+    # Combine both querysets
+    jobs = list(non_scraped_jobs) + list(scraped_jobs)
+
+    # Pagination for the job listings
+    paginator = Paginator(jobs, 10)  # Show 10 jobs per page
     page = request.GET.get('page', 1)
 
     try:
@@ -278,8 +321,8 @@ def job_list(request):
     except EmptyPage:
         jobs_page = paginator.page(paginator.num_pages)
 
+    # Render the page with the jobs
     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
-
 
 @login_required
 def post_job(request):
