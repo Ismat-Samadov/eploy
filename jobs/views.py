@@ -234,95 +234,74 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
-# def job_list(request):
-#     job_title = request.GET.get('job_title', '')
-#     company = request.GET.get('company', '')
-#     query = Q(deleted=False)
-
-#     if job_title:
-#         query &= Q(title__icontains=job_title)
-#     if company:
-#         query &= Q(company__icontains=company)
-
-#     now = timezone.now()
-#     time_threshold = now - timedelta(days=30)
-
-#     non_scraped_jobs = JobPost.objects.filter(
-#         query,
-#         is_scraped=False,
-#         posted_at__gte=time_threshold
-#     ).order_by('-posted_at')
-
-#     scraped_jobs = JobPost.objects.filter(
-#         query,
-#         is_scraped=True,
-#         posted_at__gte=time_threshold
-#     ).order_by('-posted_at')
-#     # Combine the querysets and ensure uniqueness
-#     jobs = list(non_scraped_jobs) + list(scraped_jobs)
-#     unique_jobs = []
-#     seen_titles = set()
-#     for job in jobs:
-#         if job.title not in seen_titles:
-#             unique_jobs.append(job)
-#             seen_titles.add(job.title)
-
-#     paginator = Paginator(unique_jobs, 10)
-#     page = request.GET.get('page', 1)
-
-#     try:
-#         jobs_page = paginator.page(page)
-#     except PageNotAnInteger:
-#         jobs_page = paginator.page(1)
-#     except EmptyPage:
-#         jobs_page = paginator.page(paginator.num_pages)
-
-#     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
-
-
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
     query = Q(deleted=False)
 
+    # Add filters for job title and company with case-insensitive search using icontains
     if job_title:
-        query &= Q(title__icontains=job_title)
+        query &= Q(title__icontains=job_title)  # Case-insensitive search for job title
     if company:
-        query &= Q(company__icontains=company)
+        query &= Q(company__icontains=company)  # Case-insensitive search for company
 
     now = timezone.now()
-    time_threshold = now - timedelta(days=30)
 
-    # Fetch non-scraped jobs and use .distinct() while ensuring the correct order
+    # Define time thresholds for scraped and non-scraped jobs
+    scraped_threshold = now - timedelta(days=10)
+    non_scraped_threshold = now - timedelta(days=15)
+
+    # Retrieve and paginate non-scraped jobs first
     non_scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=False,
-        posted_at__gte=time_threshold
-    ).distinct('title').order_by('title', '-posted_at')
+        posted_at__gte=non_scraped_threshold
+    ).order_by('-posted_at')
 
-    # Fetch scraped jobs and use .distinct() while ensuring the correct order
+    paginator_non_scraped = Paginator(non_scraped_jobs, 5)  # Paginate by 5
+    page_non_scraped = request.GET.get('page_non_scraped', 1)
+
+    try:
+        non_scraped_page = paginator_non_scraped.page(page_non_scraped)
+    except PageNotAnInteger:
+        non_scraped_page = paginator_non_scraped.page(1)
+    except EmptyPage:
+        non_scraped_page = paginator_non_scraped.page(paginator_non_scraped.num_pages)
+
+    # Retrieve and paginate scraped jobs
     scraped_jobs = JobPost.objects.filter(
         query,
         is_scraped=True,
-        posted_at__gte=time_threshold
-    ).distinct('title').order_by('title', '-posted_at')
+        posted_at__gte=scraped_threshold
+    ).order_by('-posted_at')
 
-    # Combine both querysets
-    jobs = list(non_scraped_jobs) + list(scraped_jobs)
+    paginator_scraped = Paginator(scraped_jobs, 5)  # Paginate by 5
+    page_scraped = request.GET.get('page_scraped', 1)
 
-    # Pagination for the job listings
-    paginator = Paginator(jobs, 10)  # Show 10 jobs per page
+    try:
+        scraped_page = paginator_scraped.page(page_scraped)
+    except PageNotAnInteger:
+        scraped_page = paginator_scraped.page(1)
+    except EmptyPage:
+        scraped_page = paginator_scraped.page(paginator_scraped.num_pages)
+
+    # Combine the two paginated querysets
+    jobs = list(non_scraped_page) + list(scraped_page)
+
+    # Final pagination for the combined result
+    final_paginator = Paginator(jobs, 10)  # Show 10 jobs per page
     page = request.GET.get('page', 1)
 
     try:
-        jobs_page = paginator.page(page)
+        jobs_page = final_paginator.page(page)
     except PageNotAnInteger:
-        jobs_page = paginator.page(1)
+        jobs_page = final_paginator.page(1)
     except EmptyPage:
-        jobs_page = paginator.page(paginator.num_pages)
+        jobs_page = final_paginator.page(final_paginator.num_pages)
 
     # Render the page with the jobs
     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
+
 
 @login_required
 def post_job(request):
@@ -401,24 +380,24 @@ def test_openai_api(request):
 
 @login_required
 def job_search(request):
-    query = request.GET.get('query', '').lower()
+    query = request.GET.get('query', '').lower()  # Convert query to lowercase for consistency
 
     if query:
         now = timezone.now()
         non_scraped_time_threshold = now - timedelta(days=5)
         scraped_time_threshold = now - timedelta(hours=5)
 
-        # Filter non-scraped jobs
+        # Filter non-scraped jobs (case-insensitive search using icontains)
         non_scraped_jobs = JobPost.objects.filter(
-            title__icontains=query,
+            title__icontains=query,  # Use icontains for case-insensitive search
             deleted=False,
             is_scraped=False,
             posted_at__gte=non_scraped_time_threshold
         ).order_by('-posted_at')
 
-        # Filter scraped jobs
+        # Filter scraped jobs (case-insensitive search using icontains)
         scraped_jobs = JobPost.objects.filter(
-            title__icontains=query,
+            title__icontains=query,  # Use icontains for case-insensitive search
             deleted=False,
             is_scraped=True,
             posted_at__gte=scraped_time_threshold
@@ -434,7 +413,6 @@ def job_search(request):
         job_results = []
 
     return JsonResponse(job_results, safe=False)
-
 
 
 def parse_pdf(file):
