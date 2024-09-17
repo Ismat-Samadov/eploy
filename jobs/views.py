@@ -94,7 +94,7 @@ def job_list(request):
     combined_jobs = list(non_scraped_jobs) + list(scraped_jobs)
 
     # Use a dictionary to remove duplicates based on (title, company, apply_link)
-    unique_jobs = {(job.title, job.company, job.apply_link): job for job in combined_jobs}.values()
+    unique_jobs = {(job.title.lower(), job.company.lower(), job.apply_link): job for job in combined_jobs}.values()
 
     # Final pagination for the combined unique result
     final_paginator = Paginator(list(unique_jobs), 10)  # Show 10 jobs per page
@@ -109,6 +109,7 @@ def job_list(request):
 
     # Render the page with the jobs
     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
+
 
 def upload_file_to_wasabi(file_name, bucket_name):
     try:
