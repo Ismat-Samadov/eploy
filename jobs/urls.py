@@ -9,7 +9,7 @@ from .views import (
     edit_job,
     delete_job,
     test_openai_api,
-    job_search,
+    # job_search,
     search_jobs_for_cv,
     parse_cv_page,
     about,
@@ -34,7 +34,7 @@ urlpatterns = [
     path('download_applicants/<int:job_id>/', views.download_applicants_xlsx, name='download_applicants_xlsx'),
     path('hr-applicants/<int:job_id>/', hr_applicants, name='hr_applicants'),
     path('test-openai-api/', test_openai_api, name='test_openai_api'),
-    path('job-search/', job_search, name='job_search'),
+    # path('job-search/', job_search, name='job_search'),
     path('search-jobs-for-cv/', search_jobs_for_cv, name='search_jobs_for_cv'),
     path('parse-cv/', parse_cv_page, name='parse_cv_page'),
 ]
