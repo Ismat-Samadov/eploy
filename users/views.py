@@ -63,8 +63,6 @@ def edit_profile(request):
         'password_form': password_form,
     })
 
-
-
 def custom_login(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -84,7 +82,6 @@ def custom_login(request):
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
-
 
 def custom_logout(request):
     logout(request)
