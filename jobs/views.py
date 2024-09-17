@@ -344,21 +344,21 @@ def delete_job(request, job_id):
     return render(request, 'jobs/confirm_delete.html', {'job': job})
 
 
-@csrf_exempt
-def test_openai_api(request):
-    openai.api_key = settings.OPENAI_API_KEY
+# @csrf_exempt
+# def test_openai_api(request):
+#     openai.api_key = settings.OPENAI_API_KEY
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Say this is a test"}
-            ]
-        )
-        return JsonResponse({'response': response['choices'][0]['message']['content']})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     try:
+#         response = openai.ChatCompletion.create(
+#             model="gpt-3.5-turbo",
+#             messages=[
+#                 {"role": "system", "content": "You are a helpful assistant."},
+#                 {"role": "user", "content": "Say this is a test"}
+#             ]
+#         )
+#         return JsonResponse({'response': response['choices'][0]['message']['content']})
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
 
 
 # @login_required
