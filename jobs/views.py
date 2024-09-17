@@ -22,7 +22,6 @@ import io
 import base64
 import numpy as np
 from django.views.generic import DetailView
-# from users.models import UserProfile, WorkExperience, Education, Project, Skill, Language, Certification
 from .utils import calculate_similarity, get_openai_analysis
 import matplotlib
 from botocore.exceptions import NoCredentialsError, ClientError
@@ -56,6 +55,61 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
+
+
+# candidate views
+
+def job_list(request):
+    job_title = request.GET.get('job_title', '')
+    company = request.GET.get('company', '')
+    query = Q(deleted=False)
+
+    # Add filters for job title and company with case-insensitive search using icontains
+    if job_title:
+        query &= Q(title__icontains=job_title)  # Case-insensitive search for job title
+    if company:
+        query &= Q(company__icontains=company)  # Case-insensitive search for company
+
+    now = timezone.now()
+
+    # Define time thresholds for scraped and non-scraped jobs
+    scraped_threshold = now - timedelta(days=10)
+    non_scraped_threshold = now - timedelta(days=15)
+
+    # Retrieve non-scraped jobs
+    non_scraped_jobs = JobPost.objects.filter(
+        query,
+        is_scraped=False,
+        posted_at__gte=non_scraped_threshold
+    ).order_by('-posted_at')
+
+    # Retrieve scraped jobs
+    scraped_jobs = JobPost.objects.filter(
+        query,
+        is_scraped=True,
+        posted_at__gte=scraped_threshold
+    ).order_by('-posted_at')
+
+    # Combine non-scraped and scraped jobs while ensuring no duplicates
+    combined_jobs = list(non_scraped_jobs) + list(scraped_jobs)
+
+    # Use a dictionary to remove duplicates based on (title, company, apply_link)
+    unique_jobs = {(job.title, job.company, job.apply_link): job for job in combined_jobs}.values()
+
+    # Final pagination for the combined unique result
+    final_paginator = Paginator(list(unique_jobs), 10)  # Show 10 jobs per page
+    page = request.GET.get('page', 1)
+
+    try:
+        jobs_page = final_paginator.page(page)
+    except PageNotAnInteger:
+        jobs_page = final_paginator.page(1)
+    except EmptyPage:
+        jobs_page = final_paginator.page(final_paginator.num_pages)
+
+    # Render the page with the jobs
+    return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
+
 def upload_file_to_wasabi(file_name, bucket_name):
     try:
         # Check if the bucket exists
@@ -81,7 +135,6 @@ def upload_file_to_wasabi(file_name, bucket_name):
     except NoCredentialsError:
         logger.error("Credentials not available.")
         return None
-
 
 def apply_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id)
@@ -136,19 +189,35 @@ def apply_job(request, job_id):
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
 
 
-def redirect_to_jobs(request):
-    return redirect('job_list')
 
 
-class JobDetailView(DetailView):
-    model = JobPost
-    template_name = 'jobs/job_detail.html'
-    context_object_name = 'job'
 
-    def get_object(self):
-        id_ = self.kwargs.get("id")
-        return get_object_or_404(JobPost, id=id_)
 
+
+
+
+
+# hr views
+@login_required
+def edit_job(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
+    if request.method == 'POST':
+        form = JobPostForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            return redirect('job_list')
+    else:
+        form = JobPostForm(instance=job)
+    return render(request, 'jobs/edit_job.html', {'form': form, 'job': job})
+
+@login_required
+def delete_job(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+    if request.method == 'POST':
+        job.deleted = True
+        job.save()
+        return redirect('job_list')
+    return render(request, 'jobs/confirm_delete.html', {'job': job})
 
 @login_required
 def hr_dashboard(request):
@@ -174,7 +243,6 @@ def hr_dashboard(request):
 
     return render(request, 'jobs/hr_dashboard.html', {'jobs': jobs, 'search_query': search_query})
 
-
 @login_required
 def hr_applicants(request, job_id):
     if request.user.user_type != 'HR':
@@ -193,7 +261,6 @@ def hr_applicants(request, job_id):
         applications = applications_paginator.page(applications_paginator.num_pages)
 
     return render(request, 'jobs/hr_applicants.html', {'applications': applications, 'job': job})
-
 
 @login_required
 def download_applicants_xlsx(request, job_id):
@@ -234,58 +301,6 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
-def job_list(request):
-    job_title = request.GET.get('job_title', '')
-    company = request.GET.get('company', '')
-    query = Q(deleted=False)
-
-    # Add filters for job title and company with case-insensitive search using icontains
-    if job_title:
-        query &= Q(title__icontains=job_title)  # Case-insensitive search for job title
-    if company:
-        query &= Q(company__icontains=company)  # Case-insensitive search for company
-
-    now = timezone.now()
-
-    # Define time thresholds for scraped and non-scraped jobs
-    scraped_threshold = now - timedelta(days=10)
-    non_scraped_threshold = now - timedelta(days=15)
-
-    # Retrieve non-scraped jobs
-    non_scraped_jobs = JobPost.objects.filter(
-        query,
-        is_scraped=False,
-        posted_at__gte=non_scraped_threshold
-    ).order_by('-posted_at')
-
-    # Retrieve scraped jobs
-    scraped_jobs = JobPost.objects.filter(
-        query,
-        is_scraped=True,
-        posted_at__gte=scraped_threshold
-    ).order_by('-posted_at')
-
-    # Combine non-scraped and scraped jobs while ensuring no duplicates
-    combined_jobs = list(non_scraped_jobs) + list(scraped_jobs)
-
-    # Use a dictionary to remove duplicates based on (title, company, apply_link)
-    unique_jobs = {(job.title, job.company, job.apply_link): job for job in combined_jobs}.values()
-
-    # Final pagination for the combined unique result
-    final_paginator = Paginator(list(unique_jobs), 10)  # Show 10 jobs per page
-    page = request.GET.get('page', 1)
-
-    try:
-        jobs_page = final_paginator.page(page)
-    except PageNotAnInteger:
-        jobs_page = final_paginator.page(1)
-    except EmptyPage:
-        jobs_page = final_paginator.page(final_paginator.num_pages)
-
-    # Render the page with the jobs
-    return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
-
-
 @login_required
 def post_job(request):
     if request.method == 'POST':
@@ -299,21 +314,6 @@ def post_job(request):
         form = JobPostForm()
     return render(request, 'jobs/post_job.html', {'form': form})
 
-
-def congrats(request):
-    return render(request, 'jobs/congrats.html')
-
-
-def about(request):
-    return render(request, 'jobs/about.html')
-
-
-def company_description(request, company_id):
-    company_jobs = JobPost.objects.filter(company_id=company_id, deleted=False)
-    company_name = company_jobs.first().company if company_jobs.exists() else "Unknown Company"
-    return render(request, 'jobs/company_description.html', {'company_name': company_name, 'company_jobs': company_jobs})
-
-
 @login_required
 def job_applicants(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
@@ -321,83 +321,13 @@ def job_applicants(request, job_id):
     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
 
 
-@login_required
-def edit_job(request, job_id):
-    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
-    if request.method == 'POST':
-        form = JobPostForm(request.POST, instance=job)
-        if form.is_valid():
-            form.save()
-            return redirect('job_list')
-    else:
-        form = JobPostForm(instance=job)
-    return render(request, 'jobs/edit_job.html', {'form': form, 'job': job})
 
 
-@login_required
-def delete_job(request, job_id):
-    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
-    if request.method == 'POST':
-        job.deleted = True
-        job.save()
-        return redirect('job_list')
-    return render(request, 'jobs/confirm_delete.html', {'job': job})
 
 
-# @csrf_exempt
-# def test_openai_api(request):
-#     openai.api_key = settings.OPENAI_API_KEY
-
-#     try:
-#         response = openai.ChatCompletion.create(
-#             model="gpt-3.5-turbo",
-#             messages=[
-#                 {"role": "system", "content": "You are a helpful assistant."},
-#                 {"role": "user", "content": "Say this is a test"}
-#             ]
-#         )
-#         return JsonResponse({'response': response['choices'][0]['message']['content']})
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
 
 
-# @login_required
-# def job_search(request):
-#     query = request.GET.get('query', '').lower()  # Convert query to lowercase for consistency
-
-#     if query:
-#         now = timezone.now()
-#         non_scraped_time_threshold = now - timedelta(days=5)
-#         scraped_time_threshold = now - timedelta(hours=5)
-
-#         # Filter non-scraped jobs (case-insensitive search using icontains)
-#         non_scraped_jobs = JobPost.objects.filter(
-#             title__icontains=query,  # Use icontains for case-insensitive search
-#             deleted=False,
-#             is_scraped=False,
-#             posted_at__gte=non_scraped_time_threshold
-#         ).order_by('-posted_at')
-
-#         # Filter scraped jobs (case-insensitive search using icontains)
-#         scraped_jobs = JobPost.objects.filter(
-#             title__icontains=query,  # Use icontains for case-insensitive search
-#             deleted=False,
-#             is_scraped=True,
-#             posted_at__gte=scraped_time_threshold
-#         ).order_by('-posted_at')
-
-#         # Combine the querysets and include all jobs (no uniqueness check)
-#         jobs = list(non_scraped_jobs) + list(scraped_jobs)
-#         job_results = [{'id': job.id, 'title': job.title, 'company': job.company} for job in jobs]
-
-#         # Limit the result to 20 jobs
-#         job_results = job_results[:20]
-#     else:
-#         job_results = []
-
-#     return JsonResponse(job_results, safe=False)
-
-
+# apply and create match score based on resume and job description
 def parse_pdf(file):
     try:
         pdf_reader = PyPDF2.PdfReader(file)
@@ -417,7 +347,6 @@ def parse_pdf(file):
     except Exception as e:
         logger.error(f"Unexpected error while parsing PDF: {e}")
         raise ValueError("An unexpected error occurred while processing the PDF.")
-
 
 def translate_text(text, target_lang='en'):
     translator = Translator()
@@ -447,8 +376,6 @@ def calculate_similarity(cv_text, job_text):
     vectorizer = TfidfVectorizer().fit_transform([cv_text, job_text])
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]
-
-
 
 def create_similarity_chart(score):
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -504,7 +431,6 @@ def search_jobs_for_cv(request):
         unique_jobs = []
 
     return JsonResponse(unique_jobs, safe=False)
-
 
 @login_required
 def parse_cv_page(request):
@@ -577,6 +503,21 @@ def parse_cv_page(request):
     })
 
  
+ 
+ 
+ 
+ 
+ 
+
+# instructions and common views
+def redirect_to_jobs(request):
+    return redirect('job_list')
+
+def congrats(request):
+    return render(request, 'jobs/congrats.html')
+
+def about(request):
+    return render(request, 'jobs/about.html')
 
 def robots_txt(request):
     lines = [
