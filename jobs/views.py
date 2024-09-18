@@ -31,6 +31,10 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from langdetect import detect
 from googletrans import Translator
+from payments.models import Order  # Import the Order model for payment
+from django.urls import reverse  # To generate URL for redirect after payment
+
+
 
 # Initialize s3_client with Wasabi configuration
 s3_client = boto3.client(
@@ -302,18 +306,75 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
+# @login_required
+# def post_job(request):
+#     if request.method == 'POST':
+#         form = JobPostForm(request.POST)
+#         if form.is_valid():
+#             job = form.save(commit=False)
+#             job.posted_by = request.user
+#             job.save()
+#             return redirect('job_list')
+#     else:
+#         form = JobPostForm()
+#     return render(request, 'jobs/post_job.html', {'form': form})
+
+
 @login_required
 def post_job(request):
     if request.method == 'POST':
         form = JobPostForm(request.POST)
         if form.is_valid():
+            # Create the job but don't save it yet
             job = form.save(commit=False)
             job.posted_by = request.user
+
+            # Redirect to payment page
+            amount = 20.00  # Set the job posting price (this can be dynamic)
+            order = Order.objects.create(
+                amount=amount,
+                status='pending'
+            )
+            
+            # Save the job post with a reference to the order but don't make it live until payment is done
+            job.payment_order = order
             job.save()
-            return redirect('job_list')
+
+            # Redirect to payment page
+            payment_url = reverse('create_payment')  # Assuming 'create_payment' is your payment view
+            return redirect(f"{payment_url}?order_id={order.order_id}&amount={amount}")
     else:
         form = JobPostForm()
+
     return render(request, 'jobs/post_job.html', {'form': form})
+
+
+@login_required
+def post_job_payment(request, job_id):
+    # Get the job that needs payment
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+
+    # Check if the job is already paid
+    if job.is_paid:
+        messages.success(request, 'This job is already paid.')
+        return redirect('job_list')
+
+    # Create a new order for the payment
+    amount = 20.00  # For example, this can be dynamic or based on the job type (e.g. premium or basic)
+    order = Order.objects.create(
+        order_id=str(uuid4()),
+        amount=amount,
+        status='pending'
+    )
+
+    # Associate the order with the job
+    job.payment_order = order
+    job.save()
+
+    # Redirect to the payment system (this redirects to the payments app's create_payment view)
+    payment_url = reverse('create_payment')  # Assuming you have this URL set up in the payments app
+    return redirect(f"{payment_url}?amount={amount}&order_id={order.order_id}")
+
 
 @login_required
 def job_applicants(request, job_id):

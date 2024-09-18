@@ -1,4 +1,3 @@
-# payments/views.py
 import os
 import json
 import base64
@@ -8,7 +7,8 @@ from django.shortcuts import redirect, render
 from django.http import JsonResponse
 import requests
 from dotenv import load_dotenv
-from .models import Order
+from payments.models import Order
+from jobs.models import JobPost  # Correct import for JobPost
 
 # Load .env file to access sensitive data
 load_dotenv()
@@ -40,8 +40,8 @@ def create_payment(request):
             'language': 'az',  # or 'en', 'ru' depending on user preference
             'order_id': order_id,
             'description': 'Payment for Job Posting Package',
-            'success_redirect_url': 'https://eploy.io/success',
-            'error_redirect_url': 'https://eploy.io/error',
+            'success_redirect_url': 'https://eploy.io/payments/success',
+            'error_redirect_url': 'https://eploy.io/payments/error',
         }
 
         # Encode payload to Base64
@@ -68,11 +68,35 @@ def create_payment(request):
     # Render the payment form template
     return render(request, 'payments/payment_form.html')
 
+
 def payment_success(request):
+    # Handle payment success and update the job post
+    order_id = request.GET.get('order_id')
+    order = Order.objects.filter(order_id=order_id).first()
+
+    if order and order.status == 'paid':
+        # Find the job linked to this order and mark it as paid
+        job = JobPost.objects.filter(payment_order=order).first()
+        if job:
+            job.is_paid = True
+            job.save()
+
     return render(request, 'payments/payment_success.html')
 
+
 def payment_error(request):
+    # Handle payment failure logic, such as deleting the job post if necessary
+    order_id = request.GET.get('order_id')
+    order = Order.objects.filter(order_id=order_id).first()
+
+    if order:
+        # Optionally remove the job post if the payment fails
+        job = JobPost.objects.filter(payment_order=order).first()
+        if job:
+            job.delete()  # Or just mark it as deleted
+
     return render(request, 'payments/payment_error.html')
+
 
 def handle_result(request):
     if request.method == 'POST':
@@ -104,4 +128,5 @@ def handle_result(request):
             order.save()
 
         return JsonResponse({'status': 'received'}, status=200)
+
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)

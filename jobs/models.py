@@ -2,6 +2,8 @@ from django.db import models
 from users.models import CustomUser
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import models
+from payments.models import Order
 
 class JobPost(models.Model):
     title = models.CharField(max_length=500)
@@ -21,6 +23,10 @@ class JobPost(models.Model):
     premium_days = models.IntegerField(default=0)
     priority_level = models.IntegerField(default=0)
     apply_link = models.URLField(max_length=1000, default='')
+
+    # New fields for payment integration
+    is_paid = models.BooleanField(default=False)  # Track if the job is paid for
+    payment_order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='job_post')  # Link to the payment order
 
     def __str__(self):
         return self.title

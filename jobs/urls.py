@@ -25,4 +25,5 @@ urlpatterns = [
     path('hr-dashboard/', hr_dashboard, name='hr_dashboard'),
     path('download_applicants/<int:job_id>/', views.download_applicants_xlsx, name='download_applicants_xlsx'),
     path('hr-applicants/<int:job_id>/', hr_applicants, name='hr_applicants'),
+    path('post-job-payment/<int:job_id>/', views.post_job_payment, name='post_job_payment'),
 ]
