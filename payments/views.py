@@ -8,7 +8,7 @@ from django.http import JsonResponse
 import requests
 from dotenv import load_dotenv
 from payments.models import Order
-from jobs.models import JobPost  # Correct import for JobPost
+from jobs.models import JobPost
 
 # Load .env file to access sensitive data
 load_dotenv()
@@ -70,18 +70,21 @@ def create_payment(request):
 
 
 def payment_success(request):
-    # Handle payment success and update the job post
-    order_id = request.GET.get('order_id')
-    order = Order.objects.filter(order_id=order_id).first()
+    order_id = request.GET.get('order_id')  # Epoint will return this
+    if order_id:
+        order = Order.objects.filter(order_id=order_id).first()
+        if order and order.status == 'pending':
+            # Mark the order and job post as paid
+            order.status = 'paid'
+            order.save()
 
-    if order and order.status == 'paid':
-        # Find the job linked to this order and mark it as paid
-        job = JobPost.objects.filter(payment_order=order).first()
-        if job:
+            # Mark the job as paid
+            job = order.job
             job.is_paid = True
             job.save()
 
-    return render(request, 'payments/payment_success.html')
+            return render(request, 'payments/success.html', {'job': job})
+    return redirect('/payments/error/')
 
 
 def payment_error(request):
