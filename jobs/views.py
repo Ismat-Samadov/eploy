@@ -332,7 +332,6 @@ def download_applicants_xlsx(request, job_id):
 #     return render(request, 'jobs/post_job.html', {'form': form})
 
 
-
 @login_required
 def post_job(request):
     if request.method == 'POST':
@@ -346,10 +345,13 @@ def post_job(request):
             # Generate a unique order ID for this transaction
             order_id = str(uuid4())
 
+            # Define the job posting cost dynamically (You can calculate or set it as needed)
+            posting_cost = 20.00  # Example cost, adjust as needed
+
             # Create an order for this job post
             order = Order.objects.create(
                 order_id=order_id,
-                amount=job.posting_cost,  # Assuming job posting cost is handled dynamically
+                amount=posting_cost,  # Dynamically calculated posting cost
                 status='pending',
                 job=job  # Store reference to the job
             )
@@ -376,14 +378,17 @@ def post_job(request):
             # Send the request to Epoint
             response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
 
+            # Handle the Epoint response
             if response.status_code == 200:
                 result = response.json()
                 if result.get('status') == 'success':
                     # Redirect user to the Epoint payment page
                     return redirect(result['redirect_url'])
                 else:
+                    # Handle the error if the status is not 'success'
                     return redirect('/payments/error/')
             else:
+                # Handle the error if the response is not successful
                 return redirect('/payments/error/')
     else:
         form = JobPostForm()
