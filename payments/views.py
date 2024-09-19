@@ -7,8 +7,10 @@ from django.shortcuts import redirect, render
 from django.http import JsonResponse
 import requests
 from dotenv import load_dotenv
-from payments.models import Order
 from jobs.models import JobPost
+from .models import Order
+from jobs.models import JobPost
+from django.conf import settings
 
 # Load .env file to access sensitive data
 load_dotenv()
@@ -101,35 +103,68 @@ def payment_error(request):
     return render(request, 'payments/payment_error.html')
 
 
-def handle_result(request):
+# def handle_result(request):
+#     if request.method == 'POST':
+#         data = request.POST.get('data')
+#         signature = request.POST.get('signature')
+
+#         # Recompute the signature for security
+#         signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
+#         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
+
+#         # Validate the signature
+#         if signature != computed_signature:
+#             return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+
+#         # Decode the data
+#         decoded_data = json.loads(base64.b64decode(data))
+
+#         # Process payment result
+#         order_id = decoded_data.get('order_id')
+#         status = decoded_data.get('status')
+
+#         # Update your database with payment result (Success or Failure)
+#         order = Order.objects.filter(order_id=order_id).first()
+#         if order:
+#             if status == 'success':
+#                 order.status = 'paid'
+#             else:
+#                 order.status = 'failed'
+#             order.save()
+
+#         return JsonResponse({'status': 'received'}, status=200)
+
+#     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+def handle_epoint_result(request):
     if request.method == 'POST':
         data = request.POST.get('data')
         signature = request.POST.get('signature')
 
-        # Recompute the signature for security
-        signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
+        # Recompute the signature
+        signature_string = f"{settings.PRIVATE_KEY}{data}{settings.PRIVATE_KEY}"
         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
 
-        # Validate the signature
+        # Verify signature
         if signature != computed_signature:
             return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
 
-        # Decode the data
+        # Decode data and process payment result
         decoded_data = json.loads(base64.b64decode(data))
 
-        # Process payment result
         order_id = decoded_data.get('order_id')
         status = decoded_data.get('status')
 
-        # Update your database with payment result (Success or Failure)
         order = Order.objects.filter(order_id=order_id).first()
         if order:
             if status == 'success':
                 order.status = 'paid'
+                job = order.job
+                job.is_paid = True
+                job.save()
             else:
                 order.status = 'failed'
             order.save()
 
         return JsonResponse({'status': 'received'}, status=200)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)

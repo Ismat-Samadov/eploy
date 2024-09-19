@@ -23,7 +23,6 @@ class JobPost(models.Model):
     premium_days = models.IntegerField(default=0)
     priority_level = models.IntegerField(default=0)
     apply_link = models.URLField(max_length=1000, default='')
-
     # New fields for payment integration
     is_paid = models.BooleanField(default=False)  # Track if the job is paid for
     payment_order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='job_post')  # Link to the payment order
