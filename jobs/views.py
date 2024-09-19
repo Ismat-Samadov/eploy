@@ -31,8 +31,20 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from langdetect import detect
 from googletrans import Translator
-from payments.models import Order  # Import the Order model for payment
-from django.urls import reverse  # To generate URL for redirect after payment
+from payments.models import Order  
+from django.urls import reverse
+import json
+import base64
+import hashlib
+from uuid import uuid4
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+PUBLIC_KEY = os.getenv('PUBLIC_KEY')
+PRIVATE_KEY = os.getenv('PRIVATE_KEY')
+EPOINT_API_URL = 'https://epoint.az/api/1/request'
 
 
 
@@ -320,29 +332,59 @@ def download_applicants_xlsx(request, job_id):
 #     return render(request, 'jobs/post_job.html', {'form': form})
 
 
+
 @login_required
 def post_job(request):
     if request.method == 'POST':
         form = JobPostForm(request.POST)
         if form.is_valid():
-            # Create the job but don't save it yet
             job = form.save(commit=False)
             job.posted_by = request.user
-
-            # Redirect to payment page
-            amount = 20.00  # Set the job posting price (this can be dynamic)
-            order = Order.objects.create(
-                amount=amount,
-                status='pending'
-            )
-            
-            # Save the job post with a reference to the order but don't make it live until payment is done
-            job.payment_order = order
+            job.is_paid = False  # Mark job as not paid initially
             job.save()
 
-            # Redirect to payment page
-            payment_url = reverse('create_payment')  # Assuming 'create_payment' is your payment view
-            return redirect(f"{payment_url}?order_id={order.order_id}&amount={amount}")
+            # Generate a unique order ID for this transaction
+            order_id = str(uuid4())
+
+            # Create an order for this job post
+            order = Order.objects.create(
+                order_id=order_id,
+                amount=job.posting_cost,  # Assuming job posting cost is handled dynamically
+                status='pending',
+                job=job  # Store reference to the job
+            )
+
+            # Prepare payload for Epoint API request
+            payload = {
+                'public_key': PUBLIC_KEY,
+                'amount': str(order.amount),
+                'currency': 'AZN',
+                'language': 'az',  # Depending on the user's preference
+                'order_id': order_id,
+                'description': 'Payment for Job Posting',
+                'success_redirect_url': request.build_absolute_uri('/payments/success/'),
+                'error_redirect_url': request.build_absolute_uri('/payments/error/'),
+            }
+
+            # Encode payload to Base64
+            data = base64.b64encode(json.dumps(payload).encode()).decode()
+
+            # Generate signature using private_key and payload
+            signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
+            signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
+
+            # Send the request to Epoint
+            response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
+
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('status') == 'success':
+                    # Redirect user to the Epoint payment page
+                    return redirect(result['redirect_url'])
+                else:
+                    return redirect('/payments/error/')
+            else:
+                return redirect('/payments/error/')
     else:
         form = JobPostForm()
 
