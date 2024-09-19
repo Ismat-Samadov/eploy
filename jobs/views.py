@@ -210,10 +210,6 @@ def apply_job(request, job_id):
 
 
 
-
-
-
-
 # hr views
 @login_required
 def edit_job(request, job_id):
