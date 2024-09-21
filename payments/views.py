@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 from jobs.models import JobPost
 from .models import Order
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Load .env file to access sensitive data
 load_dotenv()
@@ -102,35 +106,48 @@ def payment_error(request):
     return render(request, 'payments/payment_error.html')
 
 
+@csrf_exempt
 def handle_epoint_result(request):
     if request.method == 'POST':
         data = request.POST.get('data')
         signature = request.POST.get('signature')
 
+        logger.debug(f"Received payment data: {data}, signature: {signature}")
+
         # Recompute the signature
         signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
 
+        logger.debug(f"Computed signature: {computed_signature}")
+
         # Verify the signature
         if signature != computed_signature:
+            logger.error("Invalid signature detected.")
             return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
 
         # Decode data and process payment result
         decoded_data = json.loads(base64.b64decode(data))
+        logger.debug(f"Decoded payment data: {decoded_data}")
+
         order_id = decoded_data.get('order_id')
         status = decoded_data.get('status')
+        logger.debug(f"Order ID: {order_id}, Status: {status}")
 
+        # Update the order based on the status received
         order = Order.objects.filter(order_id=order_id).first()
         if order:
             if status == 'success':
-                order.status = 'paid'
+                logger.info(f"Payment successful for order {order_id}.")
+                order.status = 'paid'  # Update status to 'paid'
                 job = order.job
-                job.is_paid = True
+                job.is_paid = True  # Mark the job as paid
                 job.save()
             else:
+                logger.warning(f"Payment failed for order {order_id}.")
                 order.status = 'failed'
             order.save()
 
         return JsonResponse({'status': 'received'}, status=200)
 
+    logger.error("Invalid request method.")
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
