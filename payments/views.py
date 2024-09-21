@@ -108,17 +108,14 @@ def handle_epoint_result(request):
         # Recompute the signature
         signature_string = f"{settings.PRIVATE_KEY}{data}{settings.PRIVATE_KEY}"
         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
-
         # Verify signature
         if signature != computed_signature:
             return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
-
         # Decode data and process payment result
         decoded_data = json.loads(base64.b64decode(data))
 
         order_id = decoded_data.get('order_id')
         status = decoded_data.get('status')
-
         order = Order.objects.filter(order_id=order_id).first()
         if order:
             if status == 'success':
@@ -129,5 +126,4 @@ def handle_epoint_result(request):
             else:
                 order.status = 'failed'
             order.save()
-
         return JsonResponse({'status': 'received'}, status=200)
