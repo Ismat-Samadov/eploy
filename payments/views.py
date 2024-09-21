@@ -88,7 +88,6 @@ def payment_success(request):
             return render(request, 'payments/success.html', {'job': job})
     return redirect('/payments/error/')
 
-
 def payment_error(request):
     # Handle payment failure logic, such as deleting the job post if necessary
     order_id = request.GET.get('order_id')
