@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import JsonResponse
 import requests
 from dotenv import load_dotenv
-from jobs.models import JobPost  # Assuming JobPost is in jobs app
+from jobs.models import JobPost
 from .models import Order
 from django.conf import settings
 
@@ -18,31 +18,34 @@ PUBLIC_KEY = os.getenv('PUBLIC_KEY')
 PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 EPOINT_API_URL = 'https://epoint.az/api/1/request'
 
-
 def initiate_payment(request, job_id):
-    # Get the job that needs payment
+    # Get the job post that needs payment
     job = get_object_or_404(JobPost, id=job_id)
 
-    # Check if the job is already paid
-    if job.is_paid:
-        return redirect('job_list')  # Redirect if already paid
-
-    # Define posting cost (could be dynamic)
-    amount = 20.00  # Example cost, adjust as needed
-
-    # Create an order for the job post
-    order_id = str(uuid4())
+    # Create a new order for the payment
+    amount = 20.00  # Example: set the cost of the job posting
     order = Order.objects.create(
-        order_id=order_id,
+        order_id=str(uuid4()),
         amount=amount,
         status='pending',
-        job=job  # Link to the job
+        job=job  # Associate the order with the job
     )
 
-    # Prepare payment payload
+    # Redirect to create_payment for further processing
+    return redirect('create_payment', order_id=order.order_id)
+
+
+def create_payment(request, order_id):
+    # Retrieve the order based on the order_id
+    order = get_object_or_404(Order, order_id=order_id)
+
+    # Define payment details and order info
+    amount = order.amount
+
+    # Prepare payload for payment
     payload = {
         'public_key': PUBLIC_KEY,
-        'amount': str(order.amount),
+        'amount': str(amount),
         'currency': 'AZN',
         'language': 'az',
         'order_id': order_id,
@@ -56,7 +59,7 @@ def initiate_payment(request, job_id):
     signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
     signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
 
-    # Send the request to Epoint
+    # Send the request to the payment API
     response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
 
     # Handle response
@@ -68,7 +71,6 @@ def initiate_payment(request, job_id):
             return redirect('/payments/error/')
     else:
         return redirect('/payments/error/')
-
 
 def payment_success(request):
     order_id = request.GET.get('order_id')

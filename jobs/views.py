@@ -56,18 +56,14 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R_SECRET_ACCESS_KEY')
 )
 
-
 matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
 # Log to console
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
-
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
-
 logger.addHandler(console_handler)
 
 
@@ -204,11 +200,24 @@ def apply_job(request, job_id):
     return render(request, 'jobs/apply_job.html', {'form': form, 'job': job})
 
 
-
-
-
-
 # hr views
+@login_required
+def post_job(request):
+    if request.method == 'POST':
+        form = JobPostForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.posted_by = request.user
+            job.is_paid = False  # Mark job as not paid initially
+            job.save()
+
+            # Redirect to the payment process in the payments app
+            return redirect('initiate_payment', job_id=job.id)  # Job ID will be passed to the payments app
+    else:
+        form = JobPostForm()
+
+    return render(request, 'jobs/post_job.html', {'form': form})
+
 @login_required
 def edit_job(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
@@ -313,33 +322,10 @@ def download_applicants_xlsx(request, job_id):
     return response
 
 @login_required
-def post_job(request):
-    if request.method == 'POST':
-        form = JobPostForm(request.POST)
-        if form.is_valid():
-            job = form.save(commit=False)
-            job.posted_by = request.user
-            job.is_paid = False  # Mark job as not paid initially
-            job.save()
-
-            # Redirect to the payment process in the payments app
-            return redirect('initiate_payment', job_id=job.id)  # Job ID will be passed to the payments app
-    else:
-        form = JobPostForm()
-
-    return render(request, 'jobs/post_job.html', {'form': form})
-
-@login_required
 def job_applicants(request, job_id):
     job = get_object_or_404(JobPost, id=job_id, posted_by=request.user, deleted=False)
     applications = JobApplication.objects.filter(job=job)
     return render(request, 'jobs/job_applicants.html', {'job': job, 'applications': applications})
-
-
-
-
-
-
 
 
 # apply and create match score based on resume and job description
@@ -392,137 +378,6 @@ def calculate_similarity(cv_text, job_text):
     vectors = vectorizer.toarray()
     return cosine_similarity(vectors)[0, 1]
 
-def create_similarity_chart(score):
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
-    ax[0].pie([score, 1 - score], labels=['Similarity', 'Difference'], colors=['blue', 'gray'], autopct='%1.1f%%')
-    ax[0].set_title('CV and Job Description Similarity')
-
-    labels = ['Overall Similarity']
-    values = [score]
-    x = np.arange(len(labels))
-
-    ax[1].bar(x, values, color='blue', alpha=0.7)
-    ax[1].set_xticks(x)
-    ax[1].set_xticklabels(labels)
-    ax[1].set_ylim(0, 1)
-    ax[1].set_ylabel('Score')
-    ax[1].set_title('Detailed Similarity Breakdown')
-
-    buf = io.BytesIO()
-    plt.tight_layout()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    string = base64.b64encode(buf.read())
-    uri = 'data:image/png;base64,' + string.decode('utf-8')
-    buf.close()
-    return uri
-
-@login_required
-def search_jobs_for_cv(request):
-    query = request.GET.get('query', '').lower()
-    if query:
-        now = timezone.now()
-        time_threshold = now - timedelta(days=10)
-
-        non_scraped_jobs = JobPost.objects.filter(
-            Q(title__icontains=query) &
-            Q(deleted=False) &
-            Q(is_scraped=False) &
-            Q(description__isnull=False) &
-            Q(description__gt='') &
-            Q(posted_at__gte=time_threshold)
-        ).order_by('-posted_at')
-
-        unique_jobs = []
-        seen_titles = set()
-        for job in non_scraped_jobs:
-            if (job.title, job.company) not in seen_titles:
-                unique_jobs.append({'id': job.id, 'title': job.title, 'company': job.company})
-                seen_titles.add((job.title, job.company))
-
-        unique_jobs = unique_jobs[:20]
-    else:
-        unique_jobs = []
-
-    return JsonResponse(unique_jobs, safe=False)
-
-@login_required
-def parse_cv_page(request):
-    job_search_form = JobSearchForm()
-    resume_upload_form = ResumeUploadForm()
-
-    if request.method == 'POST':
-        form = ResumeUploadForm(request.POST, request.FILES)
-        logger.debug(f'Form data: {request.POST}')
-        logger.debug(f'File data: {request.FILES}')
-        if form.is_valid():
-            job_id = request.POST.get('job_id')
-            if not job_id:
-                logger.error('Job ID is missing from the form data.')
-                return JsonResponse({'error': 'Job ID is required.'}, status=400)
-
-            resume_file = request.FILES['resume']
-            logger.debug(f'Job ID: {job_id}')
-            logger.debug(f'Resume file: {resume_file.name}')
-
-            try:
-                job = get_object_or_404(JobPost, id=job_id)
-            except ValueError:
-                logger.error(f'Invalid job ID: {job_id}')
-                return JsonResponse({'error': 'Invalid job ID'}, status=400)
-
-            file_ext = resume_file.name.split('.')[-1].lower()
-            if file_ext == 'pdf':
-                cv_text = parse_pdf(resume_file)
-            else:
-                return JsonResponse({'error': 'Unsupported file format. Only PDF is supported at this moment.'}, status=400)
-
-            cv_prompt = f"Extract the key skills and experience from this CV: {cv_text}"
-            job_prompt = f"Extract the key skills and experience from this job description: {job.description}"
-            advice_prompt = f"Give some advice to improve this CV for the job at {job.company}: {cv_text}"
-            cover_letter_prompt = f"Generate a personalized cover letter for the job description: {job.description} at {job.company} based on the following CV: {cv_text}"
-
-            try:
-                cv_skills = get_openai_analysis(cv_prompt)
-                job_skills = get_openai_analysis(job_prompt)
-                advice = get_openai_analysis(advice_prompt)
-                cover_letter = get_openai_analysis(cover_letter_prompt)
-                similarity_score = calculate_similarity(cv_skills, job_skills)
-                chart_uri = create_similarity_chart(similarity_score)
-
-                logger.debug(f'CV Skills: {cv_skills}')
-                logger.debug(f'Job Skills: {job_skills}')
-                logger.debug(f'Similarity Score: {similarity_score}')
-
-                return render(request, 'jobs/similarity_results.html', {
-                    'cv_skills': cv_skills,
-                    'job_skills': job_skills,
-                    'similarity_score': similarity_score,
-                    'chart_uri': chart_uri,
-                    'advice': advice,
-                    'cover_letter': cover_letter,
-                    'job_title': job.title,
-                    'company_name': job.company
-                })
-            except Exception as e:
-                logger.error(f"Error analyzing CV or job description with OpenAI: {e}")
-                return JsonResponse({'error': 'Error analyzing CV or job description with OpenAI.'}, status=500)
-        else:
-            logger.error(f'Form is not valid: {form.errors}')
-            return JsonResponse({'error': 'Invalid form data.'}, status=400)
-
-    return render(request, 'jobs/parse_cv.html', {
-        'job_search_form': job_search_form,
-        'resume_upload_form': resume_upload_form
-    })
-
- 
- 
- 
- 
- 
- 
 
 # instructions and common views
 def redirect_to_jobs(request):
