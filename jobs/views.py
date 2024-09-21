@@ -314,19 +314,6 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
-# @login_required
-# def post_job(request):
-#     if request.method == 'POST':
-#         form = JobPostForm(request.POST)
-#         if form.is_valid():
-#             job = form.save(commit=False)
-#             job.posted_by = request.user
-#             job.save()
-#             return redirect('job_list')
-#     else:
-#         form = JobPostForm()
-#     return render(request, 'jobs/post_job.html', {'form': form})
-
 
 @login_required
 def post_job(request):
