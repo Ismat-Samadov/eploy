@@ -9,7 +9,6 @@ import requests
 from dotenv import load_dotenv
 from jobs.models import JobPost
 from .models import Order
-from jobs.models import JobPost
 from django.conf import settings
 
 # Load .env file to access sensitive data
@@ -39,11 +38,11 @@ def create_payment(request):
             'public_key': PUBLIC_KEY,
             'amount': amount,
             'currency': 'AZN',
-            'language': 'az',  # or 'en', 'ru' depending on user preference
+            'language': 'en',  # or 'en', 'ru' depending on user preference
             'order_id': order_id,
             'description': 'Payment for Job Posting Package',
-            'success_redirect_url': 'https://eploy.io/payments/success',
-            'error_redirect_url': 'https://eploy.io/payments/error',
+            'success_redirect_url': request.build_absolute_uri('/payments/success/'),
+            'error_redirect_url': request.build_absolute_uri('/payments/error/'),
         }
 
         # Encode payload to Base64
@@ -63,16 +62,15 @@ def create_payment(request):
                 # Redirect to Epoint's payment page
                 return redirect(result['redirect_url'])
             else:
-                return redirect('payment_error')
+                return redirect('/payments/error/')
         else:
-            return redirect('payment_error')
-
+            return redirect('/payments/error/')
+    
     # Render the payment form template
     return render(request, 'payments/payment_form.html')
 
-
 def payment_success(request):
-    order_id = request.GET.get('order_id')  # Epoint will return this
+    order_id = request.GET.get('order_id')  # Epoint will return this in the query string
     if order_id:
         order = Order.objects.filter(order_id=order_id).first()
         if order and order.status == 'pending':
@@ -85,19 +83,19 @@ def payment_success(request):
             job.is_paid = True
             job.save()
 
-            return render(request, 'payments/success.html', {'job': job})
+            return render(request, 'payments/payment_success.html', {'job': job})
     return redirect('/payments/error/')
 
 def payment_error(request):
-    # Handle payment failure logic, such as deleting the job post if necessary
     order_id = request.GET.get('order_id')
     order = Order.objects.filter(order_id=order_id).first()
 
     if order:
-        # Optionally remove the job post if the payment fails
+        # Optionally remove or mark the job post as deleted if the payment fails
         job = JobPost.objects.filter(payment_order=order).first()
         if job:
-            job.delete()  # Or just mark it as deleted
+            job.deleted = True  # Mark the job as deleted instead of removing
+            job.save()
 
     return render(request, 'payments/payment_error.html')
 
@@ -105,17 +103,21 @@ def handle_epoint_result(request):
     if request.method == 'POST':
         data = request.POST.get('data')
         signature = request.POST.get('signature')
+
         # Recompute the signature
-        signature_string = f"{settings.PRIVATE_KEY}{data}{settings.PRIVATE_KEY}"
+        signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
-        # Verify signature
+
+        # Verify the signature
         if signature != computed_signature:
             return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+
         # Decode data and process payment result
         decoded_data = json.loads(base64.b64decode(data))
 
         order_id = decoded_data.get('order_id')
         status = decoded_data.get('status')
+
         order = Order.objects.filter(order_id=order_id).first()
         if order:
             if status == 'success':
@@ -126,4 +128,7 @@ def handle_epoint_result(request):
             else:
                 order.status = 'failed'
             order.save()
+
         return JsonResponse({'status': 'received'}, status=200)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
