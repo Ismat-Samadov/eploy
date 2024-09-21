@@ -77,22 +77,30 @@ def create_payment(request, order_id):
         return redirect('/payments/error/')
 
 def payment_success(request):
+    logger.debug(f'Payment success called with query params: {request.GET}')
     order_id = request.GET.get('order_id')
-    if order_id:
-        order = Order.objects.filter(order_id=order_id).first()
-        if order and order.status == 'pending':
-            # Mark the order and job as paid
-            order.status = 'paid'
-            order.save()
 
+    if not order_id:
+        logger.error('No order ID provided')
+        return redirect('/payments/error/')
+    
+    order = Order.objects.filter(order_id=order_id).first()
+
+    if not order:
+        logger.error(f'Order with ID {order_id} not found')
+        return redirect('/payments/error/')
+
+    if order.status == 'pending':
+        order.status = 'paid'
+        order.save()
+
+        if order.job:
             job = order.job
             job.is_paid = True
             job.save()
-
-            return render(request, 'payments/payment_success.html', {'job': job})
+        return render(request, 'payments/success.html', {'job': job})
+    
     return redirect('/payments/error/')
-
-
 def payment_error(request):
     order_id = request.GET.get('order_id')
     order = Order.objects.filter(order_id=order_id).first()
