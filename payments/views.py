@@ -138,7 +138,7 @@ def payment_success(request):
             job.is_paid = True
             job.save()
 
-        return render(request, 'payments/success.html', {'job': job})
+        return render(request, 'payments/payments_success.html', {'job': job})
     
     return redirect('/payments/error/')
 
