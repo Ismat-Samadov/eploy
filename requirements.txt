@@ -132,8 +132,6 @@ linkedin-scraper==2.11.2
 lxml==5.2.2
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
-matplotlib==3.9.1
-matplotlib-inline==0.1.7
 mdurl==0.1.2
 mistune==3.0.2
 msgpack==1.0.8

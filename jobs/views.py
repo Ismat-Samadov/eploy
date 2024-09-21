@@ -23,7 +23,6 @@ import base64
 import numpy as np
 from django.views.generic import DetailView
 from .utils import calculate_similarity, get_openai_analysis
-import matplotlib
 from botocore.exceptions import NoCredentialsError, ClientError
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
@@ -56,7 +55,6 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('R_SECRET_ACCESS_KEY')
 )
 
-matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # Log to console
