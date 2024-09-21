@@ -12,6 +12,8 @@ from .models import Order
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import logging
+from django.urls import reverse
+from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
@@ -23,20 +25,51 @@ PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 EPOINT_API_URL = 'https://epoint.az/api/1/request'
 
 def initiate_payment(request, job_id):
-    # Get the job post that needs payment
-    job = get_object_or_404(JobPost, id=job_id)
+    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
+
+    # Check if the job is already paid
+    if job.is_paid:
+        messages.success(request, 'This job is already paid.')
+        return redirect('job_list')
 
     # Create a new order for the payment
-    amount = 20.00  # Example: set the cost of the job posting
+    amount = 20.00  # You can make this dynamic based on your business logic
     order = Order.objects.create(
         order_id=str(uuid4()),
         amount=amount,
         status='pending',
-        job=job  # Associate the order with the job
+        job=job  # Associate the job with the order
     )
 
-    # Redirect to create_payment for further processing
-    return redirect('create_payment', order_id=order.order_id)
+    payload = {
+        'public_key': PUBLIC_KEY,
+        'amount': str(order.amount),
+        'currency': 'AZN',
+        'language': 'az',
+        'order_id': order.order_id,
+        'description': 'Payment for Job Posting',
+        'success_redirect_url': request.build_absolute_uri(reverse('payment_success') + f'?order_id={order.order_id}'),
+        'error_redirect_url': request.build_absolute_uri(reverse('payment_error')),
+    }
+
+    # Encode payload to Base64
+    data = base64.b64encode(json.dumps(payload).encode()).decode()
+
+    # Generate signature using private_key and payload
+    signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
+    signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
+
+    # Send the request to Epoint
+    response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
+
+    if response.status_code == 200:
+        result = response.json()
+        if result.get('status') == 'success':
+            return redirect(result['redirect_url'])  # Redirect user to payment page
+        else:
+            return redirect('/payments/error/')
+    else:
+        return redirect('/payments/error/')
 
 
 def create_payment(request, order_id):
@@ -76,31 +109,40 @@ def create_payment(request, order_id):
     else:
         return redirect('/payments/error/')
 
+
 def payment_success(request):
-    logger.debug(f'Payment success called with query params: {request.GET}')
+    logger.info(f'Payment success called with query params: {request.GET}')
+    
+    # Get the order_id from the query string
     order_id = request.GET.get('order_id')
 
     if not order_id:
         logger.error('No order ID provided')
         return redirect('/payments/error/')
-    
+
+    # Find the order with the given order_id
     order = Order.objects.filter(order_id=order_id).first()
 
     if not order:
         logger.error(f'Order with ID {order_id} not found')
         return redirect('/payments/error/')
 
+    # Mark the order as paid if it's still pending
     if order.status == 'pending':
         order.status = 'paid'
         order.save()
 
+        # If the order is linked to a job, mark the job as paid
         if order.job:
             job = order.job
             job.is_paid = True
             job.save()
+
         return render(request, 'payments/success.html', {'job': job})
     
     return redirect('/payments/error/')
+
+
 def payment_error(request):
     order_id = request.GET.get('order_id')
     order = Order.objects.filter(order_id=order_id).first()
