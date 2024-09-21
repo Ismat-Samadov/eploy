@@ -105,7 +105,6 @@ def handle_epoint_result(request):
     if request.method == 'POST':
         data = request.POST.get('data')
         signature = request.POST.get('signature')
-
         # Recompute the signature
         signature_string = f"{settings.PRIVATE_KEY}{data}{settings.PRIVATE_KEY}"
         computed_signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
