@@ -3,82 +3,82 @@ import json
 import base64
 import hashlib
 from uuid import uuid4
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import JsonResponse
 import requests
 from dotenv import load_dotenv
-from jobs.models import JobPost
+from jobs.models import JobPost  # Assuming JobPost is in jobs app
 from .models import Order
 from django.conf import settings
 
 # Load .env file to access sensitive data
 load_dotenv()
 
-# Retrieve sensitive data from .env file
 PUBLIC_KEY = os.getenv('PUBLIC_KEY')
 PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 EPOINT_API_URL = 'https://epoint.az/api/1/request'
 
-def create_payment(request):
-    if request.method == 'POST':
-        amount = request.POST.get('amount')
 
-        # Generate unique order_id
-        order_id = str(uuid4())
+def initiate_payment(request, job_id):
+    # Get the job that needs payment
+    job = get_object_or_404(JobPost, id=job_id)
 
-        # Save the order to the database
-        order = Order.objects.create(
-            order_id=order_id,
-            amount=amount,
-            status='pending'
-        )
+    # Check if the job is already paid
+    if job.is_paid:
+        return redirect('job_list')  # Redirect if already paid
 
-        # Prepare payment payload
-        payload = {
-            'public_key': PUBLIC_KEY,
-            'amount': amount,
-            'currency': 'AZN',
-            'language': 'en',  # or 'en', 'ru' depending on user preference
-            'order_id': order_id,
-            'description': 'Payment for Job Posting Package',
-            'success_redirect_url': request.build_absolute_uri('/payments/success/'),
-            'error_redirect_url': request.build_absolute_uri('/payments/error/'),
-        }
+    # Define posting cost (could be dynamic)
+    amount = 20.00  # Example cost, adjust as needed
 
-        # Encode payload to Base64
-        data = base64.b64encode(json.dumps(payload).encode()).decode()
+    # Create an order for the job post
+    order_id = str(uuid4())
+    order = Order.objects.create(
+        order_id=order_id,
+        amount=amount,
+        status='pending',
+        job=job  # Link to the job
+    )
 
-        # Create signature by hashing with sha1 and base64 encoding
-        signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
-        signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
+    # Prepare payment payload
+    payload = {
+        'public_key': PUBLIC_KEY,
+        'amount': str(order.amount),
+        'currency': 'AZN',
+        'language': 'az',
+        'order_id': order_id,
+        'description': 'Payment for Job Posting',
+        'success_redirect_url': request.build_absolute_uri('/payments/success/'),
+        'error_redirect_url': request.build_absolute_uri('/payments/error/'),
+    }
 
-        # Send payment request to Epoint
-        response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
+    # Encode payload and generate signature
+    data = base64.b64encode(json.dumps(payload).encode()).decode()
+    signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
+    signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
 
-        # Check response from Epoint
-        if response.status_code == 200:
-            result = response.json()
-            if result.get('status') == 'success':
-                # Redirect to Epoint's payment page
-                return redirect(result['redirect_url'])
-            else:
-                return redirect('/payments/error/')
+    # Send the request to Epoint
+    response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
+
+    # Handle response
+    if response.status_code == 200:
+        result = response.json()
+        if result.get('status') == 'success':
+            return redirect(result['redirect_url'])
         else:
             return redirect('/payments/error/')
-    
-    # Render the payment form template
-    return render(request, 'payments/payment_form.html')
+    else:
+        return redirect('/payments/error/')
+
 
 def payment_success(request):
-    order_id = request.GET.get('order_id')  # Epoint will return this in the query string
+    order_id = request.GET.get('order_id')
     if order_id:
         order = Order.objects.filter(order_id=order_id).first()
         if order and order.status == 'pending':
-            # Mark the order and job post as paid
+            # Mark the order and job as paid
             order.status = 'paid'
             order.save()
 
-            # Mark the job as paid
             job = order.job
             job.is_paid = True
             job.save()
@@ -86,18 +86,19 @@ def payment_success(request):
             return render(request, 'payments/payment_success.html', {'job': job})
     return redirect('/payments/error/')
 
+
 def payment_error(request):
     order_id = request.GET.get('order_id')
     order = Order.objects.filter(order_id=order_id).first()
 
     if order:
-        # Optionally remove or mark the job post as deleted if the payment fails
-        job = JobPost.objects.filter(payment_order=order).first()
-        if job:
-            job.deleted = True  # Mark the job as deleted instead of removing
-            job.save()
+        # Mark the job as deleted if payment fails
+        job = order.job
+        job.deleted = True  # Mark as deleted
+        job.save()
 
     return render(request, 'payments/payment_error.html')
+
 
 def handle_epoint_result(request):
     if request.method == 'POST':
@@ -114,7 +115,6 @@ def handle_epoint_result(request):
 
         # Decode data and process payment result
         decoded_data = json.loads(base64.b64decode(data))
-
         order_id = decoded_data.get('order_id')
         status = decoded_data.get('status')
 

@@ -74,7 +74,6 @@ logger.addHandler(console_handler)
 
 
 # candidate views
-
 def job_list(request):
     job_title = request.GET.get('job_title', '')
     company = request.GET.get('company', '')
@@ -125,7 +124,6 @@ def job_list(request):
 
     # Render the page with the jobs
     return render(request, 'jobs/job_list.html', {'jobs': jobs_page, 'job_title': job_title, 'company': company})
-
 
 def upload_file_to_wasabi(file_name, bucket_name):
     try:
@@ -314,7 +312,6 @@ def download_applicants_xlsx(request, job_id):
     wb.save(response)
     return response
 
-
 @login_required
 def post_job(request):
     if request.method == 'POST':
@@ -325,86 +322,12 @@ def post_job(request):
             job.is_paid = False  # Mark job as not paid initially
             job.save()
 
-            # Generate a unique order ID for this transaction
-            order_id = str(uuid4())
-
-            # Define the job posting cost dynamically (You can calculate or set it as needed)
-            posting_cost = 20.00  # Example cost, adjust as needed
-
-            # Create an order for this job post
-            order = Order.objects.create(
-                order_id=order_id,
-                amount=posting_cost,  # Dynamically calculated posting cost
-                status='pending',
-                job=job  # Store reference to the job
-            )
-
-            # Prepare payload for Epoint API request
-            payload = {
-                'public_key': PUBLIC_KEY,
-                'amount': str(order.amount),
-                'currency': 'AZN',
-                'language': 'az',  # Depending on the user's preference
-                'order_id': order_id,
-                'description': 'Payment for Job Posting',
-                'success_redirect_url': request.build_absolute_uri('/payments/success/'),
-                'error_redirect_url': request.build_absolute_uri('/payments/error/'),
-            }
-
-            # Encode payload to Base64
-            data = base64.b64encode(json.dumps(payload).encode()).decode()
-
-            # Generate signature using private_key and payload
-            signature_string = f"{PRIVATE_KEY}{data}{PRIVATE_KEY}"
-            signature = base64.b64encode(hashlib.sha1(signature_string.encode()).digest()).decode()
-
-            # Send the request to Epoint
-            response = requests.post(EPOINT_API_URL, data={'data': data, 'signature': signature})
-
-            # Handle the Epoint response
-            if response.status_code == 200:
-                result = response.json()
-                if result.get('status') == 'success':
-                    # Redirect user to the Epoint payment page
-                    return redirect(result['redirect_url'])
-                else:
-                    # Handle the error if the status is not 'success'
-                    return redirect('/payments/error/')
-            else:
-                # Handle the error if the response is not successful
-                return redirect('/payments/error/')
+            # Redirect to the payment process in the payments app
+            return redirect('initiate_payment', job_id=job.id)  # Job ID will be passed to the payments app
     else:
         form = JobPostForm()
 
     return render(request, 'jobs/post_job.html', {'form': form})
-
-
-@login_required
-def post_job_payment(request, job_id):
-    # Get the job that needs payment
-    job = get_object_or_404(JobPost, id=job_id, posted_by=request.user)
-
-    # Check if the job is already paid
-    if job.is_paid:
-        messages.success(request, 'This job is already paid.')
-        return redirect('job_list')
-
-    # Create a new order for the payment
-    amount = 20.00  # For example, this can be dynamic or based on the job type (e.g. premium or basic)
-    order = Order.objects.create(
-        order_id=str(uuid4()),
-        amount=amount,
-        status='pending'
-    )
-
-    # Associate the order with the job
-    job.payment_order = order
-    job.save()
-
-    # Redirect to the payment system (this redirects to the payments app's create_payment view)
-    payment_url = reverse('create_payment')  # Assuming you have this URL set up in the payments app
-    return redirect(f"{payment_url}?amount={amount}&order_id={order.order_id}")
-
 
 @login_required
 def job_applicants(request, job_id):
